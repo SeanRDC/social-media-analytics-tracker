@@ -16,3 +16,15 @@ export const SORT_LABELS: Record<PostSort, string> = {
   engagement: "Most engaging",
   date: "Newest",
 };
+
+const DAY = 86_400_000;
+
+/** Posts published in the last `days` days up to and including `asOf` (ISO dates). */
+export function postsInRange<T extends { publishedAt: string }>(posts: readonly T[], days: number, asOf: string): T[] {
+  const end = Date.parse(asOf);
+  const start = end - (days - 1) * DAY;
+  return posts.filter((p) => {
+    const t = Date.parse(p.publishedAt);
+    return t >= start && t <= end;
+  });
+}

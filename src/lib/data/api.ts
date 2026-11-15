@@ -3,11 +3,16 @@
  * phase can replace these bodies with real requests without touching pages.
  */
 import { sortPosts } from "./sort";
-import { ACCOUNT_NAME, AUDIENCE, LIVE, METRICS, PLATFORMS, POSTS, TOTAL_TREND, TREND_START, WEEK_GROWTH, platformById } from "./sample";
+import { ACCOUNT_NAME, AUDIENCE, TODAY, LIVE, METRICS, PLATFORMS, POSTS, TOTAL_TREND, TREND_START, WEEK_GROWTH, platformById } from "./sample";
 import type { Audience, LiveViewers, Overview, Platform, PlatformId, Post, PostKind, PostSort } from "./types";
 
-export async function getAccount(): Promise<{ name: string }> {
-  return { name: ACCOUNT_NAME };
+export async function getAccount(): Promise<{ name: string; email: string }> {
+  return { name: ACCOUNT_NAME, email: "hello@northbay.studio" };
+}
+
+/** The date the numbers are current as of (ISO). */
+export async function getAsOf(): Promise<string> {
+  return TODAY;
 }
 
 export async function getOverview(): Promise<Overview> {

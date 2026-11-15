@@ -103,3 +103,19 @@ describe("sortPosts", () => {
     expect(posts.map((p) => p.id)).toEqual(["a", "b", "c"]);
   });
 });
+
+describe("postsInRange", () => {
+  const posts = [
+    { id: "a", publishedAt: "2026-11-15" },
+    { id: "b", publishedAt: "2026-11-09" },
+    { id: "c", publishedAt: "2026-11-08" },
+    { id: "d", publishedAt: "2026-10-17" },
+    { id: "e", publishedAt: "2026-10-16" },
+  ];
+
+  it("keeps posts from the last N days, counting today", async () => {
+    const { postsInRange } = await import("@/lib/data/sort");
+    expect(postsInRange(posts, 7, "2026-11-15").map((p) => p.id)).toEqual(["a", "b"]);
+    expect(postsInRange(posts, 30, "2026-11-15").map((p) => p.id)).toEqual(["a", "b", "c", "d"]);
+  });
+});
