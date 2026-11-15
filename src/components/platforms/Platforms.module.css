@@ -1,0 +1,234 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: 12px;
+  align-items: start;
+}
+@media (max-width: 1023px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- platform cards ---------- */
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.pcard {
+  position: relative;
+  border-radius: 22px;
+  padding: 15px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.cover {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+}
+.cover:focus-visible {
+  outline-offset: -2px;
+}
+
+.pTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pName {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.go {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--pill);
+  transition: transform 0.35s var(--spring), background 0.2s;
+}
+.pcard:hover .go {
+  transform: rotate(45deg);
+  background: var(--seg-on);
+}
+.acct {
+  font-size: 11px;
+  color: var(--mu);
+}
+.pNum {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+}
+.pBig {
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.pNoun {
+  font-size: 11px;
+  color: var(--mu);
+}
+
+.pStats {
+  margin: 4px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--cardb);
+  padding-top: 9px;
+}
+.pStats div + div {
+  padding-left: 10px;
+  border-left: 1px solid var(--cardb);
+}
+.pStats dt {
+  font-size: 10px;
+  color: var(--mu);
+}
+.pStats dd {
+  margin: 1px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pending {
+  border-style: dashed;
+  justify-content: space-between;
+}
+.badge {
+  font-size: 10.5px;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: var(--pill);
+  color: var(--mu);
+}
+.pendingText {
+  font-size: 12px;
+  color: var(--mu);
+  line-height: 1.5;
+}
+.connect {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 14px;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: var(--btn-bg);
+  color: var(--btn-tx);
+  transition: transform 0.14s var(--out);
+}
+.connect:active {
+  transform: scale(0.96);
+}
+
+/* ---------- compare ---------- */
+.card {
+  position: relative;
+  border-radius: 22px;
+  padding: 15px 16px;
+}
+.compare {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.h2 {
+  font-size: 14px;
+  font-weight: 500;
+}
+.caption {
+  font-size: 11px;
+  color: var(--mu);
+  margin-top: 2px;
+}
+
+.rank {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rk {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  font-size: 12.5px;
+}
+.rkName {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.rkVal {
+  text-align: right;
+  font-weight: 500;
+}
+.track {
+  height: 7px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.track i {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  transform-origin: left;
+  transition: transform 0.6s var(--out);
+  animation: growX 0.9s var(--out) 0.3s both;
+}
+@keyframes growX {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.insight {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 11px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  background: linear-gradient(150deg, rgba(143, 208, 255, 0.14), rgba(143, 208, 255, 0.04));
+  border: 1px solid rgba(143, 208, 255, 0.22);
+}
+.insight svg {
+  color: var(--acc);
+  margin-top: 1px;
+}
+.insight b {
+  color: var(--acc);
+  font-weight: 600;
+}

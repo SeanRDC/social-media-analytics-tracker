@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { PlatformPill } from "@/components/ui/PlatformPill";
 import { SortMenu } from "@/components/ui/SortMenu";
+import { useFlip } from "@/hooks/useFlip";
 import { SORT_LABELS, sortPosts } from "@/lib/data/sort";
 import type { Post, PostSort } from "@/lib/data/types";
 import { formatCompact, formatDate, formatDuration, formatPercent } from "@/lib/format";
@@ -15,26 +16,12 @@ const OPTIONS = (Object.keys(SORT_LABELS) as PostSort[]).map((value) => ({ value
 export function TopPostsTable({ posts, className = "" }: { posts: Post[]; className?: string }) {
   const [sort, setSort] = useState<PostSort>("views");
   const rows = useMemo(() => sortPosts(posts, sort), [posts, sort]);
-  const rowEls = useRef(new Map<string, HTMLTableRowElement>());
-  const before = useRef(new Map<string, number>());
+  const { register, capture } = useFlip<HTMLTableRowElement>(sort);
 
   const choose = (next: PostSort) => {
-    // FLIP: remember where every row was before the order changes
-    rowEls.current.forEach((el, id) => before.current.set(id, el.getBoundingClientRect().top));
+    capture();
     setSort(next);
   };
-
-  useLayoutEffect(() => {
-    if (before.current.size === 0) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    rowEls.current.forEach((el, id) => {
-      const was = before.current.get(id);
-      if (was == null || reduce || typeof el.animate !== "function") return;
-      const dy = was - el.getBoundingClientRect().top;
-      if (dy) el.animate([{ transform: `translateY(${dy}px)` }, { transform: "translateY(0)" }], { duration: 450, easing: "cubic-bezier(.16,1,.3,1)" });
-    });
-    before.current.clear();
-  }, [sort]);
 
   return (
     <section className={`${s.card} glass rim sweep reveal ${className}`} style={{ "--i": 4 } as React.CSSProperties} aria-labelledby="top-posts-h">
@@ -61,10 +48,7 @@ export function TopPostsTable({ posts, className = "" }: { posts: Post[]; classN
           {rows.map((p) => (
             <tr
               key={p.id}
-              ref={(el) => {
-                if (el) rowEls.current.set(p.id, el);
-                else rowEls.current.delete(p.id);
-              }}
+              ref={register(p.id)}
             >
               <td>
                 <div className={s.post}>
