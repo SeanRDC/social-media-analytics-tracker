@@ -22,10 +22,12 @@ function create() {
   return drizzlePglite(new PGlite(dir), { schema, casing: "snake_case" }) as unknown as ReturnType<typeof drizzlePostgres<typeof schema>>;
 }
 
-type Db = ReturnType<typeof create>;
+export type Db = ReturnType<typeof create>;
 
-// One client per process, kept across hot reloads in development.
-const g = globalThis as unknown as { __db?: Db };
-export const db: Db = g.__db ?? (g.__db = create());
+/** One client per process, created on first use and kept across hot reloads. */
+export function getDb(): Db {
+  const g = globalThis as unknown as { __db?: Db };
+  return (g.__db ??= create());
+}
 
 export { schema };

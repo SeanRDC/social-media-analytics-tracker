@@ -1,30 +1,29 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { AlertSettings } from "@/components/settings/AlertSettings";
 import { Connections } from "@/components/settings/Connections";
+import { SignOutButton } from "@/components/settings/SignOutButton";
 import s from "@/components/settings/Settings.module.css";
 import { Avatar } from "@/components/ui/Avatar";
-import { getAccount, getConnections } from "@/lib/data/api";
+import { getConnections } from "@/lib/data/api";
+import { requireUser } from "@/lib/dal";
 
 export const metadata: Metadata = { title: "Settings" };
 
 const reveal = (i: number) => ({ "--i": i }) as CSSProperties;
 
 export default async function SettingsPage() {
-  const [account, connections] = await Promise.all([getAccount(), getConnections()]);
+  const [user, connections] = await Promise.all([requireUser(), getConnections()]);
   return (
     <div className={s.grid}>
       <section className={`${s.card} ${s.profile} ${s.wide} glass rim reveal`} style={reveal(1)} aria-label="Profile">
         <Avatar size={56} />
         <div className={s.profileText}>
-          <b>{account.name}</b>
-          <small>{account.email}</small>
+          <b>{user.name}</b>
+          <small>{user.email}</small>
         </div>
-        <Link href="/sign-in" className={s.ghost}>
-          <Icon name="logout" size={15} /> Sign out
-        </Link>
+        <SignOutButton />
       </section>
 
       <section className={`${s.card} glass rim reveal`} style={reveal(2)} aria-labelledby="conn-h">

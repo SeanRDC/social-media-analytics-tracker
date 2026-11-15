@@ -1,26 +1,88 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Icon } from "@/components/icons/Icon";
+import { authClient } from "@/lib/auth-client";
+import type { SocialProvider } from "@/lib/auth-providers";
 import s from "./Onboarding.module.css";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const LABEL: Record<SocialProvider, string> = { google: "Google", apple: "Apple" };
+const ICON = { google: "globe", apple: "user" } as const;
 
-export function SignInForm() {
-  const router = useRouter();
+/** Only same-site paths are allowed as a post-sign-in destination. */
+function safeNext(raw: string | null): string {
+  return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/overview";
+}
+
+export function SignInForm({ providers }: { providers: SocialProvider[] }) {
+  const search = useSearchParams();
+  const next = safeNext(search.get("next"));
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [devLink, setDevLink] = useState<string | null>(null);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!EMAIL.test(email.trim())) {
+    const address = email.trim();
+    if (!EMAIL.test(address)) {
       setError("Enter an email like name@example.com");
       return;
     }
     setError("");
-    router.push("/onboarding/connect");
+    setSending(true);
+    const { error: err } = await authClient.signIn.magicLink({ email: address, callbackURL: next, newUserCallbackURL: "/onboarding/connect" });
+    setSending(false);
+    if (err) {
+      setError(err.message ?? "We couldn't send the link. Try again in a moment.");
+      return;
+    }
+    setSentTo(address);
+    if (process.env.NODE_ENV === "development") {
+      fetch(`/api/dev/last-link?email=${encodeURIComponent(address)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { url: string | null } | null) => setDevLink(d?.url ?? null))
+        .catch(() => {});
+    }
   };
+
+  const social = (provider: SocialProvider) => {
+    void authClient.signIn.social({ provider, callbackURL: next, newUserCallbackURL: "/onboarding/connect" });
+  };
+
+  if (sentTo) {
+    return (
+      <div className={s.form} aria-live="polite">
+        <span className={s.check} style={{ width: 44, height: 44 }} aria-hidden="true">
+          <Icon name="mail" size={20} strokeWidth={1.8} />
+        </span>
+        <h2 className={s.h1} style={{ fontSize: 22 }}>
+          Check your email
+        </h2>
+        <p className={s.sub}>
+          We sent a sign-in link to <b style={{ color: "var(--tx)" }}>{sentTo}</b>. It works once and expires in 10 minutes.
+        </p>
+        {devLink && (
+          <a href={devLink} className={s.primary}>
+            Development: open the sign-in link
+          </a>
+        )}
+        <button
+          type="button"
+          className={s.secondary}
+          onClick={() => {
+            setSentTo(null);
+            setDevLink(null);
+          }}
+        >
+          Use a different email
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form className={s.form} onSubmit={submit} noValidate>
@@ -42,19 +104,22 @@ export function SignInForm() {
           <Icon name="alert" size={14} /> {error}
         </p>
       )}
-      <button type="submit" className={s.primary}>
-        Continue with email
+      <button type="submit" className={s.primary} disabled={sending} aria-busy={sending}>
+        {sending ? "Sending…" : "Email me a sign-in link"}
       </button>
-      <div className={s.or}>
-        <span>or</span>
-      </div>
-      <button type="button" className={s.secondary} onClick={() => router.push("/onboarding/connect")}>
-        <Icon name="globe" size={16} /> Continue with Google
-      </button>
-      <button type="button" className={s.secondary} onClick={() => router.push("/onboarding/connect")}>
-        <Icon name="user" size={16} /> Continue with Apple
-      </button>
-      <p className={s.fine}>Sign-in is simulated in this prototype. No account is created.</p>
+      {providers.length > 0 && (
+        <>
+          <div className={s.or}>
+            <span>or</span>
+          </div>
+          {providers.map((p) => (
+            <button key={p} type="button" className={s.secondary} onClick={() => social(p)}>
+              <Icon name={ICON[p]} size={16} /> Continue with {LABEL[p]}
+            </button>
+          ))}
+        </>
+      )}
+      <p className={s.fine}>No password needed. New here? The link creates your account.</p>
     </form>
   );
 }

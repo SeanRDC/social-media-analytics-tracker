@@ -4,7 +4,7 @@ import { Icon, type IconName } from "@/components/icons/Icon";
 import { ScheduleCard } from "@/components/reports/ScheduleCard";
 import s from "@/components/reports/Reports.module.css";
 import { ExportButton } from "@/components/ui/ExportButton";
-import { getAccount } from "@/lib/data/api";
+import { requireUser } from "@/lib/dal";
 
 export const metadata: Metadata = { title: "Reports" };
 
@@ -16,7 +16,7 @@ const PRESETS: { title: string; desc: string; icon: IconName; includes: string[]
 ];
 
 export default async function ReportsPage() {
-  const account = await getAccount();
+  const user = await requireUser();
   return (
     <div className={s.grid}>
       {PRESETS.map((p, i) => (
@@ -39,7 +39,7 @@ export default async function ReportsPage() {
           </div>
         </section>
       ))}
-      <ScheduleCard email={account.email} />
+      <ScheduleCard email={user.email} />
       <p className={`${s.footnote} reveal`} style={{ "--i": 6 } as CSSProperties}>
         This prototype prepares exports without creating files. Real PDF and CSV downloads and email delivery arrive with the backend.
       </p>

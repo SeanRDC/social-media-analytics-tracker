@@ -14,7 +14,7 @@ export function DailyViewsCard({ views }: { views: DailyViews }) {
   const peakIndex = views.thisWeek.indexOf(Math.max(...views.thisWeek));
   const today = views.thisWeek[views.todayIndex];
   const max = Math.max(...views.thisWeek, ...views.lastWeek);
-  const ticks = niceTicks(0, max, 2).filter((t) => t > 0);
+  const ticks = niceTicks(0, max, 3).filter((t) => t > 0);
 
   return (
     <section className={`${s.card} glass rim sweep lift reveal`} style={{ "--i": 2 } as CSSProperties} aria-labelledby="views-h">
