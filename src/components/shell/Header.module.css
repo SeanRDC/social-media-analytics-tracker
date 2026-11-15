@@ -1,0 +1,67 @@
+.hd {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 40px;
+}
+
+.titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.acct {
+  display: none;
+  font-size: 11px;
+  color: var(--mu);
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ib {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--card);
+  border: 1px solid var(--cardb);
+  color: var(--mu);
+  transition: color 0.2s var(--out), transform 0.14s var(--out);
+}
+.ib:hover {
+  color: var(--tx);
+}
+.ib:active {
+  transform: scale(0.92);
+}
+
+@media (max-width: 639px) {
+  .acct {
+    display: block;
+  }
+  .title {
+    font-size: 20px;
+  }
+  .ib {
+    display: none;
+  }
+  .range {
+    order: 3;
+    width: 100%;
+  }
+  .range button {
+    flex: 1;
+  }
+}

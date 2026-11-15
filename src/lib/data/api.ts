@@ -6,6 +6,10 @@ import { sortPosts } from "./sort";
 import { ACCOUNT_NAME, AUDIENCE, LIVE, METRICS, PLATFORMS, POSTS, TOTAL_TREND, TREND_START, WEEK_GROWTH, platformById } from "./sample";
 import type { Audience, LiveViewers, Overview, Platform, PlatformId, Post, PostKind, PostSort } from "./types";
 
+export async function getAccount(): Promise<{ name: string }> {
+  return { name: ACCOUNT_NAME };
+}
+
 export async function getOverview(): Promise<Overview> {
   const connected = PLATFORMS.filter((p) => p.status === "connected");
   const top = [...connected].sort((a, b) => b.followers - a.followers)[0];

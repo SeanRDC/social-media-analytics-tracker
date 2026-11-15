@@ -1,0 +1,62 @@
+/* Desktop and tablet: one glass window with a dark rail, like the inspiration. */
+.frame {
+  position: relative;
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr);
+  min-height: calc(100dvh - 32px);
+  margin: 16px;
+  border-radius: 28px;
+  background: var(--win);
+  border: 1px solid var(--cardb);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  backdrop-filter: blur(28px) saturate(140%);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.55);
+}
+
+.railCol {
+  position: relative;
+  z-index: 3;
+  background: var(--rail);
+  border-radius: 27px 0 0 27px;
+}
+
+.main {
+  min-width: 0;
+  padding: 14px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Phone: no window or rail; content runs edge to edge above the floating tab bar. */
+@media (max-width: 639px) {
+  .frame {
+    display: block;
+    min-height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+  .frame::before {
+    display: none;
+  }
+  .railCol {
+    display: none;
+  }
+  .main {
+    gap: 12px;
+    padding: calc(10px + var(--safe-t)) max(12px, var(--safe-r)) calc(var(--tabbar-h) + 34px + var(--safe-b)) max(12px, var(--safe-l));
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .frame {
+    background: var(--solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
