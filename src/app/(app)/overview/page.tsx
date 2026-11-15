@@ -3,13 +3,13 @@ import { GrowthCard } from "@/components/overview/GrowthCard";
 import { HeroCard } from "@/components/overview/HeroCard";
 import { LiveViewersCard } from "@/components/overview/LiveViewersCard";
 import { TopPostsTable } from "@/components/overview/TopPostsTable";
-import { getLiveViewers, getOverview, getPlatform, getTopPosts } from "@/lib/data/api";
+import { getAsOf, getLiveViewers, getOverview, getPlatform, getPosts } from "@/lib/data/api";
 import s from "./overview.module.css";
 
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function OverviewPage() {
-  const [overview, live, posts] = await Promise.all([getOverview(), getLiveViewers(), getTopPosts(5)]);
+  const [overview, live, posts, asOf] = await Promise.all([getOverview(), getLiveViewers(), getPosts(), getAsOf()]);
   const top = await getPlatform(overview.topPlatform);
 
   return (
@@ -19,7 +19,7 @@ export default async function OverviewPage() {
         <LiveViewersCard live={live} />
         {top && <GrowthCard week={overview.metrics[7]} weekGrowth={overview.weekGrowth} top={top} />}
       </div>
-      <TopPostsTable posts={posts} className={s.table} />
+      <TopPostsTable posts={posts} asOf={asOf} className={s.table} />
     </div>
   );
 }

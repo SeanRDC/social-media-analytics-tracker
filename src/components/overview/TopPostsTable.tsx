@@ -6,16 +6,27 @@ import { Icon } from "@/components/icons/Icon";
 import { PlatformPill } from "@/components/ui/PlatformPill";
 import { SortMenu } from "@/components/ui/SortMenu";
 import { useFlip } from "@/hooks/useFlip";
-import { SORT_LABELS, sortPosts } from "@/lib/data/sort";
+import { useRange } from "@/components/shell/RangeProvider";
+import { SORT_LABELS, postsInRange, sortPosts } from "@/lib/data/sort";
 import type { Post, PostSort } from "@/lib/data/types";
 import { formatCompact, formatDate, formatDuration, formatPercent } from "@/lib/format";
 import s from "./TopPostsTable.module.css";
 
 const OPTIONS = (Object.keys(SORT_LABELS) as PostSort[]).map((value) => ({ value, label: SORT_LABELS[value] }));
 
-export function TopPostsTable({ posts, className = "" }: { posts: Post[]; className?: string }) {
+interface Props {
+  posts: Post[];
+  /** Date the data is current as of; the table shows the top posts in the selected range up to it. */
+  asOf: string;
+  limit?: number;
+  className?: string;
+}
+
+export function TopPostsTable({ posts, asOf, limit = 5, className = "" }: Props) {
+  const { range } = useRange();
   const [sort, setSort] = useState<PostSort>("views");
-  const rows = useMemo(() => sortPosts(posts, sort), [posts, sort]);
+  // top N by views within the range, then ordered the way the person chose
+  const rows = useMemo(() => sortPosts(sortPosts(postsInRange(posts, range, asOf), "views").slice(0, limit), sort), [posts, range, asOf, limit, sort]);
   const { register, capture } = useFlip<HTMLTableRowElement>(sort);
 
   const choose = (next: PostSort) => {

@@ -19,12 +19,12 @@ const titles = () =>
 
 describe("TopPostsTable", () => {
   it("starts sorted by views", () => {
-    render(<TopPostsTable posts={POSTS} />);
+    render(<TopPostsTable posts={POSTS} asOf="2026-11-15" />);
     expect(titles()).toEqual(["Alpha", "Bravo", "Charlie"]);
   });
 
   it("re-sorts when another order is chosen and updates the button label", async () => {
-    render(<TopPostsTable posts={POSTS} />);
+    render(<TopPostsTable posts={POSTS} asOf="2026-11-15" />);
     await userEvent.click(screen.getByRole("button", { name: /most viewed/i }));
     await userEvent.click(screen.getByRole("menuitemradio", { name: "Most engaging" }));
     expect(titles()).toEqual(["Alpha", "Charlie", "Bravo"]);
@@ -35,8 +35,19 @@ describe("TopPostsTable", () => {
     expect(titles()).toEqual(["Charlie", "Alpha", "Bravo"]);
   });
 
+  it("only lists posts from the selected range", async () => {
+    const { RangeProvider } = await import("@/components/shell/RangeProvider");
+    const old = { ...POSTS[1], id: "4", title: "Delta", publishedAt: "2026-09-01", views: 999999 };
+    render(
+      <RangeProvider>
+        <TopPostsTable posts={[...POSTS, old]} asOf="2026-11-15" />
+      </RangeProvider>,
+    );
+    expect(titles()).not.toContain("Delta");
+  });
+
   it("closes the menu with Escape", async () => {
-    render(<TopPostsTable posts={POSTS} />);
+    render(<TopPostsTable posts={POSTS} asOf="2026-11-15" />);
     await userEvent.click(screen.getByRole("button", { name: /most viewed/i }));
     expect(screen.getByRole("menu")).toBeInTheDocument();
     await userEvent.keyboard("{Escape}");
