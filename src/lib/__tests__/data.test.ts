@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getAudience,
   getConnections,
-  getLiveViewers,
+  getDailyViews,
   getOverview,
   getPlatform,
   getPlatforms,
@@ -43,10 +43,15 @@ describe("sample data consistency", () => {
     }
   });
 
-  it("live viewers stop at the current hour today", async () => {
-    const live = await getLiveViewers();
-    expect(live.today).toHaveLength(live.nowIndex + 1);
-    expect(live.yesterday).toHaveLength(live.hours.length);
+  it("daily views add up to the 7-day views and match the week-over-week change", async () => {
+    const [daily, overview] = await Promise.all([getDailyViews(), getOverview()]);
+    expect(daily.days).toHaveLength(7);
+    expect(daily.thisWeek).toHaveLength(7);
+    expect(daily.lastWeek).toHaveLength(7);
+    const thisWeek = daily.thisWeek.reduce((s, v) => s + v, 0);
+    const lastWeek = daily.lastWeek.reduce((s, v) => s + v, 0);
+    expect(thisWeek).toBe(overview.metrics[7].views);
+    expect(Math.round((thisWeek / lastWeek - 1) * 100)).toBe(overview.metrics[7].viewsChange);
   });
 
   it("audience shares add up to 100", async () => {

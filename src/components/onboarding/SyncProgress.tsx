@@ -50,7 +50,7 @@ export function SyncProgress() {
                 </span>
                 <span className={s.pText}>
                   <b>{PLATFORM_NAMES[id]}</b>
-                  <small>{v >= 100 ? "90 days imported" : `Importing 90 days of history… ${Math.round(v)}%`}</small>
+                  <small>{v >= 100 ? "History imported" : `Importing recent history… ${Math.round(v)}%`}</small>
                 </span>
                 {v >= 100 && (
                   <span className={s.check} aria-hidden="true">

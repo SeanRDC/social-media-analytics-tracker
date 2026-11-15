@@ -10,7 +10,7 @@ export default function SyncPage() {
     <main className={`${s.card} glass rim reveal`}>
       <span className={s.step}>Step 3 of 3</span>
       <h1 className={s.h1}>Importing your history</h1>
-      <p className={s.sub}>We&apos;re bringing in the last 90 days from each account so your charts start full, not empty.</p>
+      <p className={s.sub}>We&apos;re bringing in as much recent history as each platform allows, so your charts don&apos;t start empty. From now on we save a snapshot every day.</p>
       {/* reads ?p= from the URL, which is only known per request */}
       <Suspense>
         <SyncProgress />

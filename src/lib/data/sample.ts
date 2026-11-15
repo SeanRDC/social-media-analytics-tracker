@@ -3,7 +3,7 @@
  * UI can be checked end to end. The backend phase replaces this module's role
  * behind `api.ts`.
  */
-import type { Audience, LiveViewers, Metrics, Platform, PlatformId, Post, Range } from "./types";
+import type { Audience, DailyViews, Metrics, Platform, PlatformId, Post, Range } from "./types";
 
 export const ACCOUNT_NAME = "Northbay Studio";
 export const TODAY = "2026-11-15";
@@ -62,12 +62,12 @@ export const TOTAL_TREND: number[] = Array.from({ length: 31 }, (_, i) =>
   connected.reduce((s, p) => s + p.trend[i], 0),
 );
 
-export const LIVE: LiveViewers = {
-  hours: ["6 a.m.", "8 a.m.", "10 a.m.", "12 p.m.", "2 p.m.", "4 p.m.", "6 p.m.", "8 p.m.", "10 p.m.", "12 a.m."],
-  shortHours: ["6a", "8a", "10a", "12p", "2p", "4p", "6p", "8p", "10p", "12a"],
-  today: [210, 380, 520, 460, 690, 820, 1310, 1240],
-  yesterday: [180, 300, 450, 520, 600, 760, 1050, 1120, 840, 520],
-  nowIndex: 7,
+/** Mon Nov 9 – Sun Nov 15 vs the week before. This week sums to the 7-day views (1.2M, +8%). */
+export const DAILY_VIEWS: DailyViews = {
+  days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  thisWeek: [148_000, 132_000, 171_000, 158_000, 166_000, 214_000, 211_000],
+  lastWeek: [139_000, 121_000, 158_000, 149_000, 151_000, 188_000, 205_000],
+  todayIndex: 6,
 };
 
 type PostSeed = Omit<Post, "likes" | "comments" | "shares">;
@@ -98,6 +98,7 @@ export const POSTS: Post[] = POST_SEEDS.map((p) => {
 });
 
 export const AUDIENCE: Audience = {
+  sources: ["youtube", "instagram"],
   ages: [
     { label: "13–17", share: 4 },
     { label: "18–24", share: 31 },

@@ -9,7 +9,7 @@ This repository holds the **front end**, built on realistic sample data. The bac
 "Graphite": dark, smoky frosted glass with ice-blue accents, based on the owner's inspiration image. The design spec and build plan are in [`docs/superpowers`](docs/superpowers).
 
 - Frosted glass panels with a lit edge, film grain and layered soft shadows
-- Motion everywhere it helps: panels rise in, numbers count up, chart lines draw themselves, a live dot pulses, highlights spring between tabs, rows glide when re-sorted, and a band of light sweeps across glass on hover
+- Motion everywhere it helps: panels rise in, numbers count up, chart lines draw themselves, a dot pulses on today, highlights spring between tabs, rows glide when re-sorted, and a band of light sweeps across glass on hover
 - Responsive from phones to wide desktops: a floating tab bar on phones, a slim icon rail from 640px up
 - Phone friendly: safe areas for notches and home indicators, 44px+ tap targets, 16px form inputs (no iOS zoom), bottom sheets, installable from the browser
 - Respects device settings: Reduce Motion stops the animation and Reduce Transparency makes the glass solid
@@ -22,7 +22,7 @@ This repository holds the **front end**, built on realistic sample data. The bac
 | `/sign-in` | Email, Google or Apple sign-in (simulated) |
 | `/onboarding/connect` | Connect each platform, including Instagram's Professional-account requirement |
 | `/onboarding/sync` | First import progress |
-| `/overview` | Hero stats, live viewers, weekly growth, top posts |
+| `/overview` | Hero stats, views per day (this week vs last), weekly growth, top posts |
 | `/platforms`, `/platforms/[id]` | Every platform, a compare ranking, and per-platform detail |
 | `/content` | Filterable post library; `?post=<id>` opens a post's detail sheet |
 | `/audience` | Age, countries and the best time to post |

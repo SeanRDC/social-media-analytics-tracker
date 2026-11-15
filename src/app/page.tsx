@@ -5,11 +5,11 @@ import { Icon, type IconName } from "@/components/icons/Icon";
 import s from "@/components/landing/Landing.module.css";
 import { GrowthCard } from "@/components/overview/GrowthCard";
 import { HeroCard } from "@/components/overview/HeroCard";
-import { LiveViewersCard } from "@/components/overview/LiveViewersCard";
+import { DailyViewsCard } from "@/components/overview/DailyViewsCard";
 import { RangeProvider } from "@/components/shell/RangeProvider";
 import { ArrowButton } from "@/components/ui/ArrowButton";
 import { APP_NAME } from "@/lib/brand";
-import { getConnections, getLiveViewers, getOverview, getPlatform } from "@/lib/data/api";
+import { getConnections, getDailyViews, getOverview, getPlatform } from "@/lib/data/api";
 
 export const metadata: Metadata = {
   title: { absolute: `${APP_NAME} · Every channel, one calm dashboard` },
@@ -17,12 +17,12 @@ export const metadata: Metadata = {
 
 const FEATURES: { icon: IconName; title: string; body: string }[] = [
   { icon: "grid", title: "Every platform together", body: "Followers, views and engagement from YouTube, TikTok, Instagram, Facebook, LinkedIn and X, side by side and in the same units." },
-  { icon: "sparkle", title: "See what's working", body: "Live viewers, your best posts and the hours your audience is online, explained in plain words instead of raw numbers." },
+  { icon: "sparkle", title: "See what's working", body: "Daily views against last week, your best posts and when your posts do best, explained in plain words instead of raw numbers." },
   { icon: "download", title: "Reports in a click", body: "Monthly, weekly and client-ready summaries as PDF or CSV, or emailed to you every Monday before the week starts." },
 ];
 
 export default async function Landing() {
-  const [overview, live, connections] = await Promise.all([getOverview(), getLiveViewers(), getConnections()]);
+  const [overview, views, connections] = await Promise.all([getOverview(), getDailyViews(), getConnections()]);
   const top = await getPlatform(overview.topPlatform);
 
   return (
@@ -73,7 +73,7 @@ export default async function Landing() {
             <div className={s.previewGrid}>
               <HeroCard accountName={overview.accountName} connectedCount={overview.connectedCount} metrics={overview.metrics} />
               <div className={s.previewSide}>
-                <LiveViewersCard live={live} />
+                <DailyViewsCard views={views} />
                 {top && <GrowthCard week={overview.metrics[7]} weekGrowth={overview.weekGrowth} top={top} />}
               </div>
             </div>

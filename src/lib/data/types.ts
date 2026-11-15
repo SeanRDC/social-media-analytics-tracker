@@ -51,12 +51,13 @@ export interface Overview {
   trendStart: string;
 }
 
-export interface LiveViewers {
-  hours: string[];
-  shortHours: string[];
-  today: number[];
-  yesterday: number[];
-  nowIndex: number;
+/** Views per day across all platforms, this week vs last week (Mon–Sun). */
+export interface DailyViews {
+  days: string[];
+  thisWeek: number[];
+  lastWeek: number[];
+  /** Index of today within the week. */
+  todayIndex: number;
 }
 
 export type PostKind = "video" | "short" | "reel" | "post";
@@ -81,6 +82,8 @@ export interface Post {
 export type PostSort = "views" | "engagement" | "date";
 
 export interface Audience {
+  /** Platforms whose demographics are included (not every platform shares them). */
+  sources: PlatformId[];
   ages: { label: string; share: number }[];
   countries: { name: string; share: number }[];
   slotLabels: string[];
