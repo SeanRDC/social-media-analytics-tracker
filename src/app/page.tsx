@@ -105,6 +105,11 @@ export default async function Landing() {
       <footer className={s.footer}>
         <span>{APP_NAME}</span>
         <span>Works on iPhone, Android and desktop. Add it to your home screen from the browser menu.</span>
+        <nav aria-label="Legal" style={{ display: "flex", gap: 14 }}>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/data-deletion">Data deletion</Link>
+        </nav>
       </footer>
     </div>
   );
