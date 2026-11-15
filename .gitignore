@@ -42,3 +42,6 @@ next-env.d.ts
 
 # private conversation log (never pushed)
 /conversation-log/
+
+# local embedded database
+/.data/
