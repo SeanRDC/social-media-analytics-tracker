@@ -1,0 +1,33 @@
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.side {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 12px;
+  min-width: 0;
+  align-content: start;
+}
+
+.table {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1023px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .side {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+}
+
+@media (max-width: 639px) {
+  .side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

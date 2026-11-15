@@ -1,0 +1,63 @@
+.btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 6px 6px 6px 17px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 13px;
+  background: var(--btn-bg);
+  color: var(--btn-tx);
+  transition: transform 0.14s var(--out);
+}
+.btn:active {
+  transform: scale(0.96);
+}
+.arr {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--btn-tx);
+  color: var(--btn-bg);
+  transition: transform 0.35s var(--spring);
+}
+.btn:hover .arr,
+.btn:focus-visible .arr {
+  transform: translate(2px, -1px) rotate(45deg) scale(1.06);
+}
+
+.glass {
+  background: var(--card);
+  color: var(--tx);
+  border: 1px solid var(--cardb);
+}
+.glass .arr {
+  background: var(--tx);
+  color: var(--btn-tx);
+}
+
+.round {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #0e1013;
+  color: #fff;
+  flex: none;
+  transition: transform 0.14s var(--out);
+}
+.round svg {
+  transition: transform 0.35s var(--spring);
+}
+.round:hover svg,
+.round:focus-visible svg {
+  transform: rotate(45deg);
+}
+.round:active {
+  transform: scale(0.92);
+}
