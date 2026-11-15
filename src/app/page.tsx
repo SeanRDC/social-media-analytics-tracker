@@ -1,6 +1,111 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import Link from "next/link";
+import type { CSSProperties } from "react";
+import { Icon, type IconName } from "@/components/icons/Icon";
+import s from "@/components/landing/Landing.module.css";
+import { GrowthCard } from "@/components/overview/GrowthCard";
+import { HeroCard } from "@/components/overview/HeroCard";
+import { LiveViewersCard } from "@/components/overview/LiveViewersCard";
+import { RangeProvider } from "@/components/shell/RangeProvider";
+import { ArrowButton } from "@/components/ui/ArrowButton";
+import { APP_NAME } from "@/lib/brand";
+import { getConnections, getLiveViewers, getOverview, getPlatform } from "@/lib/data/api";
 
-// Temporary: the landing page arrives in a later task.
-export default function Home() {
-  redirect("/overview");
+export const metadata: Metadata = {
+  title: { absolute: `${APP_NAME} · Every channel, one calm dashboard` },
+};
+
+const FEATURES: { icon: IconName; title: string; body: string }[] = [
+  { icon: "grid", title: "Every platform together", body: "Followers, views and engagement from YouTube, TikTok, Instagram, Facebook, LinkedIn and X, side by side and in the same units." },
+  { icon: "sparkle", title: "See what's working", body: "Live viewers, your best posts and the hours your audience is online, explained in plain words instead of raw numbers." },
+  { icon: "download", title: "Reports in a click", body: "Monthly, weekly and client-ready summaries as PDF or CSV, or emailed to you every Monday before the week starts." },
+];
+
+export default async function Landing() {
+  const [overview, live, connections] = await Promise.all([getOverview(), getLiveViewers(), getConnections()]);
+  const top = await getPlatform(overview.topPlatform);
+
+  return (
+    <div className={s.page}>
+      <header className={`${s.nav} glass rim`}>
+        <Link href="/" className={s.brand}>
+          <span className={s.logo}>
+            <Icon name="logo" strokeWidth={2} />
+          </span>
+          {APP_NAME}
+        </Link>
+        <nav className={s.navLinks} aria-label="Site">
+          <Link href="/overview">Live demo</Link>
+          <Link href="/sign-in">Sign in</Link>
+        </nav>
+        <Link href="/sign-in" className={s.navCta}>
+          Start free
+        </Link>
+      </header>
+
+      <main>
+        <section className={s.hero} aria-labelledby="landing-h">
+          <span className={`${s.eyebrow} reveal`}>Social analytics for creators and studios</span>
+          <h1 id="landing-h" className={`${s.h1} reveal`} style={{ "--i": 1 } as CSSProperties}>
+            Every channel. One calm dashboard.
+          </h1>
+          <p className={`${s.lead} reveal`} style={{ "--i": 2 } as CSSProperties}>
+            Connect your accounts once and see how your audience is growing across every platform, which posts are working, and when to post next.
+          </p>
+          <div className={`${s.ctas} reveal`} style={{ "--i": 3 } as CSSProperties}>
+            <ArrowButton href="/sign-in">Start free</ArrowButton>
+            <ArrowButton href="/overview" tone="glass">
+              Open the live demo
+            </ArrowButton>
+          </div>
+          <ul className={`${s.platforms} reveal`} style={{ "--i": 4 } as CSSProperties} aria-label="Supported platforms">
+            {connections.map((c) => (
+              <li key={c.id}>
+                <span className="dot" style={{ background: `var(--p-${c.id})` }} />
+                {c.name}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className={`${s.preview} rim reveal`} style={{ "--i": 4 } as CSSProperties} aria-label="Dashboard preview with sample data">
+          <RangeProvider>
+            <div className={s.previewGrid}>
+              <HeroCard accountName={overview.accountName} connectedCount={overview.connectedCount} metrics={overview.metrics} />
+              <div className={s.previewSide}>
+                <LiveViewersCard live={live} />
+                {top && <GrowthCard week={overview.metrics[7]} weekGrowth={overview.weekGrowth} top={top} />}
+              </div>
+            </div>
+          </RangeProvider>
+          <p className={s.sample}>Sample data from a demo studio account</p>
+        </section>
+
+        <section className={s.features} aria-label="Features">
+          {FEATURES.map((f, i) => (
+            <article key={f.title} className={`${s.feature} glass rim sweep reveal`} style={{ "--i": i + 5 } as CSSProperties}>
+              <span className={s.fIcon} aria-hidden="true">
+                <Icon name={f.icon} size={18} />
+              </span>
+              <h2 className={s.fTitle}>{f.title}</h2>
+              <p className={s.fBody}>{f.body}</p>
+            </article>
+          ))}
+        </section>
+
+        <section className={`${s.final} glass rim`} aria-labelledby="final-h">
+          <h2 id="final-h" className={s.finalH}>
+            See your whole audience in about two minutes.
+          </h2>
+          <p className={s.lead}>Read-only access. We never post for you, and you can disconnect at any time.</p>
+          <ArrowButton href="/sign-in">Start free</ArrowButton>
+        </section>
+      </main>
+
+      <footer className={s.footer}>
+        <span>{APP_NAME}</span>
+        <span>Works on iPhone, Android and desktop. Add it to your home screen from the browser menu.</span>
+      </footer>
+    </div>
+  );
 }
