@@ -73,10 +73,8 @@ describe("syncConnection", () => {
     expect(await count()).toEqual(before);
   });
 
-  it("skips platforms without a fetcher yet", async () => {
-    vi.stubEnv("TIKTOK_CLIENT_KEY", "k");
-    vi.stubEnv("TIKTOK_CLIENT_SECRET", "s");
-    const id = await saveConnection(db, "u1", "tiktok", tokens, { externalId: "open-id", name: "@me" });
+  it("skips platforms without a fetcher", async () => {
+    const id = await saveConnection(db, "u1", "x", tokens, { externalId: "x-id", name: "@me" });
     expect(await syncConnection(db, id, NOW)).toEqual({ status: "unsupported" });
   });
 

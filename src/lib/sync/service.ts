@@ -1,7 +1,7 @@
 /**
  * Imports platform numbers into the database. Writes are upserts keyed by
  * connection + date (and post + date), so syncing the same days twice changes
- * nothing. Platforms without a fetcher yet (phases 4 and 5) are skipped.
+ * nothing. Platforms without a fetcher (X) are skipped.
  */
 import { and, desc, eq, lt, sql } from "drizzle-orm";
 import type { Db } from "@/db";
@@ -14,6 +14,8 @@ import type { PlatformId } from "@/lib/data/types";
 import { simulatedSnapshot } from "./simulated";
 import { fetchFacebook } from "./facebook";
 import { fetchInstagram } from "./instagram";
+import { fetchLinkedIn } from "./linkedin";
+import { fetchTikTok } from "./tiktok";
 import type { DailyRow, FetchContext, PlatformSnapshot, SyncWindow } from "./types";
 import { fetchYouTube } from "./youtube";
 
@@ -23,6 +25,8 @@ const FETCHERS: Partial<Record<PlatformId, Fetcher>> = {
   youtube: fetchYouTube,
   facebook: fetchFacebook,
   instagram: fetchInstagram,
+  tiktok: fetchTikTok,
+  linkedin: fetchLinkedIn,
 };
 
 /** First import: 90 days for the longest range plus 90 before it for change percentages. */

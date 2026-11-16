@@ -35,6 +35,16 @@ export async function postForm(url: string, form: Record<string, string>, what: 
   return parse(res, what);
 }
 
+export async function postJson(url: string, body: unknown, what: string, headers: Record<string, string> = {}): Promise<Json> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...headers },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  return parse(res, what);
+}
+
 export async function getJson(url: string, what: string, headers: Record<string, string> = {}): Promise<Json> {
   const res = await fetch(url, { headers: { Accept: "application/json", ...headers }, cache: "no-store" });
   return parse(res, what);
