@@ -101,6 +101,9 @@ export const connection = pgTable(
     refreshTokenEnc: text("refresh_token_enc"),
     tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
     lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+    /** Why the last sync attempt failed (cleared on success); shown in Settings. */
+    lastSyncError: text("last_sync_error"),
+    lastSyncErrorAt: timestamp("last_sync_error_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -235,3 +238,36 @@ export const pushSubscription = pgTable(
   },
   (t) => [index("push_subscription_user_id_idx").on(t.userId)],
 );
+
+/* ---------------- operations ---------------- */
+
+/** Fixed-window counters. Used by Better Auth (database storage) and the app's own limits (keys "app:…"). */
+export const rateLimit = pgTable("rate_limit", {
+  id: uuid(),
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  /** Milliseconds since epoch. */
+  lastRequest: bigint("last_request", { mode: "number" }).notNull(),
+});
+
+/** One row per background job run, for monitoring and the health check. */
+export const jobRun = pgTable(
+  "job_run",
+  {
+    id: uuid(),
+    name: text("name").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    ok: boolean("ok"),
+    /** JSON summary of what the run did (counts only, no personal data). */
+    summary: text("summary"),
+  },
+  (t) => [index("job_run_name_started_idx").on(t.name, t.startedAt)],
+);
+
+/** A lease so two runs of the same job never overlap. */
+export const jobLease = pgTable("job_lease", {
+  name: text("name").primaryKey(),
+  holder: text("holder").notNull(),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }).notNull(),
+});

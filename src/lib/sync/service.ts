@@ -3,14 +3,15 @@
  * connection + date (and post + date), so syncing the same days twice changes
  * nothing. Platforms without a fetcher (X) are skipped.
  */
-import { and, desc, eq, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, lt, sql } from "drizzle-orm";
 import type { Db } from "@/db";
 import { audienceStat, connection, dailyStat, post, postStat } from "@/db/schema";
 import { getAccessToken } from "@/lib/connect/service";
-import { ReauthRequired } from "@/lib/connect/providers";
+import { ProviderError, RateLimited, ReauthRequired } from "@/lib/connect/providers";
 import { SIMULATED_PREFIX } from "@/lib/connect/providers/simulated";
 import { addDays, isoDate } from "@/lib/dates";
 import type { PlatformId } from "@/lib/data/types";
+import { logEvent } from "@/lib/log";
 import { simulatedSnapshot } from "./simulated";
 import { fetchFacebook } from "./facebook";
 import { fetchInstagram } from "./instagram";
@@ -34,7 +35,10 @@ export const FIRST_IMPORT_DAYS = 180;
 /** Later syncs re-read a few days, because platforms finalise recent numbers late. */
 const OVERLAP_DAYS = 3;
 
-export type SyncResult = { status: "synced"; days: number; posts: number } | { status: "skipped" | "unsupported" | "expired" };
+export type SyncResult = { status: "synced"; days: number; posts: number } | { status: "skipped" | "unsupported" | "expired" | "deferred" };
+
+/** A short, safe reason for Settings: our own error messages carry no tokens; anything else is generic. */
+const reasonOf = (e: unknown) => (e instanceof ProviderError ? e.message : "Unexpected error while importing").slice(0, 200);
 
 export function syncWindow(lastSyncedAt: Date | null, now: Date): SyncWindow {
   const end = isoDate(now);
@@ -48,23 +52,26 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
   if (!row || row.status !== "connected") return { status: "skipped" };
   const window = syncWindow(row.lastSyncedAt, now);
 
+  const fetcher = FETCHERS[row.platform];
+  const simulated = row.externalId.startsWith(SIMULATED_PREFIX);
+  if (!simulated && !fetcher) return { status: "unsupported" };
+
   let snapshot: PlatformSnapshot;
-  if (row.externalId.startsWith(SIMULATED_PREFIX)) {
-    snapshot = simulatedSnapshot(row.platform, window);
-  } else {
-    const fetcher = FETCHERS[row.platform];
-    if (!fetcher) return { status: "unsupported" };
-    try {
-      snapshot = await fetcher(await getAccessToken(db, row.id), window, { externalId: row.externalId });
-    } catch (e) {
-      if (!(e instanceof ReauthRequired)) throw e;
+  try {
+    snapshot = simulated ? simulatedSnapshot(row.platform, window) : await fetcher!(await getAccessToken(db, row.id), window, { externalId: row.externalId });
+    await store(db, row.id, window.end, snapshot);
+  } catch (e) {
+    if (e instanceof ReauthRequired) {
       await db.update(connection).set({ status: "expired" }).where(eq(connection.id, row.id));
       return { status: "expired" };
     }
+    await db.update(connection).set({ lastSyncError: e instanceof RateLimited ? "The platform asked us to slow down; we'll try again later." : reasonOf(e), lastSyncErrorAt: now }).where(eq(connection.id, row.id));
+    // a quota or rate limit is not a fault: the next run picks it up
+    if (e instanceof RateLimited) return { status: "deferred" };
+    throw e;
   }
 
-  await store(db, row.id, window.end, snapshot);
-  await db.update(connection).set({ lastSyncedAt: now }).where(eq(connection.id, row.id));
+  await db.update(connection).set({ lastSyncedAt: now, lastSyncError: null, lastSyncErrorAt: null }).where(eq(connection.id, row.id));
   return { status: "synced", days: snapshot.daily.length, posts: snapshot.posts.length };
 }
 
@@ -171,20 +178,51 @@ export async function derivedToday(db: Db, connectionId: string, today: string, 
   ];
 }
 
-/** Daily job: sync every connected account; one failure never stops the rest. */
-export async function syncAll(db: Db, now = new Date()) {
-  const rows = await db.select({ id: connection.id, platform: connection.platform }).from(connection).where(eq(connection.status, "connected"));
-  const result = { synced: 0, expired: 0, skipped: 0, failed: 0 };
-  for (const r of rows) {
-    try {
-      const out = await syncConnection(db, r.id, now);
-      if (out.status === "synced") result.synced++;
-      else if (out.status === "expired") result.expired++;
-      else result.skipped++;
-    } catch (e) {
-      result.failed++;
-      console.error(`[sync] ${r.platform} ${r.id} failed:`, e instanceof Error ? e.message : e);
+export interface SyncAllOptions {
+  /** Stop starting new syncs after this long; the next run continues (default 4 minutes). */
+  budgetMs?: number;
+  /** Accounts synced at the same time (default 4). */
+  concurrency?: number;
+}
+
+/**
+ * Daily job: sync every connected account not yet synced today, stalest first,
+ * a few at a time, within a time budget. One failure never stops the rest, and
+ * running it again the same day only picks up what is left.
+ */
+export async function syncAll(db: Db, now = new Date(), { budgetMs = 240_000, concurrency = 4 }: SyncAllOptions = {}) {
+  const started = Date.now();
+  const today = isoDate(now);
+  const rows = (
+    await db
+      .select({ id: connection.id, platform: connection.platform, lastSyncedAt: connection.lastSyncedAt })
+      .from(connection)
+      .where(eq(connection.status, "connected"))
+      .orderBy(sql`${connection.lastSyncedAt} asc nulls first`, asc(connection.id))
+  ).filter((r) => !r.lastSyncedAt || isoDate(r.lastSyncedAt) !== today);
+
+  const result = { synced: 0, expired: 0, deferred: 0, skipped: 0, failed: 0, remaining: 0 };
+  let next = 0;
+  const worker = async () => {
+    while (next < rows.length) {
+      if (Date.now() - started > budgetMs) {
+        result.remaining = rows.length - next;
+        next = rows.length;
+        return;
+      }
+      const r = rows[next++];
+      try {
+        const out = await syncConnection(db, r.id, now);
+        if (out.status === "synced") result.synced++;
+        else if (out.status === "expired") result.expired++;
+        else if (out.status === "deferred") result.deferred++;
+        else result.skipped++;
+      } catch (e) {
+        result.failed++;
+        logEvent("error", "sync_failed", { platform: r.platform, connectionId: r.id, message: reasonOf(e) });
+      }
     }
-  }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, concurrency) }, worker));
   return result;
 }

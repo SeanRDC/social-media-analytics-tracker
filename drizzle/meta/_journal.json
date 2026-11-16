@@ -15,6 +15,13 @@
       "when": 1794805677326,
       "tag": "0001_phase6_reports_alerts_push",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794806879666,
+      "tag": "0002_phase7_hardening",
+      "breakpoints": true
     }
   ]
 }

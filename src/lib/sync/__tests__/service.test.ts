@@ -98,6 +98,37 @@ describe("syncAll", () => {
     await db.insert(schema.user).values({ id: "u2", name: "B", email: "b@example.com" });
     await saveConnection(db, "u2", "youtube", tokens, { externalId: "UC2", name: "Broken" });
     await simulated("tiktok");
-    expect(await syncAll(db, NOW)).toEqual({ synced: 1, expired: 0, skipped: 0, failed: 1 });
+    expect(await syncAll(db, NOW)).toEqual({ synced: 1, expired: 0, deferred: 0, skipped: 0, failed: 1, remaining: 0 });
+  });
+
+  it("records why an account failed and clears it after a good sync", async () => {
+    vi.stubEnv("GOOGLE_CLIENT_ID", "id");
+    vi.stubEnv("GOOGLE_CLIENT_SECRET", "secret");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 500 })));
+    const id = await saveConnection(db, "u1", "youtube", tokens, { externalId: "UC1", name: "N" });
+    await syncAll(db, NOW);
+    const [failed] = await db.select().from(schema.connection).where(eq(schema.connection.id, id));
+    expect(failed.lastSyncError).toMatch(/YouTube \/channels failed \(500\)/);
+    expect(failed.status).toBe("connected");
+  });
+
+  it("defers a rate-limited account without marking it broken", async () => {
+    vi.stubEnv("GOOGLE_CLIENT_ID", "id");
+    vi.stubEnv("GOOGLE_CLIENT_SECRET", "secret");
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ error: { code: 403, errors: [{ reason: "quotaExceeded" }] } }, { status: 403 })));
+    const id = await saveConnection(db, "u1", "youtube", tokens, { externalId: "UC1", name: "N" });
+    expect(await syncAll(db, NOW)).toMatchObject({ deferred: 1, failed: 0 });
+    const [c] = await db.select().from(schema.connection).where(eq(schema.connection.id, id));
+    expect(c).toMatchObject({ status: "connected", lastSyncError: expect.stringContaining("slow down") });
+  });
+
+  it("only syncs accounts not yet synced today, stalest first, within the budget", async () => {
+    const a = await simulated("youtube");
+    const b = await simulated("tiktok");
+    await syncConnection(db, a, NOW);
+    expect(await syncAll(db, NOW)).toMatchObject({ synced: 1, remaining: 0 });
+    await db.update(schema.connection).set({ lastSyncedAt: null }).where(eq(schema.connection.id, b));
+    expect(await syncAll(db, NOW, { budgetMs: -1 })).toMatchObject({ synced: 0, remaining: 1 });
   });
 });
