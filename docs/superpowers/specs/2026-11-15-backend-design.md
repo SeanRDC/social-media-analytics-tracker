@@ -59,7 +59,7 @@ Jobs (phase 2+): first import, daily snapshot, token refresh, alerts, weekly ema
 | 4 | Facebook + Instagram | done (2026-11-16) |
 | 5 | TikTok, LinkedIn | done (2026-11-16) |
 | 6 | Exports, weekly email, alerts, push | done (2026-11-16) |
-| 7 | Hardening | later |
+| 7 | Hardening | done (2026-11-16) |
 
 ## Non-goals (this round)
 

@@ -38,7 +38,7 @@ Connect YouTube, Facebook, TikTok, LinkedIn and Instagram, then see followers, v
 ---
 
 > [!WARNING]
-> **This project is under active development.** The front end is complete, and the backend is being built in phases. Sign-in, platform connections, imports for all five platforms, exports, the weekly email and alerts are built. Until a platform has been imported the dashboard shows clearly labelled **sample data**, and real platform numbers need each platform's app approval (see the setup checklist). Expect breaking changes.
+> **This project is under active development.** The front end is complete, and the backend is being built in phases. Every phase is built, including hardening; what remains is launch setup (accounts, app approvals, legal review), listed in [`docs/launch-checklist.md`](docs/launch-checklist.md). Until a platform has been imported the dashboard shows clearly labelled **sample data**, and real platform numbers need each platform's app approval (see the setup checklist). Expect breaking changes.
 
 ## ✨ Features
 
@@ -50,6 +50,7 @@ Connect YouTube, Facebook, TikTok, LinkedIn and Instagram, then see followers, v
 - 🔔 **Alerts:** posts taking off, follower milestones, engagement drops and accounts needing reconnection, by email and web push
 - 🔐 **Real sign-in:** email magic links, plus Google and Apple when configured, with protected routes
 - 📱 **Installable and phone friendly:** works from phones to wide desktops
+- 🛡️ **Built to run unattended:** retries and quota handling, a self-healing nightly job, rate limits, a health check and one-click account deletion
 
 ## 🎨 Design
 
@@ -77,7 +78,8 @@ Connect YouTube, Facebook, TikTok, LinkedIn and Instagram, then see followers, v
 | `/audience` | Age, countries and the best time to post |
 | `/reports` | Export presets (CSV download, PDF via a print-ready page) and the weekly email schedule |
 | `/reports/print/[preset]` | Print-ready report; the print dialog saves it as a PDF |
-| `/settings` | Profile and sign out, connected accounts (connect, reconnect, disconnect), alerts and push notifications, appearance |
+| `/settings` | Profile and sign out, connected accounts (connect, reconnect, disconnect, last update), alerts and push notifications, appearance, delete account |
+| `/api/health` | Health check for uptime monitors (database, last nightly run) |
 | `/privacy`, `/terms`, `/data-deletion` | Legal pages required by platform reviews *(drafts)* |
 
 Dashboard pages require sign-in.
@@ -159,6 +161,11 @@ docs/               design specs, plans, platform API notes, owner setup checkli
 | Exports | `/api/export/[preset]` (CSV) and `/reports/print/[preset]` (PDF via print), both from `src/lib/reports/build.ts` |
 | Weekly email and alerts | `src/lib/reports/schedule.ts`, `src/lib/alerts/`; sent by the daily job after the sync |
 | Push notifications | `src/lib/push.ts`, `public/sw.js`; needs `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` |
+| Retries and quotas | `src/lib/connect/providers/oauth.ts` (backoff on network errors, 429 and 5xx; quotas become `RateLimited`) |
+| Nightly job safety | `src/lib/jobs.ts` (lease, `job_run` log, failure webhook); `syncAll` skips accounts already synced today |
+| Rate limits | `src/lib/rate-limit.ts` and Better Auth's database rate limit (`rate_limit` table) |
+| Monitoring | `/api/health`, `src/instrumentation.ts` (start-up settings check, `onRequestError`), JSON logs from `src/lib/log.ts` |
+| Account deletion | `src/lib/account.ts`, Settings → Delete account |
 | Environment variables | `.env.example` |
 | Owner setup (Neon, Vercel, Google, Meta, TikTok, LinkedIn) | [`docs/platforms/setup-checklist.md`](docs/platforms/setup-checklist.md) |
 | What each platform API provides | [`docs/platforms/api-notes.md`](docs/platforms/api-notes.md) |
@@ -186,9 +193,10 @@ The full plan is in [the backend design](docs/superpowers/specs/2026-11-15-backe
 - [x] **Phase 4:** Facebook Pages and Instagram
 - [x] **Phase 5:** TikTok and LinkedIn Pages
 - [x] **Phase 6:** CSV and PDF exports, the weekly email, alerts by email and web push
-- [ ] **Phase 7:** hardening (rate limits and quotas, retries, monitoring, scaling the nightly job, legal review)
+- [x] **Phase 7:** hardening (retries and quotas, nightly job lease and run log, rate limits, health check and logs, security headers, account deletion)
+- [ ] **Launch:** accounts, platform approvals and legal review ([`docs/launch-checklist.md`](docs/launch-checklist.md))
 
-Still to come: phase 7, and checking each platform's fetcher against a real approved account (field names are noted in `docs/platforms/api-notes.md`).
+Still to come: checking each platform's fetcher against a real approved account (field names to verify are noted in `docs/platforms/api-notes.md`), then the launch checklist.
 
 ## 🧰 Tech stack
 

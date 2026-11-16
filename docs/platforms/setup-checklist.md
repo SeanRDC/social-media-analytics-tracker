@@ -48,6 +48,10 @@ Replace `https://YOUR-DOMAIN` with the Vercel URL (or your own domain) once it e
 - [ ] LinkedIn developer portal → create an app tied to a LinkedIn Page you admin → request **Community Management API** access (Development tier first). A rejected app can't re-apply, so fill the form carefully.
 - [ ] Auth → Authorized redirect URLs: `https://YOUR-DOMAIN/api/connect/linkedin/callback`. Set `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET`.
 
+## 8. Monitoring (before launch)
+
+- [ ] Point an uptime monitor at `https://YOUR-DOMAIN/api/health`, and optionally set `ALERT_WEBHOOK_URL`. Details in `docs/launch-checklist.md`.
+
 ## Before any review: replace placeholders
 
 - [ ] Legal pages use `LEGAL_CONTACT_EMAIL` and the app name from `src/lib/brand.ts`. Have them reviewed for your jurisdiction before launch; they are a starting draft, not legal advice.
