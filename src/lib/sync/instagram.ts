@@ -4,7 +4,7 @@
  * daily rows are derived by the sync from the change since the last sync.
  * Demographics need 100+ followers and are optional.
  */
-import { ProviderError } from "@/lib/connect/providers";
+import { ProviderError, RateLimited } from "@/lib/connect/providers";
 import { getJson, withQuery } from "@/lib/connect/providers/oauth";
 import type { PostKind } from "@/lib/data/types";
 import { ageLabel, sharesOf, titleFrom } from "./daily";
@@ -58,7 +58,7 @@ async function fetchMedia(get: (path: string, params: Record<string, string>) =>
   try {
     raw = await list(`${base},insights.metric(views,shares)`);
   } catch (e) {
-    if (!(e instanceof ProviderError)) throw e;
+    if (!(e instanceof ProviderError) || e instanceof RateLimited) throw e;
     raw = await list(base);
   }
   const insight = (m: Media, name: string) => {
@@ -91,7 +91,7 @@ async function fetchDemographics(get: (path: string, params: Record<string, stri
       return results.map((r) => [String(r.dimension_values?.[0] ?? ""), Number(r.value ?? 0)]);
     } catch (e) {
       // under 100 followers, or the permission was declined
-      if (e instanceof ProviderError) return null;
+      if (e instanceof ProviderError && !(e instanceof RateLimited)) return null;
       throw e;
     }
   };

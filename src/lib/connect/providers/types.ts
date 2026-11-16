@@ -55,3 +55,11 @@ export class ProviderError extends Error {
     this.name = "ProviderError";
   }
 }
+
+/** The platform's quota or rate limit was hit: try again later; the connection itself is fine. */
+export class RateLimited extends ProviderError {
+  constructor(message: string, status: number, code?: string) {
+    super(message, status, code);
+    this.name = "RateLimited";
+  }
+}

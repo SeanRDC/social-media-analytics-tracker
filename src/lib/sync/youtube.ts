@@ -5,7 +5,7 @@
  * small channels get none, and a failure there must not lose the rest.
  */
 import { isoDate } from "@/lib/dates";
-import { ProviderError } from "@/lib/connect/providers";
+import { ProviderError, RateLimited } from "@/lib/connect/providers";
 import { getJson, withQuery } from "@/lib/connect/providers/oauth";
 import type { AudienceRow, DailyRow, PlatformSnapshot, PostRow, SyncWindow } from "./types";
 
@@ -51,7 +51,7 @@ export async function fetchYouTube(accessToken: string, window: SyncWindow): Pro
     try {
       return await report(params);
     } catch (e) {
-      if (e instanceof ProviderError) return null;
+      if (e instanceof ProviderError && !(e instanceof RateLimited)) return null;
       throw e;
     }
   };

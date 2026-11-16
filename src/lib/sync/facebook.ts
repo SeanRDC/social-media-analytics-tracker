@@ -7,7 +7,7 @@
  * Meta removed Page fan demographics, so there is no audience breakdown.
  */
 import { graphVersion } from "@/lib/connect/providers/facebook";
-import { ProviderError } from "@/lib/connect/providers";
+import { ProviderError, RateLimited } from "@/lib/connect/providers";
 import { getJson, withQuery } from "@/lib/connect/providers/oauth";
 import { addDays, dateRange, isoDate } from "@/lib/dates";
 import { buildDaily, titleFrom, type DayActivity } from "./daily";
@@ -41,7 +41,7 @@ export async function fetchFacebook(accessToken: string, window: SyncWindow, ctx
         // `until` is exclusive
         body = await graph(`/${page}/insights`, { metric, period: "day", since: chunk.start, until: addDays(chunk.end, 1) });
       } catch (e) {
-        if (e instanceof ProviderError) continue;
+        if (e instanceof ProviderError && !(e instanceof RateLimited)) continue;
         throw e;
       }
       for (const series of (body.data as Insight[] | undefined) ?? []) {
@@ -103,7 +103,7 @@ async function fetchPosts(graph: (path: string, params?: Record<string, string>)
     raw = await list(`${base},insights.metric(post_media_view)`);
   } catch (e) {
     // per-post views need read_insights; without it, keep the counts we can read
-    if (!(e instanceof ProviderError)) throw e;
+    if (!(e instanceof ProviderError) || e instanceof RateLimited) throw e;
     raw = await list(base);
   }
   return raw.map((p) => ({

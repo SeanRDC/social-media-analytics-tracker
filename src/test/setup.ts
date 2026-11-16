@@ -4,6 +4,9 @@ import { afterEach } from "vitest";
 
 afterEach(() => cleanup());
 
+// platform retries back off instantly in tests
+process.env.PLATFORM_RETRY_BASE_MS = "0";
+
 // jsdom lacks ResizeObserver; components only use it to re-measure.
 class ResizeObserverStub {
   observe() {}

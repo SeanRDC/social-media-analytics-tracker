@@ -8,7 +8,7 @@
  * only the values inside (URNs) are URL-encoded.
  */
 import { linkedinVersion } from "@/lib/connect/providers/linkedin";
-import { ProviderError } from "@/lib/connect/providers";
+import { ProviderError, RateLimited } from "@/lib/connect/providers";
 import { getJson } from "@/lib/connect/providers/oauth";
 import { addDays, isoDate, parseIso } from "@/lib/dates";
 import { buildDaily, titleFrom, type DayActivity } from "./daily";
@@ -28,7 +28,7 @@ export async function fetchLinkedIn(accessToken: string, window: SyncWindow, ctx
     try {
       return await get(pathAndQuery, what);
     } catch (e) {
-      if (e instanceof ProviderError) return null;
+      if (e instanceof ProviderError && !(e instanceof RateLimited)) return null;
       throw e;
     }
   };
