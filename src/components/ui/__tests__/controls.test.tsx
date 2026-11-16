@@ -24,16 +24,27 @@ describe("ExportButton", () => {
 
   it("moves from idle to preparing to done, then resets", () => {
     vi.useFakeTimers();
-    render(<ExportButton format="PDF" report="Monthly performance" />);
-    const btn = screen.getByRole("button", { name: "Export Monthly performance as PDF" });
+    render(<ExportButton format="PDF" report="Monthly performance" href="/reports/print/monthly" />);
+    const btn = screen.getByRole("link", { name: "Export Monthly performance as PDF" });
+    expect(btn).toHaveAttribute("href", "/reports/print/monthly");
+    expect(btn).toHaveAttribute("target", "_blank");
     fireEvent.click(btn);
     expect(btn).toHaveAttribute("aria-busy", "true");
-    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute("aria-disabled", "true");
     act(() => vi.advanceTimersByTime(1300));
     expect(btn).toHaveTextContent("Ready");
     expect(screen.getByRole("status")).toHaveTextContent("Monthly performance PDF is ready");
     act(() => vi.advanceTimersByTime(2600));
     expect(btn).toHaveTextContent("PDF");
-    expect(btn).not.toBeDisabled();
+    expect(btn).toHaveAttribute("aria-disabled", "false");
+  });
+});
+
+describe("ExportButton (CSV)", () => {
+  it("downloads in place", () => {
+    render(<ExportButton format="CSV" report="Weekly snapshot" href="/api/export/weekly" />);
+    const link = screen.getByRole("link", { name: "Export Weekly snapshot as CSV" });
+    expect(link).toHaveAttribute("download");
+    expect(link).toHaveAttribute("href", "/api/export/weekly");
   });
 });

@@ -9,6 +9,8 @@ import { getDb } from "@/db";
 import { requireUser } from "@/lib/dal";
 import { asOfDate, computeAudience, computeDailyViews, computeOverview, computePlatforms, computePosts } from "./compute";
 import { loadDataset, type DataSource } from "./live";
+import type { ReportData } from "@/lib/reports/build";
+import { reportDataFrom } from "@/lib/reports/data";
 import * as sample from "./sample-api";
 import { sortPosts } from "./sort";
 import type { Audience, DailyViews, Overview, Platform, PlatformId, Post, PostKind, PostSort } from "./types";
@@ -66,4 +68,19 @@ export async function getPosts(q: PostQuery = {}): Promise<Post[]> {
 export async function getAudience(): Promise<Audience> {
   const d = await imported();
   return d ? computeAudience(d.dataset, d.asOf) : sample.getAudience();
+}
+
+/** Everything a report needs, for the signed-in user. Loads once (also outside React rendering, e.g. route handlers). */
+export async function getReportData(): Promise<ReportData> {
+  const d = await imported();
+  if (d) return reportDataFrom(d.dataset, d.asOf);
+  const [asOf, overview, daily, platforms, posts, audience] = await Promise.all([
+    sample.getAsOf(),
+    sample.getOverview(),
+    sample.getDailyViews(),
+    sample.getPlatforms(),
+    sample.getPosts(),
+    sample.getAudience(),
+  ]);
+  return { asOf, sample: true, overview, daily, platforms, posts, audience };
 }

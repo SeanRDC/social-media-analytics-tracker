@@ -1,0 +1,138 @@
+/* Print-ready report: always light, sized for A4 and US Letter. */
+.page {
+  min-height: 100dvh;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+  background: #fff;
+  color: #16181c;
+  font-size: 13px;
+  line-height: 1.45;
+}
+:global(body):has(.page) {
+  background: #e9ecf1;
+}
+.loading {
+  padding: 48px 24px;
+  text-align: center;
+  color: #5b6472;
+  background: #fff;
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.back {
+  color: #2c5aa0;
+  font-size: 13px;
+}
+.print {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  background: #16181c;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+}
+.head {
+  padding-bottom: 16px;
+  border-bottom: 2px solid #16181c;
+}
+.brand {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5b6472;
+}
+.head h1 {
+  margin: 6px 0 4px;
+  font-size: 26px;
+  line-height: 1.15;
+}
+.period {
+  margin: 0;
+  color: #5b6472;
+}
+.note {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff4dc;
+  color: #6b4b00;
+}
+.section {
+  margin-top: 24px;
+  break-inside: avoid-page;
+}
+.section h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+.section table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.section th,
+.section td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #dde1e7;
+  text-align: left;
+  vertical-align: top;
+}
+.section th {
+  font-weight: 600;
+  color: #5b6472;
+  background: #f4f6f9;
+}
+.section tr {
+  break-inside: avoid;
+}
+.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+.section a {
+  color: #2c5aa0;
+}
+.empty {
+  color: #5b6472;
+}
+.foot {
+  margin-top: 32px;
+  color: #8a93a1;
+  font-size: 11px;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 20px 16px 40px;
+  }
+  .section {
+    overflow-x: auto;
+  }
+}
+
+@media print {
+  :global(body):has(.page) {
+    background: #fff;
+  }
+  .page {
+    max-width: none;
+    padding: 0;
+  }
+  .toolbar {
+    display: none;
+  }
+  @page {
+    margin: 14mm;
+  }
+}

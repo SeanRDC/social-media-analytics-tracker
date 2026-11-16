@@ -201,4 +201,37 @@ export const reportSchedule = pgTable("report_schedule", {
   dayOfWeek: integer("day_of_week").notNull().default(1),
   hour: integer("hour").notNull().default(9),
   timezone: text("timezone").notNull().default("UTC"),
+  /** When the last weekly email went out, so each week sends once. */
+  lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
 });
+
+/** Alerts already sent, one per user, kind and key (a post id, a milestone, a week). */
+export const alertEvent = pgTable(
+  "alert_event",
+  {
+    id: uuid(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<"spike" | "milestone" | "drop" | "reconnect">().notNull(),
+    key: text("key").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [unique("alert_event_uq").on(t.userId, t.kind, t.key)],
+);
+
+/** Web push subscriptions, one per browser or device. */
+export const pushSubscription = pgTable(
+  "push_subscription",
+  {
+    id: uuid(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("push_subscription_user_id_idx").on(t.userId)],
+);

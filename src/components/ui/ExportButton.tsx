@@ -9,13 +9,15 @@ type State = "idle" | "working" | "done";
 interface Props {
   format: "PDF" | "CSV";
   report: string;
+  /** The CSV download, or the print-ready page for PDF. */
+  href: string;
 }
 
 /**
  * One continuous control: download icon → spinner → check → back to idle.
- * The prototype simulates preparation; the backend phase produces the real file.
+ * CSV downloads in place; PDF opens the print-ready report in a new tab.
  */
-export function ExportButton({ format, report }: Props) {
+export function ExportButton({ format, report, href }: Props) {
   const [state, setState] = useState<State>("idle");
 
   useEffect(() => {
@@ -26,19 +28,23 @@ export function ExportButton({ format, report }: Props) {
 
   return (
     <>
-      <button
-        type="button"
+      <a
+        href={href}
+        {...(format === "CSV" ? { download: "" } : { target: "_blank", rel: "noopener" })}
         className={`${s.btn} ${s[state]}`}
         aria-label={`Export ${report} as ${format}`}
         aria-busy={state === "working"}
-        disabled={state !== "idle"}
-        onClick={() => setState("working")}
+        aria-disabled={state !== "idle"}
+        onClick={(e) => {
+          if (state !== "idle") e.preventDefault();
+          else setState("working");
+        }}
       >
         <span className={s.icon} aria-hidden="true">
           {state === "working" ? <span className={s.spinner} /> : <Icon name={state === "done" ? "check" : "download"} size={15} strokeWidth={1.8} />}
         </span>
         {state === "done" ? "Ready" : format}
-      </button>
+      </a>
       <span role="status" className="sr-only">
         {state === "done" ? `${report} ${format} is ready` : ""}
       </span>

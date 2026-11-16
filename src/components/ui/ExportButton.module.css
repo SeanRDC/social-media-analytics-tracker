@@ -10,15 +10,17 @@
   font-weight: 600;
   background: var(--card);
   border: 1px solid var(--cardb);
+  color: inherit;
+  text-decoration: none;
   transition: transform 0.14s var(--out), background 0.25s var(--out), color 0.25s var(--out), border-color 0.25s;
 }
-.btn:hover:not(:disabled) {
+.btn:hover:not([aria-disabled="true"]) {
   border-color: rgba(255, 255, 255, 0.22);
 }
-.btn:active:not(:disabled) {
+.btn:active:not([aria-disabled="true"]) {
   transform: scale(0.96);
 }
-.btn:disabled {
+.btn[aria-disabled="true"] {
   cursor: default;
 }
 .done {
