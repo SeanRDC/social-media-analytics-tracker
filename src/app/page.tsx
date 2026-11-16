@@ -9,7 +9,7 @@ import { DailyViewsCard } from "@/components/overview/DailyViewsCard";
 import { RangeProvider } from "@/components/shell/RangeProvider";
 import { ArrowButton } from "@/components/ui/ArrowButton";
 import { APP_NAME } from "@/lib/brand";
-import { getConnections, getDailyViews, getOverview, getPlatform } from "@/lib/data/api";
+import { getConnections, getDailyViews, getOverview, getPlatform } from "@/lib/data/sample-api";
 
 export const metadata: Metadata = {
   title: { absolute: `${APP_NAME} · Every channel, one calm dashboard` },

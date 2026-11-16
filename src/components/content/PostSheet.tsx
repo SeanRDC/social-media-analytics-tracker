@@ -7,6 +7,7 @@ import type { Post } from "@/lib/data/types";
 import { formatDate, formatDuration, formatNumber, formatPercent } from "@/lib/format";
 import { PLATFORM_NAMES } from "@/lib/platforms";
 import s from "./PostSheet.module.css";
+import { PostThumb } from "@/components/ui/PostThumb";
 
 const KIND_LABEL: Record<Post["kind"], string> = { video: "Video", short: "Short", reel: "Reel", post: "Post" };
 
@@ -105,7 +106,7 @@ export function PostSheet({ post, onClose }: Props) {
           </button>
 
           <div className={s.media}>
-            <i className={`thumb thumb-${p.thumb} ${s.cover}`} aria-hidden="true" />
+            <PostThumb post={p} className={s.cover} />
             <span className={s.kind}>{KIND_LABEL[p.kind]}</span>
           </div>
 
@@ -172,7 +173,14 @@ export function PostSheet({ post, onClose }: Props) {
               <Icon name={copied === "ok" ? "check" : "link"} size={15} />
               {copied === "ok" ? "Link copied" : copied === "fail" ? "Couldn't copy" : "Copy link"}
             </button>
-            <span className={s.note}>Opening the post on {PLATFORM_NAMES[p.platform]} arrives with the backend.</span>
+            {p.permalink ? (
+              <a href={p.permalink} target="_blank" rel="noopener noreferrer" className={s.secondary}>
+                <Icon name="arrow" size={15} />
+                Open on {PLATFORM_NAMES[p.platform]}
+              </a>
+            ) : (
+              <span className={s.note}>This is a sample post, so there is nothing to open on {PLATFORM_NAMES[p.platform]}.</span>
+            )}
           </div>
         </div>
       )}

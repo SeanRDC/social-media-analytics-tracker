@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
+import type { ImportOutcome } from "@/app/actions/sync";
 import { Icon } from "@/components/icons/Icon";
 import { connectHref, connectMessage, type ConnectResult } from "@/lib/connect/result";
 import type { ConnectionStatus, ConnectionView, PlatformId } from "@/lib/data/types";
@@ -18,10 +20,36 @@ interface Props {
   result: ConnectResult | null;
   /** Server Action: revokes access and deletes the platform's stored stats. */
   onDisconnect: (platform: PlatformId) => Promise<void>;
+  /** Server Action: the first import, run right after a platform connects. */
+  onImport?: (platform: PlatformId) => Promise<ImportOutcome>;
 }
 
-export function Connections({ initial, result, onDisconnect }: Props) {
+const IMPORT_NOTE: Record<ImportOutcome | "running", string> = {
+  running: "Importing its history…",
+  imported: "Its history is imported.",
+  "not-yet": "Its numbers arrive in a coming update.",
+  reconnect: "Access expired straight away. Please reconnect.",
+  failed: "The import didn't finish; tonight's sync will try again.",
+};
+
+export function Connections({ initial, result, onDisconnect, onImport }: Props) {
+  const router = useRouter();
   const [removed, setRemoved] = useState<ReadonlySet<PlatformId>>(new Set());
+  const [imported, setImported] = useState<ImportOutcome | "running" | null>(null);
+  const started = useRef(false);
+
+  // first import right after coming back from a successful connection
+  useEffect(() => {
+    if (!result?.ok || !onImport || started.current) return;
+    started.current = true;
+    setImported("running");
+    onImport(result.platform)
+      .catch((): ImportOutcome => "failed")
+      .then((o) => {
+        setImported(o);
+        if (o === "imported" || o === "reconnect") router.refresh();
+      });
+  }, [result, onImport, router]);
   const [confirming, setConfirming] = useState<PlatformId | null>(null);
   const [failed, setFailed] = useState<PlatformId | null>(null);
   const [, startTransition] = useTransition();
@@ -49,7 +77,10 @@ export function Connections({ initial, result, onDisconnect }: Props) {
       {result && (
         <p className={`${s.info} ${result.ok ? "" : s.notice}`} role={result.ok ? "status" : "alert"}>
           <Icon name={result.ok ? "check" : "sparkle"} size={15} />
-          <span>{connectMessage(result)}</span>
+          <span>
+            {connectMessage(result)}
+            {imported && ` ${IMPORT_NOTE[imported]}`}
+          </span>
         </p>
       )}
       <ul className={s.list}>

@@ -17,7 +17,8 @@ interface Props {
 
 /** Growth over the period as a percent of where it started. */
 export function growthPercent(m: Metrics): number {
-  return (m.followerDelta / (m.followers - m.followerDelta)) * 100;
+  const before = m.followers - m.followerDelta;
+  return before > 0 ? (m.followerDelta / before) * 100 : 0;
 }
 
 export function HeroCard({ accountName, connectedCount, metrics }: Props) {

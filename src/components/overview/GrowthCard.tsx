@@ -17,7 +17,9 @@ interface Props {
 
 export function GrowthCard({ week, weekGrowth, top }: Props) {
   const [day, setDay] = useState<number | null>(null);
-  const max = Math.max(...weekGrowth.map((d) => d.value));
+  // bars show gains; days that lost followers sit at zero height (the label still says so)
+  const max = Math.max(1, ...weekGrowth.map((d) => d.value));
+  const pct = growthPercent(week);
   const note = day == null ? "followers this week" : `${weekGrowth[day].day} · ${formatSigned(weekGrowth[day].value)} followers`;
 
   return (
@@ -28,7 +30,10 @@ export function GrowthCard({ week, weekGrowth, top }: Props) {
         </h2>
         <div className={s.bigRow}>
           <CountUp value={formatSigned(week.followerDelta)} delay={450} className={s.big} />
-          <span className={s.pillUp}>+{growthPercent(week).toFixed(1)}%</span>
+          <span className={s.pillUp}>
+            {pct >= 0 ? "+" : ""}
+            {pct.toFixed(1)}%
+          </span>
         </div>
         <span className={s.note} aria-live="polite">
           {note}
@@ -39,7 +44,7 @@ export function GrowthCard({ week, weekGrowth, top }: Props) {
               key={d.day}
               type="button"
               className={s.bar}
-              style={{ height: `${(d.value / max) * 100}%`, "--i": i } as CSSProperties}
+              style={{ height: `${(Math.max(0, d.value) / max) * 100}%`, "--i": i } as CSSProperties}
               aria-label={`${d.day}: ${formatSigned(d.value)} followers`}
               onPointerEnter={() => setDay(i)}
               onFocus={() => setDay(i)}

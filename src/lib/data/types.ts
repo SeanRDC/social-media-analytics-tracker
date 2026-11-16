@@ -89,6 +89,10 @@ export interface Post {
   comments: number;
   shares: number;
   thumb: "a" | "b" | "c" | "d";
+  /** The platform's own thumbnail, when it provides one (the placeholder art shows otherwise). */
+  thumbnailUrl?: string;
+  /** Link to the post on its platform. */
+  permalink?: string;
   insight?: string;
 }
 

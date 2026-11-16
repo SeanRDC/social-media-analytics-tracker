@@ -8,7 +8,7 @@ import {
   getPlatforms,
   getPosts,
   getTopPosts,
-} from "@/lib/data/api";
+} from "@/lib/data/sample-api";
 import { sortPosts } from "@/lib/data/sort";
 import { RANGES } from "@/lib/data/types";
 

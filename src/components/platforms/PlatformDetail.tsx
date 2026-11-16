@@ -10,6 +10,7 @@ import { niceTicks } from "@/lib/chart";
 import type { Platform, Post } from "@/lib/data/types";
 import { formatCompact, formatDate, formatPercent, formatSigned } from "@/lib/format";
 import s from "./PlatformDetail.module.css";
+import { PostThumb } from "@/components/ui/PostThumb";
 
 interface Props {
   platform: Platform;
@@ -127,7 +128,7 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
             {posts.map((post) => (
               <li key={post.id}>
                 <Link href={`/content?post=${post.id}`} className={s.row}>
-                  <i className={`thumb thumb-${post.thumb} ${s.thumb}`} aria-hidden="true" />
+                  <PostThumb post={post} className={s.thumb} />
                   <span className={s.rowText}>
                     <b>{post.title}</b>
                     <small>

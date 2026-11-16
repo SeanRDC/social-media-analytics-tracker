@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { Icon } from "@/components/icons/Icon";
+import { getDataSource } from "@/lib/data/api";
+import type { DataSource } from "@/lib/data/live";
 import { requireUser } from "@/lib/dal";
 import { Header } from "./Header";
 import { Rail } from "./Rail";
@@ -31,19 +33,26 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 async function SignedIn({ children }: { children: ReactNode }) {
-  const user = await requireUser();
+  const [user, source] = await Promise.all([requireUser(), getDataSource()]);
   return (
     <>
       <Header accountName={user.name} />
-      <p className={s.notice}>
-        <Icon name="sparkle" size={14} />
-        <span>You&apos;re looking at sample data. Your own numbers appear here once your platforms are connected.</span>
-        <Link href="/settings">Connected accounts</Link>
-      </p>
+      {source !== "live" && (
+        <p className={s.notice}>
+          <Icon name="sparkle" size={14} />
+          <span>{NOTICE[source]}</span>
+          <Link href="/settings">Connected accounts</Link>
+        </p>
+      )}
       {children}
     </>
   );
 }
+
+const NOTICE: Record<Exclude<DataSource, "live">, string> = {
+  sample: "You're looking at sample data. Your own numbers appear here once your platforms are connected and imported.",
+  simulated: "Some accounts are simulated locally, so their numbers are generated. Add platform credentials to import real ones.",
+};
 
 function ShellLoading() {
   return (

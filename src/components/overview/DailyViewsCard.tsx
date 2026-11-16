@@ -13,7 +13,8 @@ const FULL_DAY: Record<string, string> = { Mon: "Monday", Tue: "Tuesday", Wed: "
 export function DailyViewsCard({ views }: { views: DailyViews }) {
   const peakIndex = views.thisWeek.indexOf(Math.max(...views.thisWeek));
   const today = views.thisWeek[views.todayIndex];
-  const max = Math.max(...views.thisWeek, ...views.lastWeek);
+  // at least 1 so a week with no views still draws a flat line instead of dividing by zero
+  const max = Math.max(1, ...views.thisWeek, ...views.lastWeek);
   const ticks = niceTicks(0, max, 3).filter((t) => t > 0);
 
   return (

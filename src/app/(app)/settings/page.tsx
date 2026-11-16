@@ -7,6 +7,7 @@ import { SignOutButton } from "@/components/settings/SignOutButton";
 import s from "@/components/settings/Settings.module.css";
 import { Avatar } from "@/components/ui/Avatar";
 import { disconnectPlatform } from "@/app/actions/connections";
+import { importPlatform } from "@/app/actions/sync";
 import { parseConnectResult } from "@/lib/connect/result";
 import { getMyConnections } from "@/lib/data/connections";
 import { requireUser } from "@/lib/dal";
@@ -33,7 +34,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
           Connected accounts
         </h2>
         <p className={s.lead}>We only read your stats. We never post for you.</p>
-        <Connections initial={connections} result={parseConnectResult(params)} onDisconnect={disconnectPlatform} />
+        <Connections initial={connections} result={parseConnectResult(params)} onDisconnect={disconnectPlatform} onImport={importPlatform} />
       </section>
 
       <section id="alerts" className={`${s.card} glass rim reveal`} style={reveal(3)} aria-labelledby="alerts-h">

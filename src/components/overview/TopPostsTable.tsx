@@ -11,6 +11,7 @@ import { SORT_LABELS, postsInRange, sortPosts } from "@/lib/data/sort";
 import type { Post, PostSort } from "@/lib/data/types";
 import { formatCompact, formatDate, formatDuration, formatPercent } from "@/lib/format";
 import s from "./TopPostsTable.module.css";
+import { PostThumb } from "@/components/ui/PostThumb";
 
 const OPTIONS = (Object.keys(SORT_LABELS) as PostSort[]).map((value) => ({ value, label: SORT_LABELS[value] }));
 
@@ -63,7 +64,7 @@ export function TopPostsTable({ posts, asOf, limit = 5, className = "" }: Props)
             >
               <td>
                 <div className={s.post}>
-                  <i className={`thumb thumb-${p.thumb} ${s.thumb}`} aria-hidden="true" />
+                  <PostThumb post={p} className={s.thumb} />
                   <div className={s.pt}>
                     <h3 className={s.title}>{p.title}</h3>
                     <small>

@@ -14,6 +14,7 @@ import { formatCompact, formatDate, formatPercent } from "@/lib/format";
 import { PLATFORM_NAMES } from "@/lib/platforms";
 import { PostSheet } from "./PostSheet";
 import s from "./ContentLibrary.module.css";
+import { PostThumb } from "@/components/ui/PostThumb";
 
 type Kind = "all" | PostKind;
 const KINDS = [
@@ -111,7 +112,7 @@ export function ContentLibrary({ posts, asOf }: { posts: Post[]; asOf: string })
             <li key={p.id} ref={register(p.id)} className="reveal" style={{ "--i": Math.min(i, 8) + 2 } as CSSProperties}>
               <button type="button" className={`${s.card} glass rim sweep lift`} onClick={() => openPost(p.id)}>
                 <span className={s.media}>
-                  <i className={`thumb thumb-${p.thumb} ${s.thumb}`} aria-hidden="true" />
+                  <PostThumb post={p} className={s.thumb} />
                   <span className={s.kind}>{KINDS.find((k) => k.value === p.kind)?.label.replace(/s$/, "")}</span>
                 </span>
                 <span className={s.meta}>

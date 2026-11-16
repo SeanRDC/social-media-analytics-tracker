@@ -4,6 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { Connections } from "@/components/settings/Connections";
 import type { ConnectionView } from "@/lib/data/types";
 
+const refresh = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh, push: vi.fn(), replace: vi.fn() }) }));
+
 const LIST: ConnectionView[] = [
   { id: "youtube", name: "YouTube", account: "Northbay Studio", status: "connected", mode: "live" },
   { id: "tiktok", name: "TikTok", account: "@northbay", status: "expired", mode: "live" },
@@ -64,5 +67,21 @@ describe("Connections", () => {
   it("shows the result of a connection attempt", () => {
     render(<Connections initial={LIST} result={{ platform: "linkedin", ok: false, reason: "no-account" }} onDisconnect={vi.fn()} />);
     expect(screen.getByRole("alert")).toHaveTextContent("couldn't find a LinkedIn Page");
+  });
+
+  it("imports a platform's history right after it connects", async () => {
+    const onImport = vi.fn(async () => "imported" as const);
+    render(<Connections initial={LIST} result={{ platform: "youtube", ok: true }} onDisconnect={vi.fn()} onImport={onImport} />);
+    expect(screen.getByRole("status")).toHaveTextContent("YouTube is connected. Importing its history…");
+    expect(await screen.findByText(/Its history is imported/)).toBeInTheDocument();
+    expect(onImport).toHaveBeenCalledTimes(1);
+    expect(onImport).toHaveBeenCalledWith("youtube");
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("does not import after a failed connection", () => {
+    const onImport = vi.fn();
+    render(<Connections initial={LIST} result={{ platform: "youtube", ok: false, reason: "denied" }} onDisconnect={vi.fn()} onImport={onImport} />);
+    expect(onImport).not.toHaveBeenCalled();
   });
 });

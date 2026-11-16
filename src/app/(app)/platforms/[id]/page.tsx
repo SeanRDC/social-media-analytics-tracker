@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PlatformDetail } from "@/components/platforms/PlatformDetail";
-import { getOverview, getPlatform, getPlatforms, getPosts } from "@/lib/data/api";
+import { getOverview, getPlatform, getPosts } from "@/lib/data/api";
+import { PLATFORM_ORDER } from "@/lib/data/types";
+import { PLATFORM_NAMES } from "@/lib/platforms";
 
-export async function generateStaticParams() {
-  return (await getPlatforms()).map((p) => ({ id: p.id }));
+// the list of platforms is fixed; their numbers are per user and load per request
+export function generateStaticParams() {
+  return PLATFORM_ORDER.map((id) => ({ id }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/platforms/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const p = await getPlatform(id);
-  return { title: p?.name ?? "Platform" };
+  return { title: PLATFORM_NAMES[id as keyof typeof PLATFORM_NAMES] ?? "Platform" };
 }
 
 export default async function PlatformPage({ params }: PageProps<"/platforms/[id]">) {
