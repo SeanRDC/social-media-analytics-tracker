@@ -38,7 +38,7 @@ Connect YouTube, Facebook, TikTok, LinkedIn and Instagram, then see followers, v
 ---
 
 > [!WARNING]
-> **This project is under active development.** The front end is complete, and the backend is being built in phases. Sign-in, sessions and platform connections are real, but stats are not imported yet, so the dashboard shows clearly labelled **sample data** for now. Expect breaking changes.
+> **This project is under active development.** The front end is complete, and the backend is being built in phases. Sign-in, platform connections and **YouTube** stats are real. Facebook, Instagram, TikTok and LinkedIn connect but their numbers arrive in the next phases; until anything is imported the dashboard shows clearly labelled **sample data**. Expect breaking changes.
 
 ## ✨ Features
 
@@ -69,7 +69,7 @@ Connect YouTube, Facebook, TikTok, LinkedIn and Instagram, then see followers, v
 | `/` | Landing page with a live preview |
 | `/sign-in` | Email magic link; Google and Apple when configured |
 | `/onboarding/connect` | Connect each platform through its own approval screen, including Instagram's Professional-account requirement |
-| `/onboarding/sync` | First import progress *(simulated until phase 3)* |
+| `/onboarding/sync` | First import of each connected platform's history |
 | `/overview` | Hero stats, views per day, weekly growth, top posts |
 | `/platforms`, `/platforms/[id]` | Every platform, a compare ranking, and per-platform detail |
 | `/content` | Filterable post library; `?post=<id>` opens a post's detail sheet |
@@ -126,7 +126,8 @@ src/
   hooks/            sliding indicators, FLIP reordering, element width, reduced motion
   lib/
     connect/        platform OAuth: providers, token encryption, connect flow, connection service
-    data/           types, sample data, api.ts (the data layer) and connections.ts
+    data/           types, api.ts (the data layer), compute.ts (rows → dashboard), live.ts, sample data
+    sync/           platform fetchers (YouTube), generated history for simulated accounts, sync service
     auth.ts, dal.ts sign-in config and the session check
     chart.ts        chart geometry
     format.ts       number and date formatting
@@ -147,14 +148,16 @@ docs/               design specs, plans, platform API notes, owner setup checkli
 | Sign-in emails | `src/lib/email.ts` (Resend when `RESEND_API_KEY` is set) |
 | Platform connections | `/api/connect/[platform]/start` and `/callback`; providers in `src/lib/connect/providers/` |
 | Token encryption (AES-256-GCM) | `src/lib/connect/crypto.ts`, key from `TOKEN_ENCRYPTION_KEY` |
-| Token refresh, disconnect | `src/lib/connect/service.ts`; daily job `/api/cron/refresh-tokens` (`vercel.json`) |
+| Token refresh, disconnect | `src/lib/connect/service.ts` |
+| Imports (first import and daily sync) | `src/lib/sync/`; daily job `/api/cron/daily` (`vercel.json`) refreshes tokens, then syncs every account |
+| Dashboard numbers | `src/lib/data/live.ts` loads a user's rows, `src/lib/data/compute.ts` turns them into the UI's types |
 | Environment variables | `.env.example` |
 | Owner setup (Neon, Vercel, Google, Meta, TikTok, LinkedIn) | [`docs/platforms/setup-checklist.md`](docs/platforms/setup-checklist.md) |
 | What each platform API provides | [`docs/platforms/api-notes.md`](docs/platforms/api-notes.md) |
 
 ### Wiring the data layer
 
-Every page reads data through the async functions in `src/lib/data/api.ts` (`getOverview`, `getDailyViews`, `getPlatforms`, `getPosts`, `getAudience`, and others). Later phases replace their bodies with database queries and the UI keeps working. The types in `src/lib/data/types.ts` are the contract.
+Every dashboard page reads data through the async functions in `src/lib/data/api.ts` (`getOverview`, `getDailyViews`, `getPlatforms`, `getPosts`, `getAudience`, and others). They answer from the signed-in user's imported numbers, or from sample data until something has been imported. The landing page preview uses `sample-api.ts`. The types in `src/lib/data/types.ts` are the contract. Adding a platform means writing its fetcher in `src/lib/sync/` and registering it in `src/lib/sync/service.ts`.
 
 ### Deploying (Vercel + Neon)
 
@@ -171,11 +174,12 @@ The full plan is in [the backend design](docs/superpowers/specs/2026-11-15-backe
 - [x] **Phase 0:** verified platform API notes, owner setup checklist, privacy/terms/data-deletion pages
 - [x] **Phase 1:** Postgres schema and migrations, real sign-in, protected routes
 - [x] **Phase 2:** connecting platforms (OAuth, encrypted tokens, refresh, statuses)
-- [ ] YouTube, Meta (Facebook and Instagram), TikTok and LinkedIn data
+- [x] **Phase 3:** YouTube end to end (180-day history, daily sync, every page on real data)
+- [ ] Meta (Facebook and Instagram), TikTok and LinkedIn data
 - [ ] Exports and the weekly email
 - [ ] Alerts
 
-Still simulated until later phases: the first import and every stat on the dashboard, exports and the weekly email.
+Still to come: numbers for Facebook, Instagram, TikTok and LinkedIn, exports, the weekly email and alerts.
 
 ## 🧰 Tech stack
 

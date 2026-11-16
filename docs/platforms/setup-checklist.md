@@ -10,7 +10,7 @@ Replace `https://YOUR-DOMAIN` with the Vercel URL (or your own domain) once it e
 - [ ] Create a **Vercel** project from the GitHub repo. Add every variable from `.env.example` in Project Settings → Environment Variables.
 - [ ] Generate `BETTER_AUTH_SECRET` with `npx @better-auth/cli secret` (or any 32+ random bytes) and set `BETTER_AUTH_URL` to the site URL.
 - [ ] Generate `TOKEN_ENCRYPTION_KEY` with `openssl rand -base64 32` (phase 2). Keep it safe: changing it means everyone reconnects their platforms.
-- [ ] Set `CRON_SECRET` to any long random string (phase 2). Vercel Cron uses it to call the daily token refresh in `vercel.json`.
+- [ ] Set `CRON_SECRET` to any long random string (phase 2). Vercel Cron uses it to call the daily job in `vercel.json` (token refresh, then each account's daily sync).
 - [ ] Run `npm run db:migrate` once against Neon (locally with `DATABASE_URL` set, or as a Vercel build step).
 
 ## 2. Email for sign-in links (phase 1, optional until launch)

@@ -20,6 +20,14 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 
 ## YouTube (phase 3)
 
+**As built (2026-11-16):** `src/lib/sync/youtube.ts`.
+- Data API: `channels?mine=true` (subscribers, uploads playlist), `playlistItems` (200 most recent uploads), `videos` (title, thumbnail, duration, lifetime views, likes, comments).
+- Analytics API, `ids=channel==MINE`: `dimensions=day` with `views, estimatedMinutesWatched, subscribersGained, subscribersLost, likes, comments, shares`; `dimensions=video` for average view duration and shares; `ageGroup,gender` (`viewerPercentage`) and `country` (`views`). The last three are optional: small channels get no demographics and a failure there keeps the rest.
+- First import reads 180 days; daily syncs re-read from three days before the last one, because Analytics finalises recent days late (about two days behind).
+- Subscriber totals per day are rebuilt backwards from today's count using daily net change. YouTube rounds public subscriber counts, so totals are approximate.
+- There is no Shorts flag: videos of 3 minutes or less are labelled Shorts.
+- Quota per sync is small: about 3 Data API calls per 50 videos plus 4 Analytics reports.
+
 - **APIs:** YouTube Data API v3 (channel and video details) and YouTube Analytics API v2 (daily metrics, demographics).
 - **Scopes:** `https://www.googleapis.com/auth/youtube.readonly`, `https://www.googleapis.com/auth/yt-analytics.readonly`.
 - **Daily history:** Analytics reports accept `dimensions=day` with metrics such as `views`, `estimatedMinutesWatched`, `averageViewDuration`, `subscribersGained`, one row per day, so history can be backfilled on first import. Not every metric and dimension pairing is valid; check the channel reports reference.
