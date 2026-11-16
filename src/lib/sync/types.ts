@@ -40,6 +40,17 @@ export interface PlatformSnapshot {
   posts: PostRow[];
   /** null when the platform does not share demographics (or refused this time); stored shares are kept. */
   audience: AudienceRow[] | null;
+  /**
+   * The platform only reports current totals (Instagram, TikTok): the sync writes
+   * today's row from the change since the previous sync instead of `daily`.
+   */
+  derive?: boolean;
+}
+
+/** What a fetcher knows about the connected account. */
+export interface FetchContext {
+  /** The platform's id for the account (Page id, organization id, …). */
+  externalId: string;
 }
 
 export interface SyncWindow {

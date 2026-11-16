@@ -3,7 +3,7 @@
  * connection + date (and post + date), so syncing the same days twice changes
  * nothing. Platforms without a fetcher yet (phases 4 and 5) are skipped.
  */
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, lt, sql } from "drizzle-orm";
 import type { Db } from "@/db";
 import { audienceStat, connection, dailyStat, post, postStat } from "@/db/schema";
 import { getAccessToken } from "@/lib/connect/service";
@@ -12,13 +12,17 @@ import { SIMULATED_PREFIX } from "@/lib/connect/providers/simulated";
 import { addDays, isoDate } from "@/lib/dates";
 import type { PlatformId } from "@/lib/data/types";
 import { simulatedSnapshot } from "./simulated";
-import type { PlatformSnapshot, SyncWindow } from "./types";
+import { fetchFacebook } from "./facebook";
+import { fetchInstagram } from "./instagram";
+import type { DailyRow, FetchContext, PlatformSnapshot, SyncWindow } from "./types";
 import { fetchYouTube } from "./youtube";
 
-type Fetcher = (accessToken: string, window: SyncWindow) => Promise<PlatformSnapshot>;
+type Fetcher = (accessToken: string, window: SyncWindow, ctx: FetchContext) => Promise<PlatformSnapshot>;
 
 const FETCHERS: Partial<Record<PlatformId, Fetcher>> = {
   youtube: fetchYouTube,
+  facebook: fetchFacebook,
+  instagram: fetchInstagram,
 };
 
 /** First import: 90 days for the longest range plus 90 before it for change percentages. */
@@ -47,7 +51,7 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
     const fetcher = FETCHERS[row.platform];
     if (!fetcher) return { status: "unsupported" };
     try {
-      snapshot = await fetcher(await getAccessToken(db, row.id), window);
+      snapshot = await fetcher(await getAccessToken(db, row.id), window, { externalId: row.externalId });
     } catch (e) {
       if (!(e instanceof ReauthRequired)) throw e;
       await db.update(connection).set({ status: "expired" }).where(eq(connection.id, row.id));
@@ -60,8 +64,9 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
   return { status: "synced", days: snapshot.daily.length, posts: snapshot.posts.length };
 }
 
-async function store(db: Db, connectionId: string, today: string, s: PlatformSnapshot) {
+async function store(db: Db, connectionId: string, today: string, snapshot: PlatformSnapshot) {
   await db.transaction(async (tx) => {
+    const s = snapshot.derive ? { ...snapshot, daily: await derivedToday(tx as unknown as Db, connectionId, today, snapshot) } : snapshot;
     if (s.daily.length) {
       await tx
         .insert(dailyStat)
@@ -111,6 +116,55 @@ async function store(db: Db, connectionId: string, today: string, s: PlatformSna
       if (s.audience.length) await tx.insert(audienceStat).values(s.audience.map((a) => ({ connectionId, date: today, ...a })));
     }
   });
+}
+
+/**
+ * Today's row for a platform that only reports current totals: followers from
+ * the change since the previous stored day; views and engagement from each
+ * post's change since its previous stats. With no earlier sync there is no
+ * baseline, so lifetime totals are not counted as today's activity.
+ */
+export async function derivedToday(db: Db, connectionId: string, today: string, s: PlatformSnapshot): Promise<DailyRow[]> {
+  const [prevDay] = await db
+    .select()
+    .from(dailyStat)
+    .where(and(eq(dailyStat.connectionId, connectionId), lt(dailyStat.date, today)))
+    .orderBy(desc(dailyStat.date))
+    .limit(1);
+  const prevStats = await db
+    .selectDistinctOn([postStat.postId], { externalId: post.externalId, views: postStat.views, likes: postStat.likes, comments: postStat.comments, shares: postStat.shares })
+    .from(postStat)
+    .innerJoin(post, eq(post.id, postStat.postId))
+    .where(and(eq(post.connectionId, connectionId), lt(postStat.date, today)))
+    .orderBy(postStat.postId, desc(postStat.date));
+  const before = new Map(prevStats.map((p) => [p.externalId, p]));
+
+  let views = 0;
+  let engagements = 0;
+  for (const p of s.posts) {
+    const prev = before.get(p.externalId);
+    const eng = p.likes + p.comments + p.shares;
+    if (prev) {
+      // never negative: a removed like or a platform correction is not "minus" activity
+      views += Math.max(0, p.views - prev.views);
+      engagements += Math.max(0, eng - (prev.likes + prev.comments + prev.shares));
+    } else if (prevDay && isoDate(p.publishedAt) > prevDay.date) {
+      // published since the last sync: all of its activity is new
+      views += p.views;
+      engagements += eng;
+    }
+  }
+  return [
+    {
+      date: today,
+      followers: s.followers,
+      followersGained: prevDay ? s.followers - prevDay.followers : 0,
+      views,
+      engagements,
+      posts: s.posts.filter((p) => isoDate(p.publishedAt) === today).length,
+      watchMinutes: null,
+    },
+  ];
 }
 
 /** Daily job: sync every connected account; one failure never stops the rest. */
