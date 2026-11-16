@@ -1,6 +1,22 @@
 # Platform API notes
 
-Verified 2026-11-15 against official docs where available. Platform APIs change often: re-check each section when its phase starts.
+Verified 2026-11-15 against official docs where available (versions re-checked 2026-11-16 for phase 2). Platform APIs change often: re-check each section when its phase starts.
+
+## Connection framework (phase 2)
+
+Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL: `<site>/api/connect/<platform>/callback`.
+
+| Platform | Token lifetime | Refresh | Stored token |
+|---|---|---|---|
+| YouTube | about 1 hour | refresh token (PKCE, `access_type=offline`, `prompt=consent`) | user token |
+| Facebook | Page token does not expire | none needed | first managed Page's token |
+| Instagram | 60 days | `ig_refresh_token` within the last 10 days | long-lived user token |
+| TikTok | about 24 hours | refresh token (about a year) | user token |
+| LinkedIn | 60 days | refresh tokens only for approved partners; otherwise reconnect | user token |
+
+- **Versions:** Graph API `v26.0` (released 2026-07-29), override with `META_GRAPH_VERSION`. LinkedIn `LinkedIn-Version: 202607`, override with `LINKEDIN_API_VERSION`; retired versions return 426.
+- **Multiple Pages:** v1 connects the first Facebook Page or LinkedIn organization the person manages. A picker can come later.
+- Sources: [Graph API v26.0](https://developers.facebook.com/docs/graph-api/changelog/version26.0), [LinkedIn versioning](https://learn.microsoft.com/en-us/linkedin/marketing/versioning), [Business Login for Instagram](https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-instagram-login/business-login), [LinkedIn organization access control](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/organizations/organization-access-control-by-role)
 
 ## YouTube (phase 3)
 

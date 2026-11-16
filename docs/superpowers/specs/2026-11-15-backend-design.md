@@ -52,9 +52,9 @@ Jobs (phase 2+): first import, daily snapshot, token refresh, alerts, weekly ema
 
 | # | Phase | Status |
 |---|---|---|
-| 0 | Verify APIs; developer-app checklist; privacy, terms, data-deletion pages; align the front end's data contract | this round |
-| 1 | Database, schema, migrations, real sign-in, protected routes, deployment readiness | this round |
-| 2 | Connection framework (OAuth, encrypted tokens, refresh, statuses) | later |
+| 0 | Verify APIs; developer-app checklist; privacy, terms, data-deletion pages; align the front end's data contract | done |
+| 1 | Database, schema, migrations, real sign-in, protected routes, deployment readiness | done |
+| 2 | Connection framework (OAuth, encrypted tokens, refresh, statuses) | done (2026-11-16) |
 | 3 | YouTube end to end | later |
 | 4 | Facebook + Instagram | later |
 | 5 | TikTok, LinkedIn | later |

@@ -38,7 +38,7 @@ Connect YouTube, Facebook, TikTok, LinkedIn and Instagram, then see followers, v
 ---
 
 > [!WARNING]
-> **This project is under active development.** The front end is complete, and the backend is being built in phases. Sign-in and sessions are real, but platform connections are not live yet, so the dashboard shows clearly labelled **sample data** for now. Expect breaking changes.
+> **This project is under active development.** The front end is complete, and the backend is being built in phases. Sign-in, sessions and platform connections are real, but stats are not imported yet, so the dashboard shows clearly labelled **sample data** for now. Expect breaking changes.
 
 ## ✨ Features
 
@@ -68,14 +68,14 @@ Connect YouTube, Facebook, TikTok, LinkedIn and Instagram, then see followers, v
 |---|---|
 | `/` | Landing page with a live preview |
 | `/sign-in` | Email magic link; Google and Apple when configured |
-| `/onboarding/connect` | Connect each platform, including Instagram's Professional-account requirement *(simulated until phase 2)* |
-| `/onboarding/sync` | First import progress *(simulated until phase 2)* |
+| `/onboarding/connect` | Connect each platform through its own approval screen, including Instagram's Professional-account requirement |
+| `/onboarding/sync` | First import progress *(simulated until phase 3)* |
 | `/overview` | Hero stats, views per day, weekly growth, top posts |
 | `/platforms`, `/platforms/[id]` | Every platform, a compare ranking, and per-platform detail |
 | `/content` | Filterable post library; `?post=<id>` opens a post's detail sheet |
 | `/audience` | Age, countries and the best time to post |
 | `/reports` | Export presets and the weekly email schedule |
-| `/settings` | Profile and sign out, connected accounts, alerts, appearance |
+| `/settings` | Profile and sign out, connected accounts (connect, reconnect, disconnect), alerts, appearance |
 | `/privacy`, `/terms`, `/data-deletion` | Legal pages required by platform reviews *(drafts)* |
 
 Dashboard pages require sign-in.
@@ -108,6 +108,9 @@ npm run dev                  # applies database migrations, then http://localhos
 > [!TIP]
 > **Signing in locally:** enter any email on `/sign-in`. Without an email service, the link is printed in the terminal, and the "check your email" screen shows a **Development: open the sign-in link** button.
 
+> [!TIP]
+> **Connecting platforms locally:** platforms without credentials in `.env.local` are **simulated**: Connect runs the full flow (state check, encrypted tokens, storage) against a stand-in and labels the account "Simulated locally". Add a platform's credentials to connect it for real, or set `CONNECT_SIMULATION=off` to hide unconfigured platforms.
+
 > [!NOTE]
 > **Local database:** with `DATABASE_URL` unset, an embedded Postgres (PGlite) lives in `.data/pglite` (git-ignored). Stop the dev server and delete that folder to start fresh.
 
@@ -122,7 +125,8 @@ src/
   db/               Drizzle schema and database client
   hooks/            sliding indicators, FLIP reordering, element width, reduced motion
   lib/
-    data/           types, sample data and api.ts (the data layer)
+    connect/        platform OAuth: providers, token encryption, connect flow, connection service
+    data/           types, sample data, api.ts (the data layer) and connections.ts
     auth.ts, dal.ts sign-in config and the session check
     chart.ts        chart geometry
     format.ts       number and date formatting
@@ -141,6 +145,9 @@ docs/               design specs, plans, platform API notes, owner setup checkli
 | Sign-in (Better Auth: magic link, Google, Apple) | `src/lib/auth.ts`, `/api/auth/*` |
 | Route protection | `src/proxy.ts` (fast cookie check) and `src/lib/dal.ts` (`requireUser`, the real check) |
 | Sign-in emails | `src/lib/email.ts` (Resend when `RESEND_API_KEY` is set) |
+| Platform connections | `/api/connect/[platform]/start` and `/callback`; providers in `src/lib/connect/providers/` |
+| Token encryption (AES-256-GCM) | `src/lib/connect/crypto.ts`, key from `TOKEN_ENCRYPTION_KEY` |
+| Token refresh, disconnect | `src/lib/connect/service.ts`; daily job `/api/cron/refresh-tokens` (`vercel.json`) |
 | Environment variables | `.env.example` |
 | Owner setup (Neon, Vercel, Google, Meta, TikTok, LinkedIn) | [`docs/platforms/setup-checklist.md`](docs/platforms/setup-checklist.md) |
 | What each platform API provides | [`docs/platforms/api-notes.md`](docs/platforms/api-notes.md) |
@@ -152,7 +159,7 @@ Every page reads data through the async functions in `src/lib/data/api.ts` (`get
 ### Deploying (Vercel + Neon)
 
 1. Create a Neon project and copy its **pooled** connection string.
-2. Import the GitHub repo into Vercel and add the variables from `.env.example`: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (the Vercel URL), `RESEND_API_KEY`, `EMAIL_FROM`, `LEGAL_CONTACT_EMAIL`.
+2. Import the GitHub repo into Vercel and add the variables from `.env.example`: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (the Vercel URL), `TOKEN_ENCRYPTION_KEY`, `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `LEGAL_CONTACT_EMAIL`, plus the credentials of each platform you have set up.
 3. Set the Build Command to `npm run db:migrate && npm run build` so each deploy applies new migrations.
 4. Deploy, then sign in with your email.
 
@@ -163,12 +170,12 @@ The full plan is in [the backend design](docs/superpowers/specs/2026-11-15-backe
 - [x] **Front end:** every screen, the Graphite design system, motion and responsive layouts
 - [x] **Phase 0:** verified platform API notes, owner setup checklist, privacy/terms/data-deletion pages
 - [x] **Phase 1:** Postgres schema and migrations, real sign-in, protected routes
-- [ ] **Phase 2:** connecting platforms
+- [x] **Phase 2:** connecting platforms (OAuth, encrypted tokens, refresh, statuses)
 - [ ] YouTube, Meta (Facebook and Instagram), TikTok and LinkedIn data
 - [ ] Exports and the weekly email
 - [ ] Alerts
 
-Still simulated until later phases: connecting accounts, the first import, exports, the weekly email, and disconnecting accounts (local state only).
+Still simulated until later phases: the first import and every stat on the dashboard, exports and the weekly email.
 
 ## 🧰 Tech stack
 
