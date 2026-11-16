@@ -5,7 +5,7 @@
 import { PLATFORM_ORDER, type PlatformId } from "@/lib/data/types";
 import { PLATFORM_NAMES } from "@/lib/platforms";
 
-export type ConnectReason = "denied" | "state" | "needs-professional" | "no-account" | "unavailable" | "failed";
+export type ConnectReason = "denied" | "state" | "needs-professional" | "no-account" | "unavailable" | "busy" | "failed";
 
 export interface ConnectResult {
   platform: PlatformId;
@@ -13,7 +13,7 @@ export interface ConnectResult {
   reason?: ConnectReason;
 }
 
-const REASONS: ConnectReason[] = ["denied", "state", "needs-professional", "no-account", "unavailable", "failed"];
+const REASONS: ConnectReason[] = ["denied", "state", "needs-professional", "no-account", "unavailable", "busy", "failed"];
 
 type Params = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -47,6 +47,8 @@ export function connectMessage(r: ConnectResult): string {
       return NO_ACCOUNT[r.platform] ?? `We couldn't find a ${name} account to connect.`;
     case "unavailable":
       return `${name} can't be connected yet.`;
+    case "busy":
+      return "Too many connection attempts in a short time. Please wait a few minutes and try again.";
     default:
       return `Something went wrong connecting ${name}. Please try again.`;
   }

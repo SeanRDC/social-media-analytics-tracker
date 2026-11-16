@@ -7,6 +7,7 @@ import { ALERT_KINDS, type AlertKind } from "@/lib/alerts/evaluate";
 import { setAlertSetting } from "@/lib/alerts/run";
 import { requireUser } from "@/lib/dal";
 import { savePushSubscription, type BrowserSubscription } from "@/lib/push";
+import { hit, LIMITS } from "@/lib/rate-limit";
 
 export async function setAlert(kind: AlertKind, enabled: boolean): Promise<void> {
   const user = await requireUser();
@@ -23,6 +24,7 @@ const isSubscription = (s: unknown): s is BrowserSubscription => {
 export async function subscribePush(sub: BrowserSubscription): Promise<void> {
   const user = await requireUser();
   if (!isSubscription(sub)) throw new Error("Invalid subscription");
+  if (!(await hit(getDb(), `push:${user.id}`, LIMITS.push)).ok) throw new Error("Too many requests");
   await savePushSubscription(getDb(), user.id, { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } });
 }
 

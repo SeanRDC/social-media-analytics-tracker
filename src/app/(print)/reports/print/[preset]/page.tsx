@@ -4,7 +4,10 @@ import { Suspense } from "react";
 import { PrintButton } from "@/components/reports/PrintButton";
 import s from "@/components/reports/Print.module.css";
 import { APP_NAME } from "@/lib/brand";
+import { getDb } from "@/db";
+import { requireUser } from "@/lib/dal";
 import { getReportData } from "@/lib/data/api";
+import { hit, LIMITS } from "@/lib/rate-limit";
 import { formatNumber } from "@/lib/format";
 import { buildReport, isPreset, PRESETS, type Cell } from "@/lib/reports/build";
 
@@ -27,6 +30,10 @@ const cell = (c: Cell) => (typeof c === "number" ? formatNumber(c) : c);
 async function Report({ params }: Pick<PageProps<"/reports/print/[preset]">, "params">) {
   const { preset } = await params;
   if (!isPreset(preset)) notFound();
+  const user = await requireUser();
+  if (!(await hit(getDb(), `export:${user.id}`, LIMITS.export)).ok) {
+    return <p className={s.loading}>Too many exports in the last hour. Please try again later.</p>;
+  }
   const data = await getReportData();
   const r = buildReport(preset, data);
   return (

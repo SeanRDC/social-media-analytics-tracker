@@ -29,6 +29,7 @@ const IMPORT_NOTE: Record<ImportOutcome | "running", string> = {
   imported: "Its history is imported.",
   "not-yet": "Its numbers arrive in a coming update.",
   reconnect: "Access expired straight away. Please reconnect.",
+  busy: "The platform is busy right now; tonight's sync will import it.",
   failed: "The import didn't finish; tonight's sync will try again.",
 };
 

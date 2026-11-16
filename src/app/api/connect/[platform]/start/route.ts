@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { getDb } from "@/db";
+import { hit, LIMITS } from "@/lib/rate-limit";
 import { beginConnect, safeReturnTo, STATE_COOKIE, STATE_TTL_SECONDS } from "@/lib/connect/flow";
 import { baseUrl, sessionUserId } from "@/lib/connect/http";
 
@@ -13,6 +15,12 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/connect/
     const signIn = new URL("/sign-in", base);
     signIn.searchParams.set("next", safeReturnTo(returnTo));
     return NextResponse.redirect(signIn);
+  }
+
+  if (!(await hit(getDb(), `connect:${userId}`, LIMITS.connect)).ok) {
+    const back = new URL(safeReturnTo(returnTo), base);
+    back.search = new URLSearchParams({ connect: "error", platform, reason: "busy" }).toString();
+    return NextResponse.redirect(back);
   }
 
   const { location, cookie } = beginConnect({ platform, userId, returnTo, baseUrl: base });

@@ -14,7 +14,7 @@ function createAuth() {
     secret: process.env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(getDb(), {
       provider: "pg",
-      schema: { user: schema.user, session: schema.session, account: schema.account, verification: schema.verification },
+      schema: { user: schema.user, session: schema.session, account: schema.account, verification: schema.verification, rateLimit: schema.rateLimit },
     }),
     socialProviders: {
       ...(googleCredentials ? { google: googleCredentials } : {}),
@@ -23,6 +23,16 @@ function createAuth() {
     session: {
       expiresIn: 60 * 60 * 24 * 30, // 30 days
       updateAge: 60 * 60 * 24, // refresh the expiry at most daily
+    },
+    // stored in Postgres so limits hold across serverless instances; on in production only
+    rateLimit: {
+      storage: "database",
+      window: 60,
+      max: 100,
+      customRules: {
+        // each sign-in link costs an email: 5 per 10 minutes per IP address
+        "/sign-in/magic-link": { window: 600, max: 5 },
+      },
     },
     trustedOrigins: appleCredentials ? ["https://appleid.apple.com"] : [],
     plugins: [

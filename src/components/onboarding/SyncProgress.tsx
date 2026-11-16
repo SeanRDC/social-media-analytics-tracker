@@ -13,6 +13,7 @@ const MESSAGE: Record<ImportOutcome, string> = {
   imported: "History imported",
   "not-yet": "Connected. Its numbers arrive in a coming update.",
   reconnect: "Access expired. Reconnect it from Settings.",
+  busy: "The platform is busy right now. Tonight's sync will bring your history in.",
   failed: "Couldn't import yet. We'll try again in tonight's sync.",
 };
 
