@@ -1,17 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Icon } from "@/components/icons/Icon";
-import type { ConnectionStatus, PlatformId } from "@/lib/data/types";
+import { connectHref, connectMessage, type ConnectResult } from "@/lib/connect/result";
+import type { ConnectionStatus, ConnectionView, PlatformId } from "@/lib/data/types";
 import s from "./Settings.module.css";
-
-interface Connection {
-  id: PlatformId;
-  name: string;
-  account: string;
-  status: ConnectionStatus;
-}
 
 const STATUS_LABEL: Record<ConnectionStatus, string> = {
   connected: "Connected",
@@ -20,58 +13,104 @@ const STATUS_LABEL: Record<ConnectionStatus, string> = {
   expired: "Access expired",
 };
 
-export function Connections({ initial }: { initial: Connection[] }) {
-  const [list, setList] = useState(initial);
+interface Props {
+  initial: ConnectionView[];
+  result: ConnectResult | null;
+  /** Server Action: revokes access and deletes the platform's stored stats. */
+  onDisconnect: (platform: PlatformId) => Promise<void>;
+}
+
+export function Connections({ initial, result, onDisconnect }: Props) {
+  const [removed, setRemoved] = useState<ReadonlySet<PlatformId>>(new Set());
   const [confirming, setConfirming] = useState<PlatformId | null>(null);
+  const [failed, setFailed] = useState<PlatformId | null>(null);
+  const [, startTransition] = useTransition();
 
   const disconnect = (id: PlatformId) => {
-    setList((l) => l.map((c) => (c.id === id ? { ...c, status: "not-connected" } : c)));
     setConfirming(null);
+    setFailed(null);
+    setRemoved((r) => new Set(r).add(id));
+    startTransition(async () => {
+      try {
+        await onDisconnect(id);
+      } catch {
+        setRemoved((r) => {
+          const next = new Set(r);
+          next.delete(id);
+          return next;
+        });
+        setFailed(id);
+      }
+    });
   };
 
   return (
-    <ul className={s.list}>
-      {list.map((c) => {
-        const on = c.status === "connected";
-        return (
-          <li key={c.id} className={s.row} aria-label={c.name}>
-            <span className={s.pf}>
-              <span className="dot" style={{ background: `var(--p-${c.id})` }} />
-              <span className={s.pfText}>
-                <b>{c.name}</b>
-                <small>{on ? c.account : "Connect to include it in your dashboard"}</small>
-              </span>
-            </span>
-            {confirming === c.id ? (
-              <span className={s.confirm} role="group" aria-label={`Confirm disconnecting ${c.name}`}>
-                <span>Disconnect {c.name}?</span>
-                <button type="button" className={s.danger} onClick={() => disconnect(c.id)}>
-                  Yes, disconnect
-                </button>
-                <button type="button" className={s.ghost} onClick={() => setConfirming(null)}>
-                  Keep
-                </button>
-              </span>
-            ) : (
-              <span className={s.rowEnd}>
-                <span className={`${s.state} ${on ? s.stateOn : ""}`}>
-                  {on && <Icon name="check" size={13} strokeWidth={2} />}
-                  {STATUS_LABEL[c.status]}
+    <>
+      {result && (
+        <p className={`${s.info} ${result.ok ? "" : s.notice}`} role={result.ok ? "status" : "alert"}>
+          <Icon name={result.ok ? "check" : "sparkle"} size={15} />
+          <span>{connectMessage(result)}</span>
+        </p>
+      )}
+      <ul className={s.list}>
+        {initial.map((c) => {
+          const status: ConnectionStatus = removed.has(c.id) ? "not-connected" : c.status;
+          const on = status === "connected";
+          const sub = on || status === "expired" ? c.account : c.mode === "unavailable" ? "Not available yet" : "Connect to include it in your dashboard";
+          return (
+            <li key={c.id} className={s.row} aria-label={c.name}>
+              <span className={s.pf}>
+                <span className="dot" style={{ background: `var(--p-${c.id})` }} />
+                <span className={s.pfText}>
+                  <b>{c.name}</b>
+                  <small>
+                    {sub}
+                    {c.mode === "simulated" && " · Simulated locally"}
+                  </small>
+                  {failed === c.id && (
+                    <small className={s.err} role="alert">
+                      Couldn&apos;t disconnect {c.name}. Please try again.
+                    </small>
+                  )}
                 </span>
-                {on ? (
-                  <button type="button" className={s.ghost} onClick={() => setConfirming(c.id)}>
-                    Disconnect
-                  </button>
-                ) : (
-                  <Link href="/onboarding/connect" className={s.solid}>
-                    Connect
-                  </Link>
-                )}
               </span>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+              {confirming === c.id ? (
+                <span className={s.confirm} role="group" aria-label={`Confirm disconnecting ${c.name}`}>
+                  <span>Disconnect {c.name}?</span>
+                  <button type="button" className={s.danger} onClick={() => disconnect(c.id)}>
+                    Yes, disconnect
+                  </button>
+                  <button type="button" className={s.ghost} onClick={() => setConfirming(null)}>
+                    Keep
+                  </button>
+                </span>
+              ) : (
+                <span className={s.rowEnd}>
+                  {c.mode === "unavailable" ? (
+                    <span className={s.state}>Coming later</span>
+                  ) : (
+                    <>
+                      <span className={`${s.state} ${on ? s.stateOn : ""}`}>
+                        {on && <Icon name="check" size={13} strokeWidth={2} />}
+                        {STATUS_LABEL[status]}
+                      </span>
+                      {on ? (
+                        <button type="button" className={s.ghost} onClick={() => setConfirming(c.id)}>
+                          Disconnect
+                        </button>
+                      ) : (
+                        <a href={connectHref(c.id, "/settings")} className={s.solid}>
+                          {status === "expired" ? "Reconnect" : "Connect"}
+                        </a>
+                      )}
+                    </>
+                  )}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }

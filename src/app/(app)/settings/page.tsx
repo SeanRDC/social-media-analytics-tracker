@@ -6,15 +6,17 @@ import { Connections } from "@/components/settings/Connections";
 import { SignOutButton } from "@/components/settings/SignOutButton";
 import s from "@/components/settings/Settings.module.css";
 import { Avatar } from "@/components/ui/Avatar";
-import { getConnections } from "@/lib/data/api";
+import { disconnectPlatform } from "@/app/actions/connections";
+import { parseConnectResult } from "@/lib/connect/result";
+import { getMyConnections } from "@/lib/data/connections";
 import { requireUser } from "@/lib/dal";
 
 export const metadata: Metadata = { title: "Settings" };
 
 const reveal = (i: number) => ({ "--i": i }) as CSSProperties;
 
-export default async function SettingsPage() {
-  const [user, connections] = await Promise.all([requireUser(), getConnections()]);
+export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
+  const [user, connections, params] = await Promise.all([requireUser(), getMyConnections(), searchParams]);
   return (
     <div className={s.grid}>
       <section className={`${s.card} ${s.profile} ${s.wide} glass rim reveal`} style={reveal(1)} aria-label="Profile">
@@ -31,7 +33,7 @@ export default async function SettingsPage() {
           Connected accounts
         </h2>
         <p className={s.lead}>We only read your stats. We never post for you.</p>
-        <Connections initial={connections} />
+        <Connections initial={connections} result={parseConnectResult(params)} onDisconnect={disconnectPlatform} />
       </section>
 
       <section id="alerts" className={`${s.card} glass rim reveal`} style={reveal(3)} aria-labelledby="alerts-h">

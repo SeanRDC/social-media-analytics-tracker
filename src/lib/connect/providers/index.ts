@@ -1,4 +1,4 @@
-import type { PlatformId } from "@/lib/data/types";
+import type { ConnectMode, PlatformId } from "@/lib/data/types";
 import { facebookCredentials, facebookProvider } from "./facebook";
 import { instagramCredentials, instagramProvider } from "./instagram";
 import { linkedinCredentials, linkedinProvider } from "./linkedin";
@@ -6,8 +6,6 @@ import { simulatedProvider } from "./simulated";
 import { tiktokCredentials, tiktokProvider } from "./tiktok";
 import type { Provider } from "./types";
 import { youtubeCredentials, youtubeProvider } from "./youtube";
-
-export type ConnectMode = "live" | "simulated" | "unavailable";
 
 type Creds = { clientId: string; clientSecret: string };
 
@@ -36,4 +34,5 @@ export function connectMode(platform: PlatformId): ConnectMode {
   return resolveProvider(platform)?.mode ?? "unavailable";
 }
 
+export type { ConnectMode };
 export { ProviderError, ReauthRequired, type AccountResult, type Provider, type TokenSet } from "./types";

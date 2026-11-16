@@ -1,35 +1,68 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Connections } from "@/components/settings/Connections";
+import type { ConnectionView } from "@/lib/data/types";
 
-const LIST = [
-  { id: "youtube", name: "YouTube", account: "Northbay Studio", status: "connected" },
-  { id: "x", name: "X", account: "", status: "not-connected" },
-] as const;
+const LIST: ConnectionView[] = [
+  { id: "youtube", name: "YouTube", account: "Northbay Studio", status: "connected", mode: "live" },
+  { id: "tiktok", name: "TikTok", account: "@northbay", status: "expired", mode: "live" },
+  { id: "linkedin", name: "LinkedIn", account: "", status: "not-connected", mode: "live" },
+  { id: "x", name: "X", account: "", status: "not-connected", mode: "unavailable" },
+];
+
+const setup = (onDisconnect = vi.fn(async () => {})) => {
+  render(<Connections initial={LIST} result={null} onDisconnect={onDisconnect} />);
+  return onDisconnect;
+};
 
 describe("Connections", () => {
   it("asks before disconnecting and can be cancelled", async () => {
-    render(<Connections initial={[...LIST]} />);
+    const onDisconnect = setup();
     const row = screen.getByRole("listitem", { name: "YouTube" });
     await userEvent.click(within(row).getByRole("button", { name: "Disconnect" }));
     expect(within(row).getByText("Disconnect YouTube?")).toBeInTheDocument();
     await userEvent.click(within(row).getByRole("button", { name: "Keep" }));
     expect(within(row).getByText("Connected")).toBeInTheDocument();
+    expect(onDisconnect).not.toHaveBeenCalled();
   });
 
-  it("disconnects after confirming and offers to reconnect", async () => {
-    render(<Connections initial={[...LIST]} />);
+  it("disconnects through the server after confirming and offers to connect again", async () => {
+    const onDisconnect = setup();
     const row = screen.getByRole("listitem", { name: "YouTube" });
     await userEvent.click(within(row).getByRole("button", { name: "Disconnect" }));
     await userEvent.click(within(row).getByRole("button", { name: "Yes, disconnect" }));
-    expect(within(row).getByText("Not connected")).toBeInTheDocument();
-    expect(within(row).getByRole("link", { name: "Connect" })).toHaveAttribute("href", "/onboarding/connect");
+    expect(onDisconnect).toHaveBeenCalledWith("youtube");
+    expect(await within(row).findByText("Not connected")).toBeInTheDocument();
+    expect(within(row).getByRole("link", { name: "Connect" })).toHaveAttribute("href", "/api/connect/youtube/start?returnTo=%2Fsettings");
   });
 
-  it("links unconnected platforms to the connect flow", () => {
-    render(<Connections initial={[...LIST]} />);
-    const row = screen.getByRole("listitem", { name: "X" });
-    expect(within(row).getByRole("link", { name: "Connect" })).toBeInTheDocument();
+  it("restores the row and explains when disconnecting fails", async () => {
+    setup(vi.fn(async () => Promise.reject(new Error("offline"))));
+    const row = screen.getByRole("listitem", { name: "YouTube" });
+    await userEvent.click(within(row).getByRole("button", { name: "Disconnect" }));
+    await userEvent.click(within(row).getByRole("button", { name: "Yes, disconnect" }));
+    expect(await within(row).findByRole("alert")).toHaveTextContent("Couldn't disconnect YouTube");
+    expect(within(row).getByText("Connected")).toBeInTheDocument();
+  });
+
+  it("asks to reconnect when access expired", () => {
+    setup();
+    const row = screen.getByRole("listitem", { name: "TikTok" });
+    expect(within(row).getByText("Access expired")).toBeInTheDocument();
+    expect(within(row).getByRole("link", { name: "Reconnect" })).toHaveAttribute("href", "/api/connect/tiktok/start?returnTo=%2Fsettings");
+  });
+
+  it("links unconnected platforms to the connect flow and marks unavailable ones", () => {
+    setup();
+    expect(within(screen.getByRole("listitem", { name: "LinkedIn" })).getByRole("link", { name: "Connect" })).toBeInTheDocument();
+    const x = screen.getByRole("listitem", { name: "X" });
+    expect(within(x).getByText("Coming later")).toBeInTheDocument();
+    expect(within(x).queryByRole("link")).toBeNull();
+  });
+
+  it("shows the result of a connection attempt", () => {
+    render(<Connections initial={LIST} result={{ platform: "linkedin", ok: false, reason: "no-account" }} onDisconnect={vi.fn()} />);
+    expect(screen.getByRole("alert")).toHaveTextContent("couldn't find a LinkedIn Page");
   });
 });

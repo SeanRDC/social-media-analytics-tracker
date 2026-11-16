@@ -191,3 +191,14 @@
     flex-wrap: wrap;
   }
 }
+
+/* result of a connect attempt, and inline errors */
+.notice {
+  color: var(--warn);
+}
+.notice svg {
+  color: var(--warn);
+}
+.err {
+  color: var(--down);
+}

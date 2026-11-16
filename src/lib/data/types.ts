@@ -8,6 +8,19 @@ export const PLATFORM_ORDER: readonly PlatformId[] = ["youtube", "facebook", "ti
 
 export type ConnectionStatus = "connected" | "needs-professional" | "not-connected" | "expired";
 
+/** How a platform can be connected right now: for real, simulated locally, or not at all. */
+export type ConnectMode = "live" | "simulated" | "unavailable";
+
+/** One row in onboarding and Settings. */
+export interface ConnectionView {
+  id: PlatformId;
+  name: string;
+  /** Account name or handle; empty when not connected. */
+  account: string;
+  status: ConnectionStatus;
+  mode: ConnectMode;
+}
+
 export interface Platform {
   id: PlatformId;
   name: string;

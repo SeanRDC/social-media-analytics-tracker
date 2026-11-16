@@ -354,3 +354,8 @@
     padding-left: 4px;
   }
 }
+
+.pRow .error {
+  margin: 0;
+  padding-left: 41px;
+}
