@@ -8,6 +8,10 @@ import s from "@/components/settings/Settings.module.css";
 import { Avatar } from "@/components/ui/Avatar";
 import { disconnectPlatform } from "@/app/actions/connections";
 import { importPlatform } from "@/app/actions/sync";
+import { setAlert, subscribePush, unsubscribePush } from "@/app/actions/alerts";
+import { PushToggle } from "@/components/settings/PushToggle";
+import { getAlertSettings } from "@/lib/alerts/run";
+import { vapidPublicKey } from "@/lib/push";
 import { parseConnectResult } from "@/lib/connect/result";
 import { getMyConnections } from "@/lib/data/connections";
 import { requireUser } from "@/lib/dal";
@@ -18,6 +22,8 @@ const reveal = (i: number) => ({ "--i": i }) as CSSProperties;
 
 export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
   const [user, connections, params] = await Promise.all([requireUser(), getMyConnections(), searchParams]);
+  const alerts = await getAlertSettings(user.id);
+  const pushKey = vapidPublicKey();
   return (
     <div className={s.grid}>
       <section className={`${s.card} ${s.profile} ${s.wide} glass rim reveal`} style={reveal(1)} aria-label="Profile">
@@ -41,8 +47,9 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
         <h2 id="alerts-h" className={s.h2}>
           Alerts
         </h2>
-        <p className={s.lead}>Sent as push notifications on your phone and as email.</p>
-        <AlertSettings />
+        <p className={s.lead}>Sent by email{pushKey ? ", and as notifications on devices where you turn them on" : ""}. Checked once a day after your numbers update.</p>
+        <AlertSettings initial={alerts} onChange={setAlert} />
+        {pushKey && <PushToggle vapidPublicKey={pushKey} onSubscribe={subscribePush} onUnsubscribe={unsubscribePush} />}
       </section>
 
       <section className={`${s.card} ${s.wide} glass rim reveal`} style={reveal(4)} aria-labelledby="look-h">
