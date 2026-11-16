@@ -1,0 +1,57 @@
+import type { PlatformId } from "@/lib/data/types";
+
+/** Tokens as a platform returns them, normalised. */
+export interface TokenSet {
+  accessToken: string;
+  refreshToken: string | null;
+  /** When the access token stops working; null when it does not expire. */
+  expiresAt: Date | null;
+  /** Granted scopes as the platform reports them (people can decline some). */
+  scopes: string | null;
+}
+
+export type AccountResult =
+  | {
+      ok: true;
+      /** The platform's own id (channel, Page, account or organization). */
+      externalId: string;
+      name: string;
+      /** Replaces the user tokens, e.g. a Facebook Page token. */
+      tokens?: TokenSet;
+    }
+  | { ok: false; reason: "needs-professional" | "no-account" };
+
+export interface Provider {
+  platform: PlatformId;
+  /** Send a PKCE code challenge with the authorize request. */
+  pkce: boolean;
+  /** Refresh once the access token expires within this many seconds. */
+  refreshWindowSeconds: number;
+  authorizeUrl(a: { redirectUri: string; state: string; codeChallenge: string }): string;
+  exchangeCode(a: { code: string; redirectUri: string; codeVerifier: string }): Promise<TokenSet>;
+  fetchAccount(tokens: TokenSet): Promise<AccountResult>;
+  /** Throws ReauthRequired when the platform refuses (revoked, expired refresh token). */
+  refresh?(tokens: { accessToken: string; refreshToken: string | null }): Promise<TokenSet>;
+  /** Best effort; failures are ignored by the caller. */
+  revoke?(tokens: { accessToken: string; refreshToken: string | null }): Promise<void>;
+}
+
+/** The person has to connect again (access revoked or a refresh token expired). */
+export class ReauthRequired extends Error {
+  constructor(message = "The platform needs you to connect again") {
+    super(message);
+    this.name = "ReauthRequired";
+  }
+}
+
+/** Any other unexpected response from a platform. Never includes tokens. */
+export class ProviderError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code?: string,
+  ) {
+    super(message);
+    this.name = "ProviderError";
+  }
+}
