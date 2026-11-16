@@ -20,6 +20,8 @@ export default function DataDeletionPage() {
       </ol>
 
       <h2>Delete everything</h2>
+      <p>Signed in? Open Settings and choose Delete account. It revokes our access to every platform and deletes your account and all stored data immediately.</p>
+      <p>Can&apos;t sign in? Ask us by email:</p>
       <ol>
         <li>Email {LEGAL_CONTACT} from the address you sign in with, with the subject &ldquo;Delete my data&rdquo;.</li>
         <li>We confirm the request and delete your account, connections and statistics within 30 days.</li>

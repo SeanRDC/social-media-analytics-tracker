@@ -205,3 +205,35 @@
 .warnText {
   color: var(--warn);
 }
+
+.deleteForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  animation: rise 0.25s var(--out);
+}
+.deleteForm p {
+  margin: 0;
+}
+.deleteField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--mu);
+}
+.deleteField input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  /* 16px keeps iOS from zooming in */
+  font-size: 16px;
+  color: var(--tx);
+  background: var(--card);
+  border: 1px solid var(--cardb);
+}
+.deleteForm .confirm {
+  justify-content: flex-start;
+}

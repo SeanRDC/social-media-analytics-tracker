@@ -8,7 +8,9 @@ import s from "@/components/settings/Settings.module.css";
 import { Avatar } from "@/components/ui/Avatar";
 import { disconnectPlatform } from "@/app/actions/connections";
 import { importPlatform } from "@/app/actions/sync";
+import { deleteAccount } from "@/app/actions/account";
 import { setAlert, subscribePush, unsubscribePush } from "@/app/actions/alerts";
+import { DeleteAccount } from "@/components/settings/DeleteAccount";
 import { PushToggle } from "@/components/settings/PushToggle";
 import { getAlertSettings } from "@/lib/alerts/run";
 import { vapidPublicKey } from "@/lib/push";
@@ -70,6 +72,13 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
           <Icon name="sparkle" size={15} />
           <span>Motion and glass follow your device: turn on Reduce Motion or Reduce Transparency in your phone or computer settings and the app goes still and solid.</span>
         </p>
+      </section>
+      <section className={`${s.card} ${s.wide} glass rim reveal`} style={reveal(5)} aria-labelledby="delete-h">
+        <h2 id="delete-h" className={s.h2}>
+          Delete account
+        </h2>
+        <p className={s.lead}>Remove your account and everything we stored, right away.</p>
+        <DeleteAccount email={user.email} onDelete={deleteAccount} />
       </section>
     </div>
   );
