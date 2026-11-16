@@ -37,6 +37,8 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 
 ## Instagram (phase 4)
 
+**As built (2026-11-16):** `src/lib/sync/instagram.ts`. `/me?fields=user_id,username,followers_count`, `/me/media` (100 most recent, with `insights.metric(views,shares)`; retried without insights if refused), `follower_demographics` with `metric_type=total_value` and `breakdown=age|country|gender` (optional). Instagram reports totals, so daily rows are derived from the change between syncs and history starts on the day of connection. **Verify with an approved account:** the `views`/`shares` media insight names and the demographics response shape.
+
 - **API:** Instagram API with Instagram Login (`graph.instagram.com`) now includes account and media insights, so a linked Facebook Page is no longer required for that path.
 - **Permissions:** `instagram_business_basic`, `instagram_business_manage_insights`. Advanced access (App Review) is needed for users outside the app's roles.
 - **Limits:** Professional (Business or Creator) accounts only. `follower_count` and `online_followers` are unavailable under 100 followers. Data can lag up to 48 hours. `impressions` is deprecated; use the current metric list.
@@ -44,11 +46,15 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 
 ## Facebook Pages (phase 4)
 
+**As built (2026-11-16):** `src/lib/sync/facebook.ts`. `/{page}?fields=followers_count`, daily `page_daily_follows_unique`, `page_daily_unfollows_unique`, `page_media_view`, `page_post_engagements` (each requested alone, 90-day chunks, unavailable ones skipped; with none at all the sync derives daily rows from totals), `published_posts` with reaction/comment summaries, shares and `insights.metric(post_media_view)`. No demographics. **Verify with an approved app:** each metric name against the current Page Insights reference (Meta keeps retiring metrics).
+
 - **Permissions:** Facebook Login with page read permissions (for example `pages_show_list`, `pages_read_engagement`, `read_insights`); App Review required.
 - **Metric changes:** On 2025-11-15 Meta removed legacy metrics: `page_fans` → `page_follows`, `page_impressions*` → `page_media_view`, post impressions → `post_media_view`. Removed metrics return an invalid-metric error. More Page Insights metrics (reported to include unique reach) are scheduled for removal on 2026-06-15; check the deprecated-metrics page before building.
 - Sources: [deprecated metrics](https://developers.facebook.com/documentation/pages-api/platforminsights/page/deprecated-metrics), [Aug 2025 update](https://developers.facebook.com/blog/post/2025/08/15/page-insights-api-updates/), [Page insights reference](https://developers.facebook.com/docs/graph-api/reference/page/insights/)
 
 ## TikTok (phase 5)
+
+**As built (2026-11-16):** `src/lib/sync/tiktok.ts`. `GET /v2/user/info/?fields=open_id,follower_count,likes_count,video_count` and `POST /v2/video/list/` (20 per page, 100 videos) with `view_count, like_count, comment_count, share_count`. Daily rows are derived from the change between syncs. **Verify:** the stats fields require `user.info.stats` / `video.list`; a 2026-11-16 search did not confirm the count fields on the v2 reference pages.
 
 - **API:** Login Kit + Display API.
 - **Scopes:** `user.info.basic`, `user.info.profile`, `user.info.stats` (follower, following, likes and video counts), `video.list` (recent videos).
@@ -56,6 +62,8 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 - Sources: [scopes](https://developers.tiktok.com/doc/tiktok-api-scopes/), [user info scope migration](https://developers.tiktok.com/bulletin/user-info-scope-migration), [Display API overview](https://developers.tiktok.com/docs/en/display-api-get-started)
 
 ## LinkedIn (phase 5)
+
+**As built (2026-11-16):** `src/lib/sync/linkedin.ts`. Total from `networkSizes/{org}?edgeType=COMPANY_FOLLOWED_BY_MEMBER`; daily `organizationalEntityFollowerStatistics` (`followerGains`) and `organizationalEntityShareStatistics` (impressions as views) with `timeIntervals` in Rest.li 2.0 syntax; posts from `/rest/posts?q=author` with per-post share statistics. No demographics (no age facet; countries are geo ids). **Verify:** `followerGains` field names and that the share statistics finder is enabled for the approved tier.
 
 - **API:** Community Management API (organization pages only; personal profiles are not available).
 - **Access:** Request form plus vetting; apps start on a Development tier with limited call volume, and Standard tier needs a screen recording. A rejected app cannot re-apply; a new app is required. Use the versioned `/rest/` endpoints.

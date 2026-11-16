@@ -38,7 +38,7 @@ Connect YouTube, Facebook, TikTok, LinkedIn and Instagram, then see followers, v
 ---
 
 > [!WARNING]
-> **This project is under active development.** The front end is complete, and the backend is being built in phases. Sign-in, platform connections and **YouTube** stats are real. Facebook, Instagram, TikTok and LinkedIn connect but their numbers arrive in the next phases; until anything is imported the dashboard shows clearly labelled **sample data**. Expect breaking changes.
+> **This project is under active development.** The front end is complete, and the backend is being built in phases. Sign-in, platform connections, imports for all five platforms, exports, the weekly email and alerts are built. Until a platform has been imported the dashboard shows clearly labelled **sample data**, and real platform numbers need each platform's app approval (see the setup checklist). Expect breaking changes.
 
 ## ✨ Features
 
@@ -46,7 +46,8 @@ Connect YouTube, Facebook, TikTok, LinkedIn and Instagram, then see followers, v
 - 🔗 **Five platforms:** YouTube, Facebook, TikTok, LinkedIn and Instagram, with a compare ranking and per-platform detail
 - 🗂️ **Content library:** filter every post and open a detail sheet for any one of them
 - 👥 **Audience insights:** age, countries and the best time to post
-- 📨 **Reports:** export presets and a weekly email schedule
+- 📨 **Reports:** CSV and print-ready PDF exports, and a weekly email on the day you choose
+- 🔔 **Alerts:** posts taking off, follower milestones, engagement drops and accounts needing reconnection, by email and web push
 - 🔐 **Real sign-in:** email magic links, plus Google and Apple when configured, with protected routes
 - 📱 **Installable and phone friendly:** works from phones to wide desktops
 
@@ -74,8 +75,9 @@ Connect YouTube, Facebook, TikTok, LinkedIn and Instagram, then see followers, v
 | `/platforms`, `/platforms/[id]` | Every platform, a compare ranking, and per-platform detail |
 | `/content` | Filterable post library; `?post=<id>` opens a post's detail sheet |
 | `/audience` | Age, countries and the best time to post |
-| `/reports` | Export presets and the weekly email schedule |
-| `/settings` | Profile and sign out, connected accounts (connect, reconnect, disconnect), alerts, appearance |
+| `/reports` | Export presets (CSV download, PDF via a print-ready page) and the weekly email schedule |
+| `/reports/print/[preset]` | Print-ready report; the print dialog saves it as a PDF |
+| `/settings` | Profile and sign out, connected accounts (connect, reconnect, disconnect), alerts and push notifications, appearance |
 | `/privacy`, `/terms`, `/data-deletion` | Legal pages required by platform reviews *(drafts)* |
 
 Dashboard pages require sign-in.
@@ -127,7 +129,10 @@ src/
   lib/
     connect/        platform OAuth: providers, token encryption, connect flow, connection service
     data/           types, api.ts (the data layer), compute.ts (rows → dashboard), live.ts, sample data
-    sync/           platform fetchers (YouTube), generated history for simulated accounts, sync service
+    sync/           platform fetchers (YouTube, Facebook, Instagram, TikTok, LinkedIn), generated history, sync service
+    reports/        report builder (CSV, print view, email) and the weekly email schedule
+    alerts/         alert rules and delivery
+    push.ts         web push (VAPID)
     auth.ts, dal.ts sign-in config and the session check
     chart.ts        chart geometry
     format.ts       number and date formatting
@@ -151,6 +156,9 @@ docs/               design specs, plans, platform API notes, owner setup checkli
 | Token refresh, disconnect | `src/lib/connect/service.ts` |
 | Imports (first import and daily sync) | `src/lib/sync/`; daily job `/api/cron/daily` (`vercel.json`) refreshes tokens, then syncs every account |
 | Dashboard numbers | `src/lib/data/live.ts` loads a user's rows, `src/lib/data/compute.ts` turns them into the UI's types |
+| Exports | `/api/export/[preset]` (CSV) and `/reports/print/[preset]` (PDF via print), both from `src/lib/reports/build.ts` |
+| Weekly email and alerts | `src/lib/reports/schedule.ts`, `src/lib/alerts/`; sent by the daily job after the sync |
+| Push notifications | `src/lib/push.ts`, `public/sw.js`; needs `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` |
 | Environment variables | `.env.example` |
 | Owner setup (Neon, Vercel, Google, Meta, TikTok, LinkedIn) | [`docs/platforms/setup-checklist.md`](docs/platforms/setup-checklist.md) |
 | What each platform API provides | [`docs/platforms/api-notes.md`](docs/platforms/api-notes.md) |
@@ -175,11 +183,12 @@ The full plan is in [the backend design](docs/superpowers/specs/2026-11-15-backe
 - [x] **Phase 1:** Postgres schema and migrations, real sign-in, protected routes
 - [x] **Phase 2:** connecting platforms (OAuth, encrypted tokens, refresh, statuses)
 - [x] **Phase 3:** YouTube end to end (180-day history, daily sync, every page on real data)
-- [ ] Meta (Facebook and Instagram), TikTok and LinkedIn data
-- [ ] Exports and the weekly email
-- [ ] Alerts
+- [x] **Phase 4:** Facebook Pages and Instagram
+- [x] **Phase 5:** TikTok and LinkedIn Pages
+- [x] **Phase 6:** CSV and PDF exports, the weekly email, alerts by email and web push
+- [ ] **Phase 7:** hardening (rate limits and quotas, retries, monitoring, scaling the nightly job, legal review)
 
-Still to come: numbers for Facebook, Instagram, TikTok and LinkedIn, exports, the weekly email and alerts.
+Still to come: phase 7, and checking each platform's fetcher against a real approved account (field names are noted in `docs/platforms/api-notes.md`).
 
 ## 🧰 Tech stack
 

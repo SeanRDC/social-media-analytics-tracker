@@ -56,9 +56,9 @@ Jobs (phase 2+): first import, daily snapshot, token refresh, alerts, weekly ema
 | 1 | Database, schema, migrations, real sign-in, protected routes, deployment readiness | done |
 | 2 | Connection framework (OAuth, encrypted tokens, refresh, statuses) | done (2026-11-16) |
 | 3 | YouTube end to end | done (2026-11-16) |
-| 4 | Facebook + Instagram | later |
-| 5 | TikTok, LinkedIn | later |
-| 6 | Exports, weekly email, alerts, push | later |
+| 4 | Facebook + Instagram | done (2026-11-16) |
+| 5 | TikTok, LinkedIn | done (2026-11-16) |
+| 6 | Exports, weekly email, alerts, push | done (2026-11-16) |
 | 7 | Hardening | later |
 
 ## Non-goals (this round)

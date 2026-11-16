@@ -13,9 +13,11 @@ Replace `https://YOUR-DOMAIN` with the Vercel URL (or your own domain) once it e
 - [ ] Set `CRON_SECRET` to any long random string (phase 2). Vercel Cron uses it to call the daily job in `vercel.json` (token refresh, then each account's daily sync).
 - [ ] Run `npm run db:migrate` once against Neon (locally with `DATABASE_URL` set, or as a Vercel build step).
 
-## 2. Email for sign-in links (phase 1, optional until launch)
+## 2. Email: sign-in links, weekly reports and alerts
 
-- [ ] Create a **Resend** account, verify a sending domain, set `RESEND_API_KEY` and `EMAIL_FROM`. Without them, sign-in links are printed in the server log (fine for development).
+- [ ] Create a **Resend** account, verify a sending domain, set `RESEND_API_KEY` and `EMAIL_FROM`. Without them, every email is printed in the server log instead (fine for development); sign-in, the weekly email and alerts need it in production.
+- [ ] Optional, push notifications: run `npx web-push generate-vapid-keys` and set `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` (`mailto:` your address). Keep the same keys afterwards, or existing subscriptions stop working.
+- [ ] The weekly email goes out at the first daily job after the chosen time (Vercel Hobby runs crons once a day). On Vercel Pro you can change `vercel.json` to run `/api/cron/daily` hourly for on-the-hour delivery.
 
 ## 3. Google: app sign-in now, YouTube in phase 3
 
