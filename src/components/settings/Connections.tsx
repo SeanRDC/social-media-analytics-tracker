@@ -89,6 +89,7 @@ export function Connections({ initial, result, onDisconnect, onImport }: Props) 
           const status: ConnectionStatus = removed.has(c.id) ? "not-connected" : c.status;
           const on = status === "connected";
           const sub = on || status === "expired" ? c.account : c.mode === "unavailable" ? "Not available yet" : "Connect to include it in your dashboard";
+          const updated = on && c.updatedAt ? ` · Updated ${new Date(c.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : "";
           return (
             <li key={c.id} className={s.row} aria-label={c.name}>
               <span className={s.pf}>
@@ -97,8 +98,10 @@ export function Connections({ initial, result, onDisconnect, onImport }: Props) 
                   <b>{c.name}</b>
                   <small>
                     {sub}
+                    {updated}
                     {c.mode === "simulated" && " · Simulated locally"}
                   </small>
+                  {on && c.syncError && <small className={s.warnText}>Last update didn&apos;t finish: {c.syncError} We&apos;ll keep trying.</small>}
                   {failed === c.id && (
                     <small className={s.err} role="alert">
                       Couldn&apos;t disconnect {c.name}. Please try again.

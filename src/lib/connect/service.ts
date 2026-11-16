@@ -42,7 +42,15 @@ export async function listConnections(db: Db, userId: string): Promise<Connectio
   const byPlatform = new Map(rows.map((r) => [r.platform, r]));
   return PLATFORM_ORDER.map((id) => {
     const row = byPlatform.get(id);
-    return { id, name: PLATFORM_NAMES[id], account: row?.accountName ?? "", status: row?.status ?? "not-connected", mode: connectMode(id) };
+    return {
+      id,
+      name: PLATFORM_NAMES[id],
+      account: row?.accountName ?? "",
+      status: row?.status ?? "not-connected",
+      mode: connectMode(id),
+      updatedAt: row?.lastSyncedAt?.toISOString() ?? null,
+      syncError: row?.lastSyncError ?? null,
+    };
   });
 }
 

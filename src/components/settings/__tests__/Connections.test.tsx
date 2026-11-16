@@ -79,6 +79,14 @@ describe("Connections", () => {
     expect(refresh).toHaveBeenCalled();
   });
 
+  it("shows when numbers last arrived and why the last update failed", () => {
+    const list: ConnectionView[] = [{ ...LIST[0], updatedAt: "2026-11-15T04:00:00Z", syncError: "YouTube /channels failed (500)." }];
+    render(<Connections initial={list} result={null} onDisconnect={vi.fn()} />);
+    const row = screen.getByRole("listitem", { name: "YouTube" });
+    expect(within(row).getByText(/Updated 15 Nov/)).toBeInTheDocument();
+    expect(within(row).getByText(/Last update didn't finish: YouTube \/channels failed \(500\)\./)).toBeInTheDocument();
+  });
+
   it("does not import after a failed connection", () => {
     const onImport = vi.fn();
     render(<Connections initial={LIST} result={{ platform: "youtube", ok: false, reason: "denied" }} onDisconnect={vi.fn()} onImport={onImport} />);

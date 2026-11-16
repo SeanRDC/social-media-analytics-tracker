@@ -19,6 +19,10 @@ export interface ConnectionView {
   account: string;
   status: ConnectionStatus;
   mode: ConnectMode;
+  /** When numbers last arrived (ISO), if ever. */
+  updatedAt?: string | null;
+  /** Why the last import attempt failed, if it did. */
+  syncError?: string | null;
 }
 
 export interface Platform {
