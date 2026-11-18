@@ -1,9 +1,8 @@
 .hd {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   flex-wrap: wrap;
-  gap: 10px;
-  min-height: 40px;
+  gap: 14px 20px;
 }
 
 .titles {
@@ -11,54 +10,41 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
 .acct {
-  display: none;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--mu);
+}
+.acct::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--acc);
 }
 
 .title {
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-family: var(--display);
+  font-size: clamp(34px, 4.4vw, 52px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.ib {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--card);
-  border: 1px solid var(--cardb);
-  color: var(--mu);
-  transition: color 0.2s var(--out), transform 0.14s var(--out);
-}
-.ib:hover {
-  color: var(--tx);
-}
-.ib:active {
-  transform: scale(0.92);
-}
-
 @media (max-width: 639px) {
-  .acct {
-    display: block;
-  }
   .title {
-    font-size: 20px;
-  }
-  .ib {
-    display: none;
+    font-size: 32px;
   }
   .range {
-    order: 3;
     width: 100%;
   }
   .range button {

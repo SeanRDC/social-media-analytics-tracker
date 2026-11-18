@@ -1,19 +1,19 @@
+/* Track with a dark sliding thumb, echoing the navbar's active pill. */
 .seg {
   position: relative;
   display: inline-flex;
-  padding: 3px;
-  border-radius: 99px;
-  background: var(--card);
-  border: 1px solid var(--cardb);
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--track);
 }
 
 .ind {
   position: absolute;
   left: 0;
   top: 0;
-  border-radius: 99px;
-  background: var(--seg-on);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: var(--nav);
+  box-shadow: 0 6px 14px -8px rgba(20, 20, 22, 0.6);
   pointer-events: none;
 }
 .ind[data-ready="true"] {
@@ -23,30 +23,34 @@
 .opt {
   position: relative;
   z-index: 1;
-  min-height: 30px;
-  padding: 5px 13px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 500;
+  min-height: 36px;
+  padding: 6px 16px;
+  border-radius: 10px;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 600;
   color: var(--mu);
   transition: color 0.2s var(--out), transform 0.14s var(--out);
 }
-.opt[aria-pressed="true"] {
+.opt:hover {
   color: var(--tx);
+}
+.opt[aria-pressed="true"] {
+  color: #fff;
 }
 .opt:active {
   transform: scale(0.95);
 }
 
-.sm .opt {
-  min-height: 26px;
-  padding: 3px 10px;
-  font-size: 11px;
+.sm {
+  border-radius: 12px;
+  padding: 3px;
 }
-
-@media (max-width: 639px) {
-  .opt {
-    min-height: 36px;
-    padding: 6px 14px;
-  }
+.sm .opt {
+  min-height: 30px;
+  padding: 4px 12px;
+  font-size: 12.5px;
+}
+.sm .ind {
+  border-radius: 9px;
 }

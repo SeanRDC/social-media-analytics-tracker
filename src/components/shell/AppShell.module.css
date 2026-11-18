@@ -1,63 +1,18 @@
-/* Desktop and tablet: one glass window with a dark rail, like the inspiration. */
-.frame {
-  position: relative;
-  display: grid;
-  grid-template-columns: 60px minmax(0, 1fr);
-  min-height: calc(100dvh - 32px);
-  margin: 16px;
-  border-radius: 28px;
-  background: var(--win);
-  border: 1px solid var(--cardb);
-  -webkit-backdrop-filter: blur(28px) saturate(140%);
-  backdrop-filter: blur(28px) saturate(140%);
-  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.55);
-}
-
-.railCol {
-  position: relative;
-  z-index: 3;
-  background: var(--rail);
-  border-radius: 27px 0 0 27px;
-}
-
+/* Page column under the floating navbar. */
 .main {
-  min-width: 0;
-  padding: 14px 16px 20px;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px max(20px, var(--safe-r)) 56px max(20px, var(--safe-l));
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
 }
 
-/* Phone: no window or rail; content runs edge to edge above the floating tab bar. */
 @media (max-width: 639px) {
-  .frame {
-    display: block;
-    min-height: 100dvh;
-    margin: 0;
-    border: 0;
-    border-radius: 0;
-    background: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
-  }
-  .frame::before {
-    display: none;
-  }
-  .railCol {
-    display: none;
-  }
   .main {
-    gap: 12px;
-    padding: calc(10px + var(--safe-t)) max(12px, var(--safe-r)) calc(var(--tabbar-h) + 34px + var(--safe-b)) max(12px, var(--safe-l));
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .frame {
-    background: var(--solid);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+    gap: 14px;
+    padding: 18px max(14px, var(--safe-r)) calc(var(--tabbar-h) + 36px + var(--safe-b)) max(14px, var(--safe-l));
   }
 }
 
@@ -66,54 +21,70 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px 10px;
-  padding: 8px 12px;
-  border-radius: 14px;
-  font-size: 12px;
-  color: var(--mu);
-  background: var(--card);
-  border: 1px solid var(--cardb);
+  gap: 8px 12px;
+  padding: 8px 10px 8px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--tx);
+  background: var(--lime);
   animation: fade 0.5s var(--out) both;
 }
-.notice svg {
-  color: var(--acc);
+.noticeIcon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--tx);
+  color: var(--lime);
+  flex: none;
 }
 .notice a {
   margin-left: auto;
-  color: var(--acc);
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--tx);
+  color: #fff;
   font-weight: 600;
+  font-size: 12.5px;
+}
+@media (max-width: 639px) {
+  .notice {
+    border-radius: 18px;
+    align-items: flex-start;
+  }
+  .notice a {
+    margin-left: 34px;
+  }
 }
 
 /* loading skeleton while the session is checked */
 .loading {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 .skHead {
-  height: 40px;
-  width: 260px;
+  height: 56px;
+  width: 340px;
   max-width: 70%;
-  border-radius: 12px;
 }
 .skGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  grid-template-rows: 150px 140px;
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
-.skHero {
-  grid-row: span 2;
+.sk {
+  height: 160px;
 }
 .skWide {
-  height: 220px;
+  height: 280px;
 }
 .sk,
 .skHead {
   display: block;
-  border-radius: 22px;
-  background: linear-gradient(100deg, var(--card) 30%, rgba(255, 255, 255, 0.09) 50%, var(--card) 70%) 0 0 / 200% 100%;
-  border: 1px solid var(--cardb);
+  border-radius: var(--r-card);
+  background: linear-gradient(100deg, #ebeae5 30%, #f6f5f1 50%, #ebeae5 70%) 0 0 / 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
 @keyframes shimmer {
@@ -121,12 +92,8 @@
     background-position: -200% 0;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 799px) {
   .skGrid {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 220px 140px 140px;
-  }
-  .skHero {
-    grid-row: auto;
   }
 }

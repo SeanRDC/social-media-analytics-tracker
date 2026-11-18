@@ -13,9 +13,13 @@ The owner wants to drop the Graphite liquid-glass look and redesign the whole ap
 - Every screen restyled: app shell, Overview, Platforms (+ detail), Content (+ post sheet), Audience, Reports (+ print), Settings, landing, sign-in, onboarding, legal, 404.
 - Rename to Ispector everywhere the name is shown.
 
+## Scope update (2026-11-18, from the owner)
+
+"Scrap the liquid glass design… ALL together with the layout and everything… you are starting with a blank canvas." Every page's layout, card arrangement and component markup is redesigned from scratch in the Ramos direction; nothing of the Graphite layout (image hero with frosted KPI strip, glass window frame, side rail) is kept. What stays: the pages themselves (same routes), the information each page shows, and everything under the hood (data layer, server actions, auth, imports, exports, alerts). Behaviour tests (sorting, filtering, scheduling, connect flow) keep passing; markup-only assertions may change with the new layouts.
+
 ## Non-goals
 
-- No behaviour, data, routing or backend changes. Components keep their props and logic; tests keep passing.
+- No data, routing or backend changes.
 - No dark mode or theme toggle.
 - No new CSS framework (the project uses CSS modules).
 
@@ -26,7 +30,7 @@ The owner wants to drop the Graphite liquid-glass look and redesign the whole ap
 
 ## Approaches considered
 
-1. **Restyle in place (chosen):** swap design tokens in `globals.css`, remove the glass utilities, rewrite the CSS modules, and replace the side rail with a top navbar component. Keeps all logic and tests.
+1. **New design system and rebuilt page layouts on the existing data layer (chosen):** new tokens in `globals.css`, a top navbar instead of the rail, and each page's components re-laid out from scratch, while data fetching, actions and behaviour stay as they are.
 2. **Adopt Tailwind and rebuild components:** rejected. It rewrites everything for no visual gain and fights the existing CSS-module setup.
 3. **Light + dark themes with a toggle:** rejected for now. It doubles the design work and the owner chose light.
 

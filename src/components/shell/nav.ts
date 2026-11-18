@@ -6,8 +6,8 @@ export interface NavItem {
   icon: IconName;
 }
 
-/** Desktop and tablet rail. */
-export const RAIL_NAV: NavItem[] = [
+/** Sections in the top navbar (desktop and tablet). */
+export const MAIN_NAV: NavItem[] = [
   { href: "/overview", label: "Overview", icon: "home" },
   { href: "/platforms", label: "Platforms", icon: "grid" },
   { href: "/content", label: "Content", icon: "play" },
