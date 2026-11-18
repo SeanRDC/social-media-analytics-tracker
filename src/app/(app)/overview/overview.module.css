@@ -1,33 +1,59 @@
+/* 12-column grid: statement + tiles, then chart + growth, then the posts table. */
 .grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
 }
-
-.side {
-  display: grid;
-  grid-template-rows: auto auto;
-  gap: 12px;
+.grid > div {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  align-content: start;
+}
+.grid > div > * {
+  flex: 1;
 }
 
+.statement {
+  grid-column: span 7;
+}
+.kpis {
+  grid-column: span 5;
+}
+.chart {
+  grid-column: span 8;
+}
+.growth {
+  grid-column: span 4;
+}
 .table {
   grid-column: 1 / -1;
 }
 
-@media (max-width: 1023px) {
-  .grid {
-    grid-template-columns: minmax(0, 1fr);
+@media (max-width: 1099px) {
+  .statement,
+  .kpis {
+    grid-column: 1 / -1;
   }
-  .side {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto;
+  .kpis ul {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .chart {
+    grid-column: span 7;
+  }
+  .growth {
+    grid-column: span 5;
   }
 }
 
-@media (max-width: 639px) {
-  .side {
-    grid-template-columns: minmax(0, 1fr);
+@media (max-width: 799px) {
+  .grid {
+    gap: 12px;
+  }
+  .kpis ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .chart,
+  .growth {
+    grid-column: 1 / -1;
   }
 }

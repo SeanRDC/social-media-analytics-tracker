@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { Icon, type IconName } from "@/components/icons/Icon";
 import s from "@/components/landing/Landing.module.css";
 import { GrowthCard } from "@/components/overview/GrowthCard";
-import { HeroCard } from "@/components/overview/HeroCard";
+import { KpiTiles, SummaryStatement } from "@/components/overview/Summary";
 import { DailyViewsCard } from "@/components/overview/DailyViewsCard";
 import { RangeProvider } from "@/components/shell/RangeProvider";
 import { ArrowButton } from "@/components/ui/ArrowButton";
@@ -71,7 +71,8 @@ export default async function Landing() {
         <section className={`${s.preview} reveal`} style={{ "--i": 4 } as CSSProperties} aria-label="Dashboard preview with sample data">
           <RangeProvider>
             <div className={s.previewGrid}>
-              <HeroCard accountName={overview.accountName} connectedCount={overview.connectedCount} metrics={overview.metrics} />
+              <SummaryStatement accountName={overview.accountName} connectedCount={overview.connectedCount} metrics={overview.metrics} />
+              <KpiTiles metrics={overview.metrics} />
               <div className={s.previewSide}>
                 <DailyViewsCard views={views} />
                 {top && <GrowthCard week={overview.metrics[7]} weekGrowth={overview.weekGrowth} top={top} />}

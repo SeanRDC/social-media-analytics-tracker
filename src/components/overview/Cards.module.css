@@ -1,154 +1,153 @@
+/* Overview cards: views chart (white) and growth (dark ink, like Ramos's black widget). */
 .card {
-  position: relative;
-  border-radius: 22px;
-  padding: 13px 15px;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 14px;
+  padding: 22px 24px 18px;
+  min-width: 0;
 }
 
 .ct {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--mu);
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
 }
 .title {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: 400;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 600;
+}
+.live {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--acc);
+  box-shadow: 0 0 0 4px var(--acc-soft);
+}
+.legend {
+  display: inline-flex;
+  gap: 14px;
+  font-size: 12.5px;
   color: var(--mu);
 }
-
-.live {
-  position: relative;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--live);
-  flex: none;
-}
-.live::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--live);
-  animation: pulse 1.8s var(--out) infinite;
-}
-
-.legend {
-  display: flex;
-  gap: 10px;
-  font-size: 10.5px;
-}
 .legend span {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 .legend i {
-  width: 10px;
-  height: 2px;
-  border-radius: 2px;
-  display: block;
+  width: 14px;
+  height: 4px;
+  border-radius: 4px;
+  display: inline-block;
 }
 
-/* growth + top platform */
+/* ---------- growth (dark) ---------- */
 .duo {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: 10px;
+  background: var(--nav);
+  color: #fff;
+  border-color: transparent;
+  gap: 16px;
 }
 .gw {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 6px;
   min-width: 0;
+}
+.gwTitle {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--nav-mu);
 }
 .bigRow {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-top: 2px;
+  gap: 10px;
 }
 .big {
-  font-size: 27px;
-  font-weight: 500;
-  letter-spacing: -0.03em;
+  font-family: var(--display);
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
   line-height: 1;
 }
 .pillUp {
-  font-size: 10.5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--lime);
+  color: var(--tx);
+  font-size: 12.5px;
   font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 99px;
-  background: var(--acc-soft);
-  color: var(--acc);
 }
 .note {
-  font-size: 10.5px;
-  color: var(--mu);
-  min-height: 14px;
+  font-size: 13px;
+  color: var(--nav-mu);
+  min-height: 18px;
 }
 .bars {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
-  height: 34px;
-  margin-top: auto;
+  gap: 6px;
+  height: 84px;
+  margin-top: 8px;
 }
 .bar {
   flex: 1;
-  min-width: 0;
-  border-radius: 3px 3px 1px 1px;
-  background: var(--acc);
-  opacity: 0.35;
+  min-height: 6px;
+  border-radius: 8px;
+  background: var(--nav-active);
   transform-origin: bottom;
-  transition: opacity 0.15s;
   animation: grow 0.8s var(--out) both;
-  animation-delay: calc(450ms + var(--i, 0) * 60ms);
+  animation-delay: calc(0.3s + var(--i) * 60ms);
+  transition: background-color 0.2s var(--out);
 }
-.bar:last-child,
+.bar:last-child {
+  background: var(--lime);
+}
 .bar:hover,
 .bar:focus-visible {
-  opacity: 1;
+  background: #fff;
+}
+.bar:focus-visible {
+  outline-color: var(--lime);
 }
 
 .tile {
-  border-radius: 16px;
-  background: var(--tile);
-  padding: 7px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 11.5px;
-  overflow: hidden;
-  transition: background 0.2s var(--out);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 10px 14px 10px 10px;
+  border-radius: var(--r-tile);
+  background: #fff;
+  color: var(--tx);
+  transition: transform 0.2s var(--out);
 }
 .tile:hover {
-  background: var(--rowh);
+  transform: translateY(-2px);
+}
+.tile:focus-visible {
+  outline-color: var(--lime);
 }
 .tileThumb {
-  width: 100%;
-  height: 48px;
-  border-radius: 11px;
-}
-.tile:hover .tileThumb {
-  transform: scale(1.04);
+  grid-row: span 2;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
 }
 .tileVal {
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1;
+  grid-row: span 2;
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
 }
 .tileSub {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--mu);
 }

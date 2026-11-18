@@ -30,7 +30,7 @@ export function DailyViewsCard({ views }: { views: DailyViews }) {
             This week
           </span>
           <span>
-            <i style={{ background: "var(--acc2)" }} />
+            <i style={{ background: "rgba(20, 20, 22, 0.28)" }} />
             Last week
           </span>
         </span>
@@ -38,15 +38,15 @@ export function DailyViewsCard({ views }: { views: DailyViews }) {
       <LineChart
         ariaLabel={`Views per day across all platforms. This week peaked at ${formatNumber(views.thisWeek[peakIndex])} on ${FULL_DAY[views.days[peakIndex]]}; today has ${formatNumber(today)}. Use the arrow keys to compare each day with last week.`}
         series={[
-          { key: "last", label: "Last week", values: views.lastWeek, color: "var(--acc2)" },
-          { key: "this", label: "This week", values: views.thisWeek, color: "var(--acc)", glow: true, area: true },
+          { key: "last", label: "Last week", values: views.lastWeek, color: "rgba(20, 20, 22, 0.28)" },
+          { key: "this", label: "This week", values: views.thisWeek, color: "var(--acc)", area: true },
         ]}
         xCount={views.days.length}
         xLabels={views.days.map((d, i) => ({ i, label: d }))}
         yMin={0}
         yMax={max * 1.12}
         yTicks={ticks.map((t) => ({ value: t, label: formatCompact(t) }))}
-        height={128}
+        height={240}
         pointLabel={(i) => (i === views.todayIndex ? `${FULL_DAY[views.days[i]]} · today` : FULL_DAY[views.days[i]])}
         formatValue={formatCompact}
         peak={{ series: "this", i: peakIndex, label: formatCompact(views.thisWeek[peakIndex]) }}

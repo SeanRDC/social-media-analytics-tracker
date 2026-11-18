@@ -6,7 +6,7 @@ import { CountUp } from "@/components/motion/CountUp";
 import { PlatformPill } from "@/components/ui/PlatformPill";
 import type { Metrics, Platform } from "@/lib/data/types";
 import { formatCompact, formatSigned } from "@/lib/format";
-import { growthPercent } from "./HeroCard";
+import { growthPercent } from "./Summary";
 import s from "./Cards.module.css";
 
 interface Props {
@@ -25,7 +25,7 @@ export function GrowthCard({ week, weekGrowth, top }: Props) {
   return (
     <section className={`${s.card} ${s.duo} card lift reveal`} style={{ "--i": 3 } as CSSProperties} aria-labelledby="growth-h">
       <div className={s.gw}>
-        <h2 id="growth-h" className={s.ct}>
+        <h2 id="growth-h" className={s.gwTitle}>
           Latest growth
         </h2>
         <div className={s.bigRow}>
@@ -57,7 +57,7 @@ export function GrowthCard({ week, weekGrowth, top }: Props) {
         <i className={`thumb thumb-a ${s.tileThumb}`} aria-hidden="true" />
         <PlatformPill id={top.id} plain />
         <b className={s.tileVal}>{formatCompact(top.followers)}</b>
-        <span className={s.tileSub}>top platform</span>
+        <span className={s.tileSub}>Top platform</span>
       </Link>
     </section>
   );
