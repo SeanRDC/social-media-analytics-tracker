@@ -36,11 +36,11 @@
 }
 
 /* secondary: soft grey, like the "Request a demo" button */
-.glass {
+.soft {
   background: var(--track);
   color: var(--tx);
 }
-.glass .arr {
+.soft .arr {
   background: #fff;
 }
 

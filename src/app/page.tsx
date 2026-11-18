@@ -3,9 +3,9 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Icon, type IconName } from "@/components/icons/Icon";
 import s from "@/components/landing/Landing.module.css";
+import { DailyViewsCard } from "@/components/overview/DailyViewsCard";
 import { GrowthCard } from "@/components/overview/GrowthCard";
 import { KpiTiles, SummaryStatement } from "@/components/overview/Summary";
-import { DailyViewsCard } from "@/components/overview/DailyViewsCard";
 import { RangeProvider } from "@/components/shell/RangeProvider";
 import { ArrowButton } from "@/components/ui/ArrowButton";
 import { APP_NAME } from "@/lib/brand";
@@ -15,11 +15,15 @@ export const metadata: Metadata = {
   title: { absolute: `${APP_NAME} · Every channel, one calm dashboard` },
 };
 
-const FEATURES: { icon: IconName; title: string; body: string }[] = [
-  { icon: "grid", title: "Every platform together", body: "Followers, views and engagement from YouTube, TikTok, Instagram, Facebook, LinkedIn and X, side by side and in the same units." },
-  { icon: "sparkle", title: "See what's working", body: "Daily views against last week, your best posts and when your posts do best, explained in plain words instead of raw numbers." },
-  { icon: "download", title: "Reports in a click", body: "Monthly, weekly and client-ready summaries as PDF or CSV, or emailed to you every Monday before the week starts." },
+const FEATURES: { icon: IconName; title: string; body: string; tone: "cobalt" | "lime" | "lilac" }[] = [
+  { icon: "grid", title: "Every platform together", body: "Followers, views and engagement from YouTube, TikTok, Instagram, Facebook, LinkedIn and X, side by side and in the same units.", tone: "cobalt" },
+  { icon: "sparkle", title: "See what's working", body: "Daily views against last week, your best posts and when your posts do best, explained in plain words instead of raw numbers.", tone: "lime" },
+  { icon: "download", title: "Reports in a click", body: "Monthly, weekly and client-ready summaries as PDF or CSV, or emailed to you every Monday before the week starts.", tone: "lilac" },
 ];
+
+const MARQUEE = ["Followers", "Views", "Engagement", "Best time to post", "Top posts", "Weekly reports"];
+
+const reveal = (i: number) => ({ "--i": i }) as CSSProperties;
 
 export default async function Landing() {
   const [overview, views, connections] = await Promise.all([getOverview(), getDailyViews(), getConnections()]);
@@ -27,38 +31,62 @@ export default async function Landing() {
 
   return (
     <div className={s.page}>
-      <header className={s.nav}>
-        <Link href="/" className={s.brand}>
-          <span className={s.logo}>
-            <Icon name="logo" strokeWidth={2} />
-          </span>
-          {APP_NAME}
-        </Link>
-        <nav className={s.navLinks} aria-label="Site">
-          <Link href="/overview">Live demo</Link>
-          <Link href="/sign-in">Sign in</Link>
-        </nav>
-        <Link href="/sign-in" className={s.navCta}>
-          Start free
-        </Link>
+      <header className={s.navWrap}>
+        <div className={s.nav}>
+          <Link href="/" className={s.brand} aria-label={`${APP_NAME} home`}>
+            <span className={s.logo}>
+              <Icon name="logo" size={18} strokeWidth={2.2} />
+            </span>
+            <span aria-hidden="true">{APP_NAME}</span>
+          </Link>
+          <nav className={s.navLinks} aria-label="Site">
+            <a href="#features">Features</a>
+            <a href="#preview">Preview</a>
+            <Link href="/overview">Live demo</Link>
+            <Link href="/sign-in">Sign in</Link>
+          </nav>
+          <Link href="/sign-in" className={s.navCta}>
+            Start free
+          </Link>
+        </div>
       </header>
 
       <main>
         <section className={s.hero} aria-labelledby="landing-h">
-          <span className={`${s.eyebrow} reveal`}>Social analytics for creators and studios</span>
-          <h1 id="landing-h" className={`${s.h1} reveal`} style={{ "--i": 1 } as CSSProperties}>
-            Every channel. One calm dashboard.
+          <h1 id="landing-h" className={`${s.h1} reveal`} style={reveal(1)}>
+            <span className={s.row}>
+              <span className={`badges ${s.heroBadges}`} aria-hidden="true">
+                <span className={`badge-round ${s.bGrey}`}>
+                  <Icon name="sparkle" size={30} />
+                </span>
+                <span className={`badge-round ${s.bCobalt}`}>
+                  <Icon name="chart" size={30} />
+                </span>
+              </span>
+              Every channel,
+            </span>{" "}
+            <span className={`${s.row} ${s.rowIndent}`}>
+              one <span className={s.soft}>calm</span>
+            </span>{" "}
+            <span className={`${s.row} ${s.rowRight}`}>
+              <span className={`badge-round ${s.bLime}`} aria-hidden="true">
+                <Icon name="users" size={30} />
+              </span>
+              dashboard
+            </span>
           </h1>
-          <p className={`${s.lead} reveal`} style={{ "--i": 2 } as CSSProperties}>
-            Connect your accounts once and see how your audience is growing across every platform, which posts are working, and when to post next.
-          </p>
-          <div className={`${s.ctas} reveal`} style={{ "--i": 3 } as CSSProperties}>
-            <ArrowButton href="/sign-in">Start free</ArrowButton>
-            <ArrowButton href="/overview" tone="glass">
-              Open the live demo
-            </ArrowButton>
+
+          <div className={`${s.heroFoot} reveal`} style={reveal(2)}>
+            <p className={s.lead}>Connect your accounts once and see how your audience is growing across every platform, which posts are working, and when to post next.</p>
+            <div className={s.ctas}>
+              <ArrowButton href="/sign-in">Start free</ArrowButton>
+              <ArrowButton href="/overview" tone="soft">
+                Open the live demo
+              </ArrowButton>
+            </div>
           </div>
-          <ul className={`${s.platforms} reveal`} style={{ "--i": 4 } as CSSProperties} aria-label="Supported platforms">
+
+          <ul className={`${s.platforms} reveal`} style={reveal(3)} aria-label="Supported platforms">
             {connections.map((c) => (
               <li key={c.id}>
                 <span className="dot" style={{ background: `var(--p-${c.id})` }} />
@@ -68,49 +96,93 @@ export default async function Landing() {
           </ul>
         </section>
 
-        <section className={`${s.preview} reveal`} style={{ "--i": 4 } as CSSProperties} aria-label="Dashboard preview with sample data">
+        <section id="preview" className={`${s.preview} reveal`} style={reveal(4)} aria-label="Dashboard preview with sample data">
           <RangeProvider>
             <div className={s.previewGrid}>
-              <SummaryStatement accountName={overview.accountName} connectedCount={overview.connectedCount} metrics={overview.metrics} />
-              <KpiTiles metrics={overview.metrics} />
-              <div className={s.previewSide}>
-                <DailyViewsCard views={views} />
-                {top && <GrowthCard week={overview.metrics[7]} weekGrowth={overview.weekGrowth} top={top} />}
+              <div className={s.pStatement}>
+                <SummaryStatement accountName={overview.accountName} connectedCount={overview.connectedCount} metrics={overview.metrics} />
               </div>
+              <div className={s.pKpis}>
+                <KpiTiles metrics={overview.metrics} />
+              </div>
+              <div className={s.pChart}>
+                <DailyViewsCard views={views} />
+              </div>
+              {top && (
+                <div className={s.pGrowth}>
+                  <GrowthCard week={overview.metrics[7]} weekGrowth={overview.weekGrowth} top={top} />
+                </div>
+              )}
             </div>
           </RangeProvider>
           <p className={s.sample}>Sample data from a demo studio account</p>
         </section>
 
-        <section className={s.features} aria-label="Features">
-          {FEATURES.map((f, i) => (
-            <article key={f.title} className={`${s.feature} card reveal`} style={{ "--i": i + 5 } as CSSProperties}>
-              <span className={s.fIcon} aria-hidden="true">
-                <Icon name={f.icon} size={18} />
+        <div className={s.marquee} aria-hidden="true">
+          <div className={s.track}>
+            {[0, 1].map((copy) => (
+              <span key={copy} className={s.group}>
+                {MARQUEE.map((w) => (
+                  <span key={w} className={s.word}>
+                    {w}
+                    <i className={s.star}>
+                      <Icon name="sparkle" size={22} />
+                    </i>
+                  </span>
+                ))}
               </span>
-              <h2 className={s.fTitle}>{f.title}</h2>
-              <p className={s.fBody}>{f.body}</p>
-            </article>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        <section id="features" className={s.featuresWrap} aria-labelledby="features-h">
+          <div className={s.featuresHead}>
+            <h2 id="features-h" className={s.h2}>
+              Your key to a clearer picture of every audience
+            </h2>
+            <p className={s.lead}>Ready for plain-language insight across every platform, updated every day?</p>
+          </div>
+          <div className={s.features}>
+            {FEATURES.map((f, i) => (
+              <article key={f.title} className={`${s.feature} ${s[f.tone]} lift reveal`} style={reveal(i + 5)}>
+                <span className={s.fIcon} aria-hidden="true">
+                  <Icon name={f.icon} size={22} />
+                </span>
+                <h3 className={s.fTitle}>{f.title}</h3>
+                <p className={s.fBody}>{f.body}</p>
+              </article>
+            ))}
+          </div>
         </section>
 
-        <section className={`${s.final} card`} aria-labelledby="final-h">
+        <section className={s.final} aria-labelledby="final-h">
           <h2 id="final-h" className={s.finalH}>
-            See your whole audience in about two minutes.
+            See your whole audience in about <span className={s.finalHl}>two minutes.</span>
           </h2>
-          <p className={s.lead}>Read-only access. We never post for you, and you can disconnect at any time.</p>
-          <ArrowButton href="/sign-in">Start free</ArrowButton>
+          <div className={s.finalFoot}>
+            <p>Read-only access. We never post for you, and you can disconnect at any time.</p>
+            <Link href="/sign-in" className={s.finalCta}>
+              Start free
+              <span aria-hidden="true">
+                <Icon name="arrow" size={16} strokeWidth={2} />
+              </span>
+            </Link>
+          </div>
         </section>
       </main>
 
       <footer className={s.footer}>
-        <span>{APP_NAME}</span>
-        <span>Works on iPhone, Android and desktop. Add it to your home screen from the browser menu.</span>
-        <nav aria-label="Legal" style={{ display: "flex", gap: 14 }}>
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/terms">Terms</Link>
-          <Link href="/data-deletion">Data deletion</Link>
-        </nav>
+        <div className={s.footRow}>
+          <span>Works on iPhone, Android and desktop. Add it to your home screen from the browser menu.</span>
+          <nav aria-label="Legal" className={s.legal}>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/data-deletion">Data deletion</Link>
+          </nav>
+        </div>
+        <p className={s.wordmark} aria-hidden="true">
+          {APP_NAME}
+        </p>
       </footer>
     </div>
   );

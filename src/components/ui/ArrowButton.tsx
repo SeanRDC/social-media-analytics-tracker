@@ -6,14 +6,14 @@ import s from "./ArrowButton.module.css";
 interface Props {
   href: string;
   children: ReactNode;
-  tone?: "light" | "glass";
+  tone?: "light" | "soft";
   className?: string;
 }
 
 /** Pill link with the arrow nested in its own circle; the arrow turns toward its target on hover. */
 export function ArrowButton({ href, children, tone = "light", className = "" }: Props) {
   return (
-    <Link href={href} className={`${s.btn} ${tone === "glass" ? s.glass : ""} ${className}`}>
+    <Link href={href} className={`${s.btn} ${tone === "soft" ? s.soft : ""} ${className}`}>
       {children}
       <span className={s.arr} aria-hidden="true">
         <Icon name="arrow" size={13} strokeWidth={1.9} />

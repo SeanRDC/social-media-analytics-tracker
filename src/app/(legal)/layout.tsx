@@ -11,7 +11,7 @@ export default function LegalLayout({ children }: { children: ReactNode }) {
       <header className={s.top}>
         <Link href="/" className={s.brand}>
           <span className={s.logo}>
-            <Icon name="logo" strokeWidth={2} />
+            <Icon name="logo" size={18} strokeWidth={2.2} />
           </span>
           {APP_NAME}
         </Link>
