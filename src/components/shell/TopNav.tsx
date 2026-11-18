@@ -82,7 +82,7 @@ export function TopNav({ accountName }: { accountName: string }) {
             <Icon name="gear" size={18} />
             <span className="sr-only">Settings</span>
           </Link>
-          <Link href="/settings" className={s.account}>
+          <Link href="/settings" className={s.account} aria-label={`Account: ${accountName}`}>
             <Avatar size={30} />
             <span className={s.acctName}>{accountName}</span>
           </Link>

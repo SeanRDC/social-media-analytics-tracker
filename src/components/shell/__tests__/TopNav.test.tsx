@@ -25,6 +25,12 @@ describe("TopNav", () => {
     expect(account).toHaveAttribute("href", "/settings");
   });
 
+  it("names the account button even where the visible name is hidden", () => {
+    render(<TopNav accountName="Northbay Studio" />);
+    // the name text is hidden by CSS on tablets and phones, so the link needs its own label
+    expect(screen.getByRole("link", { name: "Account: Northbay Studio" })).toHaveAttribute("aria-label", "Account: Northbay Studio");
+  });
+
   it("offers alerts and settings shortcuts", () => {
     pathname = "/settings";
     render(<TopNav accountName="Northbay Studio" />);
