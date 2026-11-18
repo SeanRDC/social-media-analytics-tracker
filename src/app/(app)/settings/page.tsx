@@ -28,7 +28,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
   const pushKey = vapidPublicKey();
   return (
     <div className={s.grid}>
-      <section className={`${s.card} ${s.profile} ${s.wide} glass rim reveal`} style={reveal(1)} aria-label="Profile">
+      <section className={`${s.card} ${s.profile} ${s.wide} card reveal`} style={reveal(1)} aria-label="Profile">
         <Avatar size={56} />
         <div className={s.profileText}>
           <b>{user.name}</b>
@@ -37,7 +37,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
         <SignOutButton />
       </section>
 
-      <section className={`${s.card} glass rim reveal`} style={reveal(2)} aria-labelledby="conn-h">
+      <section className={`${s.card} card reveal`} style={reveal(2)} aria-labelledby="conn-h">
         <h2 id="conn-h" className={s.h2}>
           Connected accounts
         </h2>
@@ -45,7 +45,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
         <Connections initial={connections} result={parseConnectResult(params)} onDisconnect={disconnectPlatform} onImport={importPlatform} />
       </section>
 
-      <section id="alerts" className={`${s.card} glass rim reveal`} style={reveal(3)} aria-labelledby="alerts-h">
+      <section id="alerts" className={`${s.card} card reveal`} style={reveal(3)} aria-labelledby="alerts-h">
         <h2 id="alerts-h" className={s.h2}>
           Alerts
         </h2>
@@ -54,7 +54,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
         {pushKey && <PushToggle vapidPublicKey={pushKey} onSubscribe={subscribePush} onUnsubscribe={unsubscribePush} />}
       </section>
 
-      <section className={`${s.card} ${s.wide} glass rim reveal`} style={reveal(4)} aria-labelledby="look-h">
+      <section className={`${s.card} ${s.wide} card reveal`} style={reveal(4)} aria-labelledby="look-h">
         <h2 id="look-h" className={s.h2}>
           Appearance
         </h2>
@@ -70,10 +70,10 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
         </div>
         <p className={s.info}>
           <Icon name="sparkle" size={15} />
-          <span>Motion and glass follow your device: turn on Reduce Motion or Reduce Transparency in your phone or computer settings and the app goes still and solid.</span>
+          <span>Motion follows your device: turn on Reduce Motion in your phone or computer settings and the app goes still.</span>
         </p>
       </section>
-      <section className={`${s.card} ${s.wide} glass rim reveal`} style={reveal(5)} aria-labelledby="delete-h">
+      <section className={`${s.card} ${s.wide} card reveal`} style={reveal(5)} aria-labelledby="delete-h">
         <h2 id="delete-h" className={s.h2}>
           Delete account
         </h2>

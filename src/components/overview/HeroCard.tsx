@@ -32,7 +32,7 @@ export function HeroCard({ accountName, connectedCount, metrics }: Props) {
   ];
 
   return (
-    <section className={`${s.hero} rim sweep reveal`} style={{ "--i": 1 } as CSSProperties} aria-labelledby="hero-h">
+    <section className={`${s.hero} card reveal`} style={{ "--i": 1 } as CSSProperties} aria-labelledby="hero-h">
       <div className={s.core}>
         <div className={s.bloom} aria-hidden="true" />
         <i className={`lens ${s.lens}`} aria-hidden="true" />
@@ -51,7 +51,7 @@ export function HeroCard({ accountName, connectedCount, metrics }: Props) {
           </ArrowButton>
         </div>
 
-        <div className={`${s.kpis} glass rim`}>
+        <div className={s.kpis}>
           {kpis.map((k) => (
             <div key={k.icon} className={s.kpi}>
               <span className={s.chip} aria-hidden="true">

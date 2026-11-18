@@ -18,7 +18,7 @@ export function DailyViewsCard({ views }: { views: DailyViews }) {
   const ticks = niceTicks(0, max, 3).filter((t) => t > 0);
 
   return (
-    <section className={`${s.card} glass rim sweep lift reveal`} style={{ "--i": 2 } as CSSProperties} aria-labelledby="views-h">
+    <section className={`${s.card} card lift reveal`} style={{ "--i": 2 } as CSSProperties} aria-labelledby="views-h">
       <div className={s.ct}>
         <h2 id="views-h" className={s.title}>
           <span className={s.live} aria-hidden="true" />

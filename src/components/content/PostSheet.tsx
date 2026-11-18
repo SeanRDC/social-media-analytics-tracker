@@ -97,7 +97,7 @@ export function PostSheet({ post, onClose }: Props) {
       }}
     >
       {p && (
-        <div ref={sheet} className={`${s.sheet} rim`}>
+        <div ref={sheet} className={s.sheet}>
           <div className={s.grab} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-hidden="true">
             <span />
           </div>

@@ -92,7 +92,7 @@ export function ContentLibrary({ posts, asOf }: { posts: Post[]; asOf: string })
       </div>
 
       {shown.length === 0 ? (
-        <div className={`${s.empty} glass rim reveal`}>
+        <div className={`${s.empty} card reveal`}>
           <Icon name="filter" size={22} />
           <p>No posts match these filters in the last {range} days.</p>
           <button
@@ -110,7 +110,7 @@ export function ContentLibrary({ posts, asOf }: { posts: Post[]; asOf: string })
         <ul className={s.grid} aria-label="Posts">
           {shown.map((p, i) => (
             <li key={p.id} ref={register(p.id)} className="reveal" style={{ "--i": Math.min(i, 8) + 2 } as CSSProperties}>
-              <button type="button" className={`${s.card} glass rim sweep lift`} onClick={() => openPost(p.id)}>
+              <button type="button" className={`${s.card} card lift`} onClick={() => openPost(p.id)}>
                 <span className={s.media}>
                   <PostThumb post={p} className={s.thumb} />
                   <span className={s.kind}>{KINDS.find((k) => k.value === p.kind)?.label.replace(/s$/, "")}</span>

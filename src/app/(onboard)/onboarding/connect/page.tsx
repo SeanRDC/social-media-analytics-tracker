@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Connect accounts" };
 
 export default function ConnectPage({ searchParams }: PageProps<"/onboarding/connect">) {
   return (
-    <main className={`${s.card} glass rim reveal`}>
+    <main className={`${s.card} card reveal`}>
       <span className={s.step}>Step 2 of 3</span>
       <h1 className={s.h1}>Connect your accounts</h1>
       <p className={s.sub}>We only read your stats. We never post for you, and you can disconnect at any time.</p>

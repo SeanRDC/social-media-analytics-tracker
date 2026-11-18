@@ -18,7 +18,7 @@ export function PlatformCards({ platforms }: { platforms: Platform[] }) {
         const style = { "--i": i, "--pc": `var(--p-${p.id})` } as CSSProperties;
         if (p.status !== "connected") {
           return (
-            <li key={p.id} className={`${s.pcard} ${s.pending} glass rim reveal`} style={style}>
+            <li key={p.id} className={`${s.pcard} ${s.pending} card reveal`} style={style}>
               <div className={s.pTop}>
                 <span className={s.pName}>
                   <span className="dot" style={{ background: "var(--pc)" }} />
@@ -34,7 +34,7 @@ export function PlatformCards({ platforms }: { platforms: Platform[] }) {
           );
         }
         return (
-          <li key={p.id} className={`${s.pcard} glass rim sweep lift reveal`} style={style}>
+          <li key={p.id} className={`${s.pcard} card lift reveal`} style={style}>
             <Link href={`/platforms/${p.id}`} className={s.cover} aria-label={`${p.name}: ${formatCompact(p.followers)} ${p.followerNoun}, open details`} />
             <div className={s.pTop}>
               <span className={s.pName}>

@@ -17,7 +17,7 @@ import s from "./AppShell.module.css";
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <RangeProvider>
-      <div className={`${s.frame} rim`}>
+      <div className={s.frame}>
         <div className={s.railCol}>
           <Rail />
         </div>

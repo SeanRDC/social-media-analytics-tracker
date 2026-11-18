@@ -23,7 +23,7 @@ export function GrowthCard({ week, weekGrowth, top }: Props) {
   const note = day == null ? "followers this week" : `${weekGrowth[day].day} · ${formatSigned(weekGrowth[day].value)} followers`;
 
   return (
-    <section className={`${s.card} ${s.duo} glass rim sweep lift reveal`} style={{ "--i": 3 } as CSSProperties} aria-labelledby="growth-h">
+    <section className={`${s.card} ${s.duo} card lift reveal`} style={{ "--i": 3 } as CSSProperties} aria-labelledby="growth-h">
       <div className={s.gw}>
         <h2 id="growth-h" className={s.ct}>
           Latest growth

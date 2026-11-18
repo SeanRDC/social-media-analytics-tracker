@@ -17,7 +17,7 @@ export default async function ReportsPage() {
   return (
     <div className={s.grid}>
       {PRESETS.map((p, i) => (
-        <section key={p.id} className={`${s.card} ${s.preset} glass rim sweep lift reveal`} style={{ "--i": i + 1 } as CSSProperties} aria-labelledby={`rp-${i}`}>
+        <section key={p.id} className={`${s.card} ${s.preset} card lift reveal`} style={{ "--i": i + 1 } as CSSProperties} aria-labelledby={`rp-${i}`}>
           <span className={s.icon} aria-hidden="true">
             <Icon name={p.icon} size={18} />
           </span>

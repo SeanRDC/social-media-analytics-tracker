@@ -36,7 +36,7 @@ export function TopPostsTable({ posts, asOf, limit = 5, className = "" }: Props)
   };
 
   return (
-    <section className={`${s.card} glass rim sweep reveal ${className}`} style={{ "--i": 4 } as React.CSSProperties} aria-labelledby="top-posts-h">
+    <section className={`${s.card} card reveal ${className}`} style={{ "--i": 4 } as React.CSSProperties} aria-labelledby="top-posts-h">
       <div className={s.head}>
         <h2 id="top-posts-h" className={s.h}>
           Your top posts in this period

@@ -22,7 +22,7 @@ export function BestTimes({ slotLabels, days }: Props) {
     : "Hover or tap a cell to compare";
 
   return (
-    <section className={`${s.card} ${s.heatCard} glass rim sweep reveal`} style={{ "--i": 3 } as CSSProperties} aria-labelledby="best-h">
+    <section className={`${s.card} ${s.heatCard} card reveal`} style={{ "--i": 3 } as CSSProperties} aria-labelledby="best-h">
       <div className={s.head}>
         <h2 id="best-h" className={s.h2}>
           Best time to post

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Privacy policy" };
 
 export default function PrivacyPage() {
   return (
-    <article className={`${s.doc} glass rim reveal`}>
+    <article className={`${s.doc} card reveal`}>
       <h1>Privacy policy</h1>
       <p className={s.meta}>Last updated {LEGAL_UPDATED}</p>
       <p className={s.draft}>Draft for review. Have this checked for your jurisdiction before launch.</p>

@@ -19,7 +19,7 @@ export default async function AudiencePage() {
   if (!a.ages.length && !a.countries.length) {
     return (
       <div className={s.grid}>
-        <section className={`${s.card} ${s.summary} glass rim reveal`} style={{ "--i": 0 } as CSSProperties} aria-label="Audience summary">
+        <section className={`${s.card} ${s.summary} card reveal`} style={{ "--i": 0 } as CSSProperties} aria-label="Audience summary">
           <p className={s.summaryText}>Not enough audience data yet.</p>
           <p className={s.caption}>
             YouTube and Instagram only share age and country breakdowns once an account has enough viewers. TikTok doesn&apos;t share them with apps like this one.
@@ -37,7 +37,7 @@ export default async function AudiencePage() {
 
   return (
     <div className={s.grid}>
-      <section className={`${s.card} ${s.summary} glass rim reveal`} style={{ "--i": 0 } as CSSProperties} aria-label="Audience summary">
+      <section className={`${s.card} ${s.summary} card reveal`} style={{ "--i": 0 } as CSSProperties} aria-label="Audience summary">
         <p className={s.summaryText}>
           {topAge && (
             <>

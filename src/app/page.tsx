@@ -27,7 +27,7 @@ export default async function Landing() {
 
   return (
     <div className={s.page}>
-      <header className={`${s.nav} glass rim`}>
+      <header className={s.nav}>
         <Link href="/" className={s.brand}>
           <span className={s.logo}>
             <Icon name="logo" strokeWidth={2} />
@@ -68,7 +68,7 @@ export default async function Landing() {
           </ul>
         </section>
 
-        <section className={`${s.preview} rim reveal`} style={{ "--i": 4 } as CSSProperties} aria-label="Dashboard preview with sample data">
+        <section className={`${s.preview} reveal`} style={{ "--i": 4 } as CSSProperties} aria-label="Dashboard preview with sample data">
           <RangeProvider>
             <div className={s.previewGrid}>
               <HeroCard accountName={overview.accountName} connectedCount={overview.connectedCount} metrics={overview.metrics} />
@@ -83,7 +83,7 @@ export default async function Landing() {
 
         <section className={s.features} aria-label="Features">
           {FEATURES.map((f, i) => (
-            <article key={f.title} className={`${s.feature} glass rim sweep reveal`} style={{ "--i": i + 5 } as CSSProperties}>
+            <article key={f.title} className={`${s.feature} card reveal`} style={{ "--i": i + 5 } as CSSProperties}>
               <span className={s.fIcon} aria-hidden="true">
                 <Icon name={f.icon} size={18} />
               </span>
@@ -93,7 +93,7 @@ export default async function Landing() {
           ))}
         </section>
 
-        <section className={`${s.final} glass rim`} aria-labelledby="final-h">
+        <section className={`${s.final} card`} aria-labelledby="final-h">
           <h2 id="final-h" className={s.finalH}>
             See your whole audience in about two minutes.
           </h2>

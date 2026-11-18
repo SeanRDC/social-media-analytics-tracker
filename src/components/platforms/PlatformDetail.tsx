@@ -30,7 +30,7 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
 
   if (p.status !== "connected") {
     return (
-      <section className={`${s.empty} glass rim reveal`}>
+      <section className={`${s.empty} card reveal`}>
         <Link href="/platforms" className={s.back}>
           <Icon name="back" size={15} /> Platforms
         </Link>
@@ -54,7 +54,7 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
         <Icon name="back" size={15} /> All platforms
       </Link>
 
-      <section className={`${s.hero} glass rim sweep reveal`} style={{ "--i": 1 } as CSSProperties} aria-labelledby="pd-h">
+      <section className={`${s.hero} card reveal`} style={{ "--i": 1 } as CSSProperties} aria-labelledby="pd-h">
         <div className={s.glow} aria-hidden="true" />
         <div className={s.heroTop}>
           <div>
@@ -90,7 +90,7 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
         />
       </section>
 
-      <dl className={`${s.stats} glass rim reveal`} style={{ "--i": 2 } as CSSProperties}>
+      <dl className={`${s.stats} card reveal`} style={{ "--i": 2 } as CSSProperties}>
         <div>
           <dt>Views · 30 days</dt>
           <dd>
@@ -117,7 +117,7 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
         </div>
       </dl>
 
-      <section className={`${s.posts} glass rim reveal`} style={{ "--i": 3 } as CSSProperties} aria-labelledby="pd-posts">
+      <section className={`${s.posts} card reveal`} style={{ "--i": 3 } as CSSProperties} aria-labelledby="pd-posts">
         <h2 id="pd-posts" className={s.h2}>
           Recent posts
         </h2>

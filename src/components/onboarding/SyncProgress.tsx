@@ -55,7 +55,7 @@ export function SyncProgress({ onImport }: { onImport: (platform: PlatformId) =>
           const o = outcome[id];
           const v = o ? 100 : (pct[id] ?? 0);
           return (
-            <li key={id} aria-label={PLATFORM_NAMES[id]} className={`${s.pRow} ${o && o !== "imported" ? s.warn : ""} glass rim reveal`} style={{ "--i": i + 2 } as CSSProperties}>
+            <li key={id} aria-label={PLATFORM_NAMES[id]} className={`${s.pRow} ${o && o !== "imported" ? s.warn : ""} card reveal`} style={{ "--i": i + 2 } as CSSProperties}>
               <div className={s.pMain}>
                 <span className={s.pDot} style={{ background: `var(--p-${id})` }} aria-hidden="true">
                   {PLATFORM_NAMES[id][0]}

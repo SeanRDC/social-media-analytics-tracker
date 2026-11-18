@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Importing your data" };
 
 export default function SyncPage() {
   return (
-    <main className={`${s.card} glass rim reveal`}>
+    <main className={`${s.card} card reveal`}>
       <span className={s.step}>Step 3 of 3</span>
       <h1 className={s.h1}>Importing your history</h1>
       <p className={s.sub}>We&apos;re bringing in as much recent history as each platform allows, so your charts don&apos;t start empty. From now on we save a snapshot every day.</p>

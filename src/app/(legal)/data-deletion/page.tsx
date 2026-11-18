@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Delete your data" };
 
 export default function DataDeletionPage() {
   return (
-    <article className={`${s.doc} glass rim reveal`}>
+    <article className={`${s.doc} card reveal`}>
       <h1>Delete your data</h1>
       <p className={s.meta}>Last updated {LEGAL_UPDATED}</p>
 

@@ -7,14 +7,14 @@ import { useSlidingIndicator } from "@/hooks/useSlidingIndicator";
 import { TAB_NAV, isActive } from "./nav";
 import s from "./TabBar.module.css";
 
-/** Floating glass tab bar for phones. Hidden from 640px up, where the rail takes over. */
+/** Floating dark tab bar for phones. Hidden from 640px up, where the top navbar takes over. */
 export function TabBar() {
   const pathname = usePathname();
   const active = TAB_NAV.find((n) => isActive(pathname, n.href))?.href ?? null;
   const { container, indicator } = useSlidingIndicator<HTMLElement>(active);
 
   return (
-    <nav ref={container} className={`${s.bar} glass rim`} aria-label="Tabs">
+    <nav ref={container} className={s.bar} aria-label="Tabs">
       <span ref={indicator} className={s.ind} aria-hidden="true" />
       {TAB_NAV.map((n) => {
         const on = n.href === active;

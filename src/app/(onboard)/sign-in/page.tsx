@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Sign in" };
 
 export default function SignInPage({ searchParams }: PageProps<"/sign-in">) {
   return (
-    <main className={`${s.card} glass rim reveal`}>
+    <main className={`${s.card} card reveal`}>
       <span className={s.step}>Step 1 of 3</span>
       <h1 className={s.h1}>Sign in to see every channel in one place</h1>
       <p className={s.sub}>We&apos;ll email you a one-time link. No password to remember.</p>

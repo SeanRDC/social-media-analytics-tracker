@@ -47,7 +47,7 @@ export function CompareRanking({ platforms }: { platforms: Platform[] }) {
   const caption = metric === "views" ? "Views, last 30 days" : metric === "growth" ? `New followers, last ${range} days` : "Engagement rate, last 30 days";
 
   return (
-    <section className={`${s.card} ${s.compare} glass rim sweep reveal`} style={{ "--i": 2 } as CSSProperties} aria-labelledby="compare-h">
+    <section className={`${s.card} ${s.compare} card reveal`} style={{ "--i": 2 } as CSSProperties} aria-labelledby="compare-h">
       <div className={s.cardHead}>
         <div>
           <h2 id="compare-h" className={s.h2}>

@@ -13,7 +13,7 @@ export function ShareBars({ title, caption, rows, index }: Props) {
   const max = Math.max(...rows.map((r) => r.share));
   const id = `bars-${index}`;
   return (
-    <section className={`${s.card} glass rim sweep lift reveal`} style={{ "--i": index } as CSSProperties} aria-labelledby={id}>
+    <section className={`${s.card} card lift reveal`} style={{ "--i": index } as CSSProperties} aria-labelledby={id}>
       <div className={s.head}>
         <h2 id={id} className={s.h2}>
           {title}

@@ -60,7 +60,7 @@ export function ConnectFlow({ platforms, result }: { platforms: ConnectionView[]
           const href = connectHref(p.id, RETURN_TO);
           const hint = needsPro ? connectMessage(mine) : p.status === "connected" ? p.account : p.status === "expired" ? "Access expired. Reconnect to keep your stats updating." : HINT[p.id];
           return (
-            <li key={p.id} aria-label={p.name} className={`${s.pRow} ${needsPro || p.status === "expired" ? s.warn : ""} glass rim reveal`} style={{ "--i": i + 2 } as React.CSSProperties}>
+            <li key={p.id} aria-label={p.name} className={`${s.pRow} ${needsPro || p.status === "expired" ? s.warn : ""} card reveal`} style={{ "--i": i + 2 } as React.CSSProperties}>
               <div className={s.pMain}>
                 <span className={s.pDot} style={{ background: `var(--p-${p.id})` }} aria-hidden="true">
                   {p.name[0]}

@@ -11,7 +11,7 @@ interface Props<T extends string> {
   label: string;
 }
 
-/** Pill button that drops a glass menu. Closes on choice, outside click, Escape or when the page hides. */
+/** Pill button that drops a menu. Closes on choice, outside click, Escape or when the page hides. */
 export function SortMenu<T extends string>({ value, options, onChange, label }: Props<T>) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -56,7 +56,7 @@ export function SortMenu<T extends string>({ value, options, onChange, label }: 
         <Icon name="down" size={12} className={s.chev} />
       </button>
       {open && (
-        <div id={id} role="menu" aria-label={label} className={`${s.menu} glass`}>
+        <div id={id} role="menu" aria-label={label} className={s.menu}>
           {options.map((o) => (
             <button
               key={o.value}

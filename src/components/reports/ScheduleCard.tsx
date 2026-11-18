@@ -48,7 +48,7 @@ export function ScheduleCard({ email, initial, onSave }: Props) {
 
   const day = DAYS[v.dayOfWeek - 1] ?? DAYS[0];
   return (
-    <section className={`${s.card} ${s.schedule} glass rim reveal`} style={{ "--i": 5 } as CSSProperties} aria-labelledby="sched-h">
+    <section className={`${s.card} ${s.schedule} card reveal`} style={{ "--i": 5 } as CSSProperties} aria-labelledby="sched-h">
       <div className={s.schedTop}>
         <div>
           <h2 id="sched-h" className={s.h2}>

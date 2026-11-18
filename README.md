@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="public/icon.svg" alt="Social Tracker logo" width="88" height="88" />
+<img src="public/icon.svg" alt="Ispector logo" width="88" height="88" />
 
-# Social Media Analytics Tracker
+# Ispector
 
 **One dashboard for every social account.**
 Connect YouTube, Facebook, TikTok, LinkedIn and Instagram, then see followers, views, engagement, your best posts and when to post, side by side.
