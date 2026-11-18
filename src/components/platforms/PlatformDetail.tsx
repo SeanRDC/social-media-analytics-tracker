@@ -55,11 +55,12 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
       </Link>
 
       <section className={`${s.hero} card reveal`} style={{ "--i": 1 } as CSSProperties} aria-labelledby="pd-h">
-        <div className={s.glow} aria-hidden="true" />
         <div className={s.heroTop}>
-          <div>
+          <span className={s.mark} aria-hidden="true">
+            {p.name.charAt(0)}
+          </span>
+          <div className={s.who}>
             <h2 id="pd-h" className={s.name}>
-              <span className="dot" style={{ background: color }} />
               {p.name}
             </h2>
             <p className="muted">{p.account}</p>
@@ -77,20 +78,20 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
         </div>
         <LineChart
           ariaLabel={`${p.name} ${p.followerNoun} over the last 30 days, from ${formatCompact(p.trend[0])} to ${formatCompact(p.trend[30])}. Use the arrow keys to read each day.`}
-          series={[{ key: "f", label: p.followerNoun[0].toUpperCase() + p.followerNoun.slice(1), values: p.trend, color, glow: true, area: true }]}
+          series={[{ key: "f", label: p.followerNoun[0].toUpperCase() + p.followerNoun.slice(1), values: p.trend, color, area: true }]}
           xCount={p.trend.length}
           xLabels={[0, 15, 30].map((i) => ({ i, label: formatDate(addDays(trendStart, i)) }))}
           yMin={min - (max - min) * 0.08}
           yMax={max + (max - min) * 0.08}
           yTicks={ticks.map((t) => ({ value: t, label: formatCompact(t) }))}
-          height={180}
+          height={220}
           pointLabel={(i) => formatDate(addDays(trendStart, i))}
           formatValue={(v) => v.toLocaleString("en-US")}
           pulse={{ series: "f", i: p.trend.length - 1 }}
         />
       </section>
 
-      <dl className={`${s.stats} card reveal`} style={{ "--i": 2 } as CSSProperties}>
+      <dl className={`${s.stats} reveal`} style={{ "--i": 2 } as CSSProperties}>
         <div>
           <dt>Views · 30 days</dt>
           <dd>

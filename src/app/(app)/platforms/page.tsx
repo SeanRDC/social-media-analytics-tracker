@@ -10,8 +10,8 @@ export default async function PlatformsPage() {
   const platforms = await getPlatforms();
   return (
     <div className={s.layout}>
-      <PlatformCards platforms={platforms} />
       <CompareRanking platforms={platforms} />
+      <PlatformCards platforms={platforms} />
     </div>
   );
 }

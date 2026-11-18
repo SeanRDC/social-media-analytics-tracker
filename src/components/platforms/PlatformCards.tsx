@@ -20,10 +20,10 @@ export function PlatformCards({ platforms }: { platforms: Platform[] }) {
           return (
             <li key={p.id} className={`${s.pcard} ${s.pending} card reveal`} style={style}>
               <div className={s.pTop}>
-                <span className={s.pName}>
-                  <span className="dot" style={{ background: "var(--pc)" }} />
-                  {p.name}
+                <span className={s.mark} aria-hidden="true">
+                  <Icon name="plus" size={18} />
                 </span>
+                <span className={s.pName}>{p.name}</span>
                 <span className={s.badge}>Not connected</span>
               </div>
               <p className={s.pendingText}>Connect {p.name} to see its followers and posts next to the others.</p>
@@ -37,20 +37,22 @@ export function PlatformCards({ platforms }: { platforms: Platform[] }) {
           <li key={p.id} className={`${s.pcard} card lift reveal`} style={style}>
             <Link href={`/platforms/${p.id}`} className={s.cover} aria-label={`${p.name}: ${formatCompact(p.followers)} ${p.followerNoun}, open details`} />
             <div className={s.pTop}>
-              <span className={s.pName}>
-                <span className="dot" style={{ background: "var(--pc)" }} />
-                {p.name}
+              <span className={s.mark} aria-hidden="true">
+                {p.name.charAt(0)}
+              </span>
+              <span className={s.who}>
+                <span className={s.pName}>{p.name}</span>
+                <span className={s.acct}>{p.account}</span>
               </span>
               <span className={s.go} aria-hidden="true">
-                <Icon name="arrow" size={14} />
+                <Icon name="arrow" size={15} />
               </span>
             </div>
-            <span className={s.acct}>{p.account}</span>
             <div className={s.pNum}>
               <CountUp value={formatCompact(p.followers)} delay={300} className={s.pBig} />
               <span className={s.pNoun}>{p.followerNoun}</span>
             </div>
-            <Sparkline values={p.trend} color="var(--pc)" label={`${p.name} followers over the last 30 days, rising to ${formatCompact(p.followers)}`} />
+            <Sparkline values={p.trend} color="var(--pc)" height={48} label={`${p.name} followers over the last 30 days, rising to ${formatCompact(p.followers)}`} />
             <dl className={s.pStats}>
               <div>
                 <dt>{range}-day growth</dt>
