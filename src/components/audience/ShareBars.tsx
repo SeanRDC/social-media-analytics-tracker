@@ -25,7 +25,7 @@ export function ShareBars({ title, caption, rows, index }: Props) {
           <li key={r.label} className={s.barRow}>
             <span className={s.barLabel}>{r.label}</span>
             <span className={s.track} aria-hidden="true">
-              <i style={{ transform: `scaleX(${r.share / max})`, opacity: r.share === max ? 1 : 0.55, "--i": i } as CSSProperties} />
+              <i data-top={r.share === max} style={{ transform: `scaleX(${r.share / max})`, "--i": i } as CSSProperties} />
             </span>
             <b className={s.barVal}>{r.share}%</b>
           </li>
