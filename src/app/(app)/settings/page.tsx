@@ -60,12 +60,12 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
         </h2>
         <div className={s.themes} role="radiogroup" aria-label="Theme">
           <span className={`${s.theme} ${s.themeOn}`} role="radio" aria-checked="true">
-            <span className={s.swatch} style={{ background: "linear-gradient(135deg,#2b2f36,#16181c)" }} />
-            Graphite
+            <span className={`${s.swatch} ${s.swatchLight}`} />
+            Light
           </span>
           <span className={`${s.theme} ${s.themeOff}`} role="radio" aria-checked="false" aria-disabled="true">
-            <span className={s.swatch} style={{ background: "linear-gradient(150deg,#e6eff9,#aac6ea)" }} />
-            Light · coming later
+            <span className={`${s.swatch} ${s.swatchDark}`} />
+            Dark · coming later
           </span>
         </div>
         <p className={s.info}>

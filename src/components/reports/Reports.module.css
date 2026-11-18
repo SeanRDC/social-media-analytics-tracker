@@ -1,41 +1,59 @@
+/* Reports: one colour tile per preset, then the weekly email card in dark ink. */
 .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 .card {
-  position: relative;
-  border-radius: 22px;
-  padding: 16px;
+  padding: 22px;
   min-width: 0;
 }
+
+/* ---------- presets ---------- */
 .preset {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  border: 0;
+  min-height: 300px;
+}
+.preset:nth-of-type(4n + 1) {
+  background: var(--acc);
+  color: #fff;
+}
+.preset:nth-of-type(4n + 2) {
+  background: var(--lime);
+}
+.preset:nth-of-type(4n + 3) {
+  background: var(--lilac);
+}
+.preset:nth-of-type(4n + 4) {
+  background: var(--mint);
 }
 .icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--acc-soft);
-  color: var(--acc);
-  margin-bottom: 4px;
+  background: #fff;
+  color: var(--tx);
+  margin-bottom: 10px;
   transition: transform 0.35s var(--spring);
 }
 .preset:hover .icon {
-  transform: rotate(-8deg) scale(1.06);
+  transform: rotate(-12deg) scale(1.06);
 }
 .h2 {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 .desc {
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.5;
-  color: var(--mu);
+  opacity: 0.8;
 }
 .includes {
   list-style: none;
@@ -43,26 +61,36 @@
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 6px;
 }
 .includes li {
-  font-size: 10.5px;
-  padding: 3px 8px;
-  border-radius: 99px;
-  background: var(--pill);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--tx);
 }
 .exports {
   display: flex;
   gap: 8px;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 12px;
 }
 
+/* ---------- weekly email ---------- */
 .schedule {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+}
+.schedule .h2 {
+  font-size: clamp(26px, 3vw, 36px);
+}
+.schedule .desc {
+  color: var(--mu);
+  opacity: 1;
 }
 .schedTop {
   display: flex;
@@ -73,11 +101,10 @@
 .schedBody {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 28px;
-  padding: 12px 14px;
+  gap: 12px 32px;
+  padding: 14px 16px;
   border-radius: 16px;
   background: var(--tile);
-  border: 1px solid var(--cardb);
   transition: opacity 0.25s var(--out);
 }
 .off {
@@ -88,13 +115,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
+  font-size: 14px;
 }
 .field > span:first-child {
   color: var(--mu);
 }
 .field b {
-  font-weight: 500;
+  font-weight: 600;
 }
 .selectWrap {
   position: relative;
@@ -103,36 +130,39 @@
 }
 .selectWrap select {
   appearance: none;
-  min-height: 36px;
-  padding: 6px 30px 6px 12px;
-  border-radius: 10px;
-  background: var(--card);
+  min-height: 40px;
+  padding: 6px 34px 6px 14px;
+  border-radius: 12px;
+  background: #fff;
   border: 1px solid var(--cardb);
   color: var(--tx);
-  font-size: 13px;
-}
-.selectWrap select option {
-  background: #22252b;
+  font-size: 14px;
+  font-weight: 500;
 }
 .selectWrap svg {
   position: absolute;
-  right: 10px;
+  right: 12px;
   pointer-events: none;
   color: var(--mu);
 }
 .status {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 8px;
+  font-size: 13px;
   color: var(--mu);
 }
 .status svg {
-  color: var(--acc);
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+  border-radius: 50%;
+  background: var(--lime);
+  color: var(--tx);
 }
 .footnote {
   grid-column: 1 / -1;
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--mu);
 }
 
@@ -144,6 +174,13 @@
 @media (max-width: 639px) {
   .grid {
     grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .card {
+    padding: 18px;
+  }
+  .preset {
+    min-height: 0;
   }
   .selectWrap select {
     font-size: 16px;

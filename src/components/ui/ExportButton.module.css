@@ -1,21 +1,21 @@
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 38px;
-  min-width: 88px;
-  padding: 7px 14px 7px 10px;
-  border-radius: 99px;
-  font-size: 12.5px;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 96px;
+  padding: 6px 16px 6px 8px;
+  border-radius: 14px;
+  font-family: var(--display);
+  font-size: 14px;
   font-weight: 600;
-  background: var(--card);
-  border: 1px solid var(--cardb);
-  color: inherit;
+  background: var(--tx);
+  color: #fff;
   text-decoration: none;
-  transition: transform 0.14s var(--out), background 0.25s var(--out), color 0.25s var(--out), border-color 0.25s;
+  transition: transform 0.14s var(--out), background-color 0.25s var(--out), color 0.25s var(--out);
 }
 .btn:hover:not([aria-disabled="true"]) {
-  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 10px 20px -12px rgba(20, 20, 22, 0.7);
 }
 .btn:active:not([aria-disabled="true"]) {
   transform: scale(0.96);
@@ -24,22 +24,21 @@
   cursor: default;
 }
 .done {
-  background: var(--acc-soft);
-  border-color: rgba(143, 208, 255, 0.35);
-  color: var(--acc);
+  background: #fff;
+  color: var(--tx);
 }
 
 .icon {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.14);
 }
 .done .icon {
-  background: var(--acc);
-  color: var(--btn-tx);
+  background: var(--up);
+  color: #fff;
   animation: pop 0.35s var(--spring);
 }
 @keyframes pop {
@@ -49,11 +48,11 @@
 }
 
 .spinner {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-top-color: var(--acc);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: var(--lime);
   animation: spin 0.7s linear infinite;
 }
 @keyframes spin {

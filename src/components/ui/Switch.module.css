@@ -7,11 +7,10 @@
 }
 .track {
   position: relative;
-  width: 46px;
-  height: 28px;
+  width: 50px;
+  height: 30px;
   border-radius: 99px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid var(--cardb);
+  background: var(--track);
   flex: none;
   transition: background 0.25s var(--out);
 }
@@ -19,26 +18,27 @@
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: #f2f4f7;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(20, 20, 22, 0.25);
   transition: transform 0.3s var(--spring), width 0.2s var(--out);
 }
 .sw[aria-checked="true"] .track {
-  background: var(--acc);
+  background: var(--tx);
 }
 .sw[aria-checked="true"] .knob {
-  transform: translateX(18px);
+  transform: translateX(20px);
+  background: var(--lime);
 }
 /* knob stretches while pressed, like iOS */
 .sw:active .knob {
-  width: 24px;
+  width: 28px;
 }
 .sw[aria-checked="true"]:active .knob {
-  transform: translateX(14px);
+  transform: translateX(16px);
 }
 .label {
-  font-size: 13px;
+  font-size: 14px;
 }

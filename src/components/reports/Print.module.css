@@ -10,7 +10,7 @@
   line-height: 1.45;
 }
 :global(body):has(.page) {
-  background: #e9ecf1;
+  background: #f3f2ee;
 }
 .loading {
   padding: 48px 24px;
@@ -26,7 +26,7 @@
   margin-bottom: 28px;
 }
 .back {
-  color: #2c5aa0;
+  color: #2441e0;
   font-size: 13px;
 }
 .print {
@@ -101,7 +101,7 @@
   font-variant-numeric: tabular-nums;
 }
 .section a {
-  color: #2c5aa0;
+  color: #2441e0;
 }
 .empty {
   color: #5b6472;

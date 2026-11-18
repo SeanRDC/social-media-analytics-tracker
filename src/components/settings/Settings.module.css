@@ -1,73 +1,91 @@
+/* Settings: profile banner in dark ink, then white section cards. */
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px;
+  gap: 16px;
   align-items: start;
 }
 .wide {
   grid-column: 1 / -1;
 }
 .card {
-  position: relative;
-  border-radius: 22px;
-  padding: 16px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
-  scroll-margin-top: 24px;
+  /* clear the sticky navbar when jumping to #alerts */
+  scroll-margin-top: 96px;
 }
 .h2 {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 .lead {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--mu);
 }
 
+/* ---------- profile banner ---------- */
 .profile {
   flex-direction: row;
   align-items: center;
-  gap: 14px;
+  gap: 18px;
   flex-wrap: wrap;
+  padding: 20px 22px;
+  background: var(--nav);
+  color: #fff;
+  border: 0;
+}
+.profile > span:first-child {
+  box-shadow: 0 0 0 4px var(--lime);
 }
 .profileText {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 .profileText b {
-  font-size: 17px;
-  font-weight: 500;
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
 }
 .profileText small {
-  color: var(--mu);
-  font-size: 12.5px;
+  color: var(--nav-mu);
+  font-size: 14px;
+}
+.profile .ghost {
+  background: #fff;
+  color: var(--tx);
 }
 
+/* ---------- rows ---------- */
 .list {
   list-style: none;
-  margin: 0;
+  margin: 4px 0 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  min-height: 58px;
-  padding: 8px 0;
-  border-top: 1px solid var(--cardb);
-}
-.row:first-child {
-  border-top: 0;
+  min-height: 64px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--tile);
 }
 .pf {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 .pfText {
@@ -76,11 +94,12 @@
   min-width: 0;
 }
 .pfText b {
-  font-weight: 500;
-  font-size: 13.5px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15.5px;
 }
 .pfText small {
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--mu);
   line-height: 1.4;
 }
@@ -93,14 +112,16 @@
 .state {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11.5px;
+  gap: 5px;
+  font-size: 12.5px;
   color: var(--mu);
 }
 .stateOn {
   color: var(--up);
+  font-weight: 600;
 }
 
+/* ---------- buttons ---------- */
 .ghost,
 .solid,
 .danger {
@@ -108,28 +129,35 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 6px 13px;
-  border-radius: 99px;
-  font-size: 12.5px;
+  min-height: 40px;
+  padding: 0 15px;
+  border-radius: 12px;
+  font-family: var(--display);
+  font-size: 14px;
   font-weight: 600;
-  transition: transform 0.14s var(--out), background 0.2s;
+  transition: transform 0.14s var(--out), background-color 0.2s;
 }
 .ghost {
-  background: var(--card);
+  background: #fff;
   border: 1px solid var(--cardb);
 }
 .ghost:hover {
-  background: var(--rowh);
+  background: var(--track);
 }
 .solid {
   background: var(--btn-bg);
   color: var(--btn-tx);
 }
 .danger {
-  background: rgba(255, 155, 147, 0.16);
+  background: rgba(229, 72, 77, 0.1);
   color: var(--down);
-  border: 1px solid rgba(255, 155, 147, 0.3);
+}
+.danger:hover {
+  background: rgba(229, 72, 77, 0.16);
+}
+.card > .danger,
+.card > .solid {
+  align-self: flex-start;
 }
 .ghost:active,
 .solid:active,
@@ -143,38 +171,57 @@
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
-  font-size: 12.5px;
+  font-size: 13.5px;
   animation: rise 0.25s var(--out);
 }
 
+/* ---------- appearance ---------- */
 .info {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  font-size: 12.5px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--tile);
+  font-size: 13.5px;
   color: var(--mu);
   line-height: 1.5;
 }
 .info svg {
+  flex: none;
   color: var(--acc);
   margin-top: 2px;
 }
 .themes {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 .theme {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
 }
 .swatch {
-  width: 120px;
-  height: 72px;
-  border-radius: 14px;
-  border: 2px solid transparent;
+  width: 140px;
+  height: 84px;
+  border-radius: 16px;
+  border: 3px solid transparent;
+}
+.swatchLight {
+  background:
+    linear-gradient(var(--nav), var(--nav)) 10px 10px / calc(100% - 20px) 14px no-repeat,
+    linear-gradient(var(--acc), var(--acc)) 10px 32px / 40% 40px no-repeat,
+    linear-gradient(var(--lime), var(--lime)) 62% 32px / 34% 40px no-repeat,
+    var(--bg);
+}
+.swatchDark {
+  background:
+    linear-gradient(#3a3a40, #3a3a40) 10px 10px / calc(100% - 20px) 14px no-repeat,
+    linear-gradient(#2e2e33, #2e2e33) 10px 32px / 40% 40px no-repeat,
+    #141416;
 }
 .themeOn .swatch {
   border-color: var(--acc);
@@ -186,9 +233,16 @@
 @media (max-width: 767px) {
   .grid {
     grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .card {
+    padding: 18px;
   }
   .row {
     flex-wrap: wrap;
+  }
+  .profileText b {
+    font-size: 22px;
   }
 }
 
@@ -206,11 +260,12 @@
   color: var(--warn);
 }
 
+/* ---------- delete ---------- */
 .deleteForm {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
   animation: rise 0.25s var(--out);
 }
@@ -221,18 +276,22 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--mu);
 }
 .deleteField input {
-  min-height: 44px;
-  padding: 10px 12px;
+  min-height: 46px;
+  padding: 10px 14px;
   border-radius: 12px;
   /* 16px keeps iOS from zooming in */
   font-size: 16px;
   color: var(--tx);
-  background: var(--card);
+  background: var(--tile);
   border: 1px solid var(--cardb);
+}
+.deleteField input:focus {
+  outline: 2px solid var(--acc);
+  outline-offset: 1px;
 }
 .deleteForm .confirm {
   justify-content: flex-start;
