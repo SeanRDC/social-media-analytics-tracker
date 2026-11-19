@@ -114,11 +114,13 @@ export function computePlatforms(ds: Dataset, asOf: string): Platform[] {
   return PLATFORM_ORDER.map((id) => {
     const c = ds.connections.find((x) => x.platform === id);
     const base = { id, name: PLATFORM_NAMES[id], followerNoun: NOUN[id] ?? "followers" };
-    if (!c) return { ...base, account: "", status: "not-connected", followers: null, followerGrowth: { 7: null, 30: null, 90: null }, engagement: null, views30: null, dataSince: null, posts30: 0, trend: [] };
+    if (!c) return { ...base, account: "", status: "not-connected", followers: null, followerGrowth: { 7: null, 30: null, 90: null }, engagement: null, views30: null, dataSince: null, posts30: 0, postViews: 0, postCount: 0, viewsPerPost30: null, trend: [] };
     const days90 = daysEnding(c, asOf, 90);
     const last = (n: number) => days90.slice(-n);
     const growth = (r: Range) => sumKnown(last(r).map((d) => d.followersGained));
     const d30 = last(30);
+    const mine = ds.posts.filter((p) => p.platform === id);
+    const recent = postsBetween(mine, addDays(asOf, -29), asOf);
     return {
       ...base,
       account: c.account,
@@ -128,7 +130,10 @@ export function computePlatforms(ds: Dataset, asOf: string): Platform[] {
       engagement: rateOf(d30),
       views30: sumKnown(d30.map((d) => d.views)),
       dataSince: firstReported(d30),
-      posts30: postsBetween(ds.posts.filter((p) => p.platform === id), addDays(asOf, -29), asOf).length,
+      posts30: recent.length,
+      postViews: sum(mine.map((p) => p.views)),
+      postCount: mine.length,
+      viewsPerPost30: recent.length ? Math.round(sum(recent.map((p) => p.views)) / recent.length) : null,
       trend: last(31).map((d) => d.followers),
     };
   });

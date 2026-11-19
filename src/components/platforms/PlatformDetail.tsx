@@ -47,8 +47,6 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
   const min = trend.length ? Math.min(...trend) : 0;
   const max = trend.length ? Math.max(...trend) : 1;
   const ticks = niceTicks(min, max, 3);
-  // from reported views only; unknown when the platform has not reported views for these 30 days
-  const avgViews = p.views30 !== null && p.posts30 ? Math.round(p.views30 / p.posts30) : null;
   const since = sinceNote(p.dataSince);
 
   return (
@@ -111,7 +109,7 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
         </div>
         <div>
           <dt>Views per post</dt>
-          <dd>{avgViews === null ? NO_DATA : <CountUp value={formatCompact(avgViews)} delay={400} />}</dd>
+          <dd>{p.viewsPerPost30 === null ? NO_DATA : <CountUp value={formatCompact(p.viewsPerPost30)} delay={400} />}</dd>
         </div>
       </dl>
 

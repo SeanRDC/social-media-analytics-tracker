@@ -47,6 +47,15 @@ export interface Platform {
   /** First reported day in the last 30 days, when that is later than the window start. */
   dataSince: string | null;
   posts30: number;
+  /**
+   * Views on the imported posts: the sum of each post's view count exactly as the
+   * platform reports it (available from the first import, unlike daily views).
+   */
+  postViews: number;
+  /** How many imported posts `postViews` adds up. */
+  postCount: number;
+  /** Average reported views of posts published in the last 30 days; null when none were. */
+  viewsPerPost30: number | null;
   /** Reported daily follower totals for the last 31 days, oldest first; null where not reported. */
   trend: (number | null)[];
   /** What the platform calls its followers. */

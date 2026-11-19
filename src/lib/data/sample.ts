@@ -23,7 +23,7 @@ function series(start: number, end: number, seed: number): number[] {
 }
 
 /** Sample numbers are complete by construction: every day is "reported". */
-type PlatformSeed = Omit<Platform, "trend" | "dataSince" | "followers" | "followerGrowth" | "engagement" | "views30"> & {
+type PlatformSeed = Omit<Platform, "trend" | "dataSince" | "followers" | "followerGrowth" | "engagement" | "views30" | "postViews" | "postCount" | "viewsPerPost30"> & {
   followers: number;
   followerGrowth: Record<Range, number>;
   engagement: number;
@@ -42,6 +42,10 @@ const PLATFORM_SEEDS: PlatformSeed[] = [
 export const PLATFORMS: Platform[] = PLATFORM_SEEDS.map((p, i) => ({
   ...p,
   dataSince: null,
+  // sample posts: a month of views spread over the month's posts
+  postViews: p.views30,
+  postCount: p.posts30,
+  viewsPerPost30: p.posts30 ? Math.round(p.views30 / p.posts30) : null,
   trend: p.status === "connected" ? series(p.followers - p.followerGrowth[30], p.followers, i) : [],
 }));
 

@@ -205,3 +205,41 @@ describe("period-over-period change", () => {
     expect(computeOverview(ds, "2026-11-15").metrics[7].viewsChange).toBeNull();
   });
 });
+
+describe("post views", () => {
+  const post = (id: string, publishedAt: string, views: number): PostData => ({
+    id,
+    platform: "tiktok",
+    title: id,
+    kind: "video",
+    publishedAt: new Date(publishedAt),
+    thumbnailUrl: null,
+    permalink: null,
+    views,
+    likes: 0,
+    comments: 0,
+    shares: 0,
+    avgWatchSeconds: null,
+  });
+  const ds: Dataset = {
+    // TikTok has only reported its follower total so far: no daily views yet
+    connections: [{ platform: "tiktok", account: "@me", status: "connected", daily: [{ date: "2026-11-19", followers: 7, followersGained: null, views: null, engagements: null }] }],
+    posts: [post("a", "2026-11-18T10:00:00Z", 421), post("b", "2026-11-16T10:00:00Z", 589), post("c", "2026-09-01T10:00:00Z", 1000)],
+    audience: [],
+  };
+
+  it("totals each post's reported views from the first import", () => {
+    const t = computePlatforms(ds, "2026-11-19").find((p) => p.id === "tiktok")!;
+    expect(t).toMatchObject({ postViews: 2010, postCount: 3, views30: null });
+  });
+
+  it("averages views per post over posts published in the last 30 days", () => {
+    const t = computePlatforms(ds, "2026-11-19").find((p) => p.id === "tiktok")!;
+    expect(t.viewsPerPost30).toBe(505);
+  });
+
+  it("has no average when nothing was published in the last 30 days", () => {
+    const old = { ...ds, posts: [post("c", "2026-09-01T10:00:00Z", 1000)] };
+    expect(computePlatforms(old, "2026-11-19").find((p) => p.id === "tiktok")!.viewsPerPost30).toBeNull();
+  });
+});

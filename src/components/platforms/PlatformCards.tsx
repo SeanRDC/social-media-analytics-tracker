@@ -54,6 +54,10 @@ export function PlatformCards({ platforms }: { platforms: Platform[] }) {
             </div>
             <Sparkline values={p.trend} color="var(--pc)" height={48} label={`${p.name} followers over the last 30 days, now ${orNoData(p.followers)}`} />
             <dl className={s.pStats}>
+              <div title={`All-time views on your ${p.postCount} imported ${p.postCount === 1 ? "post" : "posts"}, as ${p.name} reports them`}>
+                <dt>Total views</dt>
+                <dd>{formatCompact(p.postViews)}</dd>
+              </div>
               <div>
                 <dt>{range}-day growth</dt>
                 <dd className={p.followerGrowth[range] === null ? undefined : "up"}>{orNoData(p.followerGrowth[range], formatSigned)}</dd>
