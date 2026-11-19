@@ -3,6 +3,7 @@ import { getDb } from "@/db";
 import { hit, LIMITS } from "@/lib/rate-limit";
 import { beginConnect, safeReturnTo, STATE_COOKIE, STATE_TTL_SECONDS } from "@/lib/connect/flow";
 import { baseUrl, sessionUserId } from "@/lib/connect/http";
+import { hasAcceptedTerms } from "@/lib/consent";
 
 /** Sends the signed-in person to the platform's approval screen. */
 export async function GET(request: NextRequest, ctx: RouteContext<"/api/connect/[platform]/start">) {
@@ -16,6 +17,9 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/connect/
     signIn.searchParams.set("next", safeReturnTo(returnTo));
     return NextResponse.redirect(signIn);
   }
+
+  // no platform access before agreeing to the Terms and Privacy Policy
+  if (!(await hasAcceptedTerms(getDb(), userId))) return NextResponse.redirect(new URL("/welcome", base));
 
   if (!(await hit(getDb(), `connect:${userId}`, LIMITS.connect)).ok) {
     const back = new URL(safeReturnTo(returnTo), base);

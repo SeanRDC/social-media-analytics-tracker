@@ -34,7 +34,7 @@ export function SignInForm({ providers }: { providers: SocialProvider[] }) {
     }
     setError("");
     setSending(true);
-    const { error: err } = await authClient.signIn.magicLink({ email: address, callbackURL: next, newUserCallbackURL: "/onboarding/connect" });
+    const { error: err } = await authClient.signIn.magicLink({ email: address, callbackURL: next, newUserCallbackURL: "/welcome" });
     setSending(false);
     if (err) {
       setError(err.message ?? "We couldn't send the link. Try again in a moment.");
@@ -50,7 +50,7 @@ export function SignInForm({ providers }: { providers: SocialProvider[] }) {
   };
 
   const social = (provider: SocialProvider) => {
-    void authClient.signIn.social({ provider, callbackURL: next, newUserCallbackURL: "/onboarding/connect" });
+    void authClient.signIn.social({ provider, callbackURL: next, newUserCallbackURL: "/welcome" });
   };
 
   if (sentTo) {

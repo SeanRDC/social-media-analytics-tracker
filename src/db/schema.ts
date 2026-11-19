@@ -282,3 +282,15 @@ export const userAvatar = pgTable("user_avatar", {
   data: text("data").notNull(),
   updatedAt: updatedAt(),
 });
+
+/**
+ * When the person agreed to the Terms of Service and Privacy Policy, and to which
+ * version (TERMS_VERSION). Kept apart from the auth tables; a newer version asks again.
+ */
+export const termsAcceptance = pgTable("terms_acceptance", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  version: text("version").notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull().defaultNow(),
+});

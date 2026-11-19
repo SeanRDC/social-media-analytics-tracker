@@ -373,3 +373,70 @@
   margin: 0;
   padding-left: 41px;
 }
+
+/* ---------- terms agreement (/welcome) ---------- */
+.wide {
+  width: min(720px, 100%);
+}
+.agree {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.docTabs {
+  align-self: flex-start;
+}
+.docPanel {
+  max-height: min(46vh, 420px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: var(--tile);
+  border: 1px solid var(--cardb);
+  animation: rise 0.25s var(--out);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20, 20, 22, 0.25) transparent;
+}
+.docPanel::-webkit-scrollbar {
+  width: 8px;
+}
+.docPanel::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: rgba(20, 20, 22, 0.22);
+}
+.docPanel:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+.docLinks {
+  font-size: 12.5px;
+  color: var(--mu);
+}
+.docLinks a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--acc-ink);
+  font-weight: 500;
+}
+.leave {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--cardb);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mu);
+}
+.leave b {
+  color: var(--tx);
+  font-weight: 600;
+}
+.leaveActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+}

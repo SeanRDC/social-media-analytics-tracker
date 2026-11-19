@@ -1,0 +1,86 @@
+.row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--tile);
+  border: 1px solid var(--cardb);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.row:hover {
+  border-color: rgba(20, 20, 22, 0.22);
+}
+.row[data-checked="true"] {
+  border-color: var(--acc);
+  background: var(--acc-soft);
+}
+.row[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* visually hidden but focusable and announced */
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.box {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 1.5px solid rgba(20, 20, 22, 0.28);
+  color: transparent;
+  transition: background 0.18s var(--out), border-color 0.18s var(--out), transform 0.14s var(--out);
+}
+.box svg {
+  transform: scale(0.4);
+  opacity: 0;
+  transition: transform 0.25s var(--spring), opacity 0.15s;
+}
+.row[data-checked="true"] .box {
+  background: var(--nav);
+  border-color: var(--nav);
+  color: var(--lime);
+}
+.row[data-checked="true"] .box svg {
+  transform: scale(1);
+  opacity: 1;
+}
+.row:active .box {
+  transform: scale(0.92);
+}
+.input:focus-visible + .box {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
+.text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--tx);
+}
+.text a {
+  color: var(--acc-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .box,
+  .box svg {
+    transition: none;
+  }
+}

@@ -74,31 +74,37 @@
   line-height: 1.05;
   color: var(--tx);
 }
-.doc h2 {
+.doc h2,
+.prose h2 {
   margin-top: 12px;
   font-size: 21px;
   font-weight: 600;
   color: var(--tx);
 }
-.doc h3 {
+.doc h3,
+.prose h3 {
   margin-top: 4px;
   font-size: 16px;
   font-weight: 600;
   color: var(--tx);
 }
-.doc b {
+.doc b,
+.prose b {
   font-weight: 600;
   color: var(--tx);
 }
 .doc ul,
-.doc ol {
+.doc ol,
+.prose ul,
+.prose ol {
   margin: 0;
   padding-left: 20px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.doc a {
+.doc a,
+.prose a {
   color: var(--acc-ink);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -114,4 +120,21 @@
   background: var(--warn-soft);
   border: 1px solid rgba(183, 121, 31, 0.3);
   color: var(--warn);
+}
+
+/* the same text inside a smaller panel (the agreement screen) */
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #3a3a40;
+}
+.prose h2 {
+  margin-top: 8px;
+  font-size: 17px;
+}
+.prose h3 {
+  font-size: 14.5px;
 }

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import { deleteAccountData } from "@/lib/account";
 import { getAuth } from "@/lib/auth";
-import { requireUser } from "@/lib/dal";
+import { requireSignedInUser } from "@/lib/dal";
 import { logEvent } from "@/lib/log";
 
 /**
@@ -13,7 +13,7 @@ import { logEvent } from "@/lib/log";
  * Signs out first (clearing the cookie), then removes everything.
  */
 export async function deleteAccount(confirmEmail: string): Promise<{ error: string } | void> {
-  const user = await requireUser();
+  const user = await requireSignedInUser();
   if (String(confirmEmail).trim().toLowerCase() !== user.email.toLowerCase()) {
     return { error: "That doesn't match the email you sign in with." };
   }

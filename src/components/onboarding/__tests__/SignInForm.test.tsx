@@ -31,7 +31,7 @@ describe("SignInForm", () => {
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "hello@northbay.studio" } });
     fireEvent.click(screen.getByRole("button", { name: "Email me a sign-in link" }));
     await waitFor(() => expect(screen.getByRole("heading", { name: "Check your email" })).toBeInTheDocument());
-    expect(magicLink).toHaveBeenCalledWith({ email: "hello@northbay.studio", callbackURL: "/platforms", newUserCallbackURL: "/onboarding/connect" });
+    expect(magicLink).toHaveBeenCalledWith({ email: "hello@northbay.studio", callbackURL: "/platforms", newUserCallbackURL: "/welcome" });
     expect(screen.getByText("hello@northbay.studio")).toBeInTheDocument();
   });
 
@@ -48,7 +48,7 @@ describe("SignInForm", () => {
     expect(screen.queryByRole("button", { name: /Google/ })).not.toBeInTheDocument();
     rerender(<SignInForm providers={["google"]} />);
     fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
-    expect(social).toHaveBeenCalledWith({ provider: "google", callbackURL: "/overview", newUserCallbackURL: "/onboarding/connect" });
+    expect(social).toHaveBeenCalledWith({ provider: "google", callbackURL: "/overview", newUserCallbackURL: "/welcome" });
     expect(screen.queryByRole("button", { name: /Apple/ })).not.toBeInTheDocument();
   });
 
