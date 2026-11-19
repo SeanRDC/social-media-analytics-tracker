@@ -6,7 +6,8 @@
 import { expiresIn, getJson, str, withQuery } from "./oauth";
 import type { Provider } from "./types";
 
-export const FACEBOOK_SCOPES = ["pages_show_list", "pages_read_engagement", "read_insights"];
+// pages_read_user_content is needed to list the Page's posts (/published_posts)
+export const FACEBOOK_SCOPES = ["pages_show_list", "pages_read_engagement", "pages_read_user_content", "read_insights"];
 
 export const graphVersion = () => process.env.META_GRAPH_VERSION || "v26.0";
 

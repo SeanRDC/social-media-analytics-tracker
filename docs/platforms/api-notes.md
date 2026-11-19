@@ -48,7 +48,7 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 
 **As built (2026-11-16):** `src/lib/sync/facebook.ts`. `/{page}?fields=followers_count`, daily `page_daily_follows_unique`, `page_daily_unfollows_unique`, `page_media_view`, `page_post_engagements` (each requested alone, 90-day chunks, unavailable ones skipped; with none at all the sync derives daily rows from totals), `published_posts` with reaction/comment summaries, shares and `insights.metric(post_media_view)`. No demographics. **Verify with an approved app:** each metric name against the current Page Insights reference (Meta keeps retiring metrics).
 
-- **Permissions:** Facebook Login with page read permissions (for example `pages_show_list`, `pages_read_engagement`, `read_insights`); App Review required.
+- **Permissions:** Facebook Login with page read permissions (`pages_show_list`, `pages_read_engagement`, `pages_read_user_content` for `published_posts`, `read_insights`); App Review required.
 - **Metric changes:** On 2025-11-15 Meta removed legacy metrics: `page_fans` → `page_follows`, `page_impressions*` → `page_media_view`, post impressions → `post_media_view`. Removed metrics return an invalid-metric error. More Page Insights metrics (reported to include unique reach) are scheduled for removal on 2026-06-15; check the deprecated-metrics page before building.
 - Sources: [deprecated metrics](https://developers.facebook.com/documentation/pages-api/platforminsights/page/deprecated-metrics), [Aug 2025 update](https://developers.facebook.com/blog/post/2025/08/15/page-insights-api-updates/), [Page insights reference](https://developers.facebook.com/docs/graph-api/reference/page/insights/)
 
