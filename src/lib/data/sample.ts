@@ -22,7 +22,13 @@ function series(start: number, end: number, seed: number): number[] {
   return out;
 }
 
-type PlatformSeed = Omit<Platform, "trend">;
+/** Sample numbers are complete by construction: every day is "reported". */
+type PlatformSeed = Omit<Platform, "trend" | "dataSince" | "followers" | "followerGrowth" | "engagement" | "views30"> & {
+  followers: number;
+  followerGrowth: Record<Range, number>;
+  engagement: number;
+  views30: number;
+};
 
 const PLATFORM_SEEDS: PlatformSeed[] = [
   { id: "youtube", name: "YouTube", account: "Northbay Studio", status: "connected", followers: 112_400, followerGrowth: { 7: 1_200, 30: 4_100, 90: 10_200 }, engagement: 5.1, views30: 684_000, posts30: 6, followerNoun: "subscribers" },
@@ -35,17 +41,19 @@ const PLATFORM_SEEDS: PlatformSeed[] = [
 
 export const PLATFORMS: Platform[] = PLATFORM_SEEDS.map((p, i) => ({
   ...p,
+  dataSince: null,
   trend: p.status === "connected" ? series(p.followers - p.followerGrowth[30], p.followers, i) : [],
 }));
 
-const connected = PLATFORMS.filter((p) => p.status === "connected");
+const connected = PLATFORM_SEEDS.filter((p) => p.status === "connected");
 const totalFollowers = connected.reduce((s, p) => s + p.followers, 0);
-const growth = (r: Range) => PLATFORMS.reduce((s, p) => s + p.followerGrowth[r], 0);
+const growth = (r: Range) => PLATFORM_SEEDS.reduce((s, p) => s + p.followerGrowth[r], 0);
+const trendOf = (id: string) => PLATFORMS.find((p) => p.id === id)!.trend;
 
 export const METRICS: Record<Range, Metrics> = {
-  7: { followers: totalFollowers, followerDelta: growth(7), views: 1_200_000, viewsChange: 8, engagement: 6.0, engagementChange: 0.3, posts: 11 },
-  30: { followers: totalFollowers, followerDelta: growth(30), views: 4_900_000, viewsChange: 12, engagement: 5.8, engagementChange: 0.4, posts: 42 },
-  90: { followers: totalFollowers, followerDelta: growth(90), views: 13_800_000, viewsChange: 21, engagement: 5.5, engagementChange: -0.1, posts: 118 },
+  7: { followers: totalFollowers, followerDelta: growth(7), views: 1_200_000, viewsChange: 8, engagement: 6.0, engagementChange: 0.3, posts: 11, dataSince: null, comparable: true },
+  30: { followers: totalFollowers, followerDelta: growth(30), views: 4_900_000, viewsChange: 12, engagement: 5.8, engagementChange: 0.4, posts: 42, dataSince: null, comparable: true },
+  90: { followers: totalFollowers, followerDelta: growth(90), views: 13_800_000, viewsChange: 21, engagement: 5.5, engagementChange: -0.1, posts: 118, dataSince: null, comparable: true },
 };
 
 export const WEEK_GROWTH = [
@@ -59,7 +67,7 @@ export const WEEK_GROWTH = [
 ];
 
 export const TOTAL_TREND: number[] = Array.from({ length: 31 }, (_, i) =>
-  connected.reduce((s, p) => s + p.trend[i], 0),
+  connected.reduce((s, p) => s + (trendOf(p.id)[i] ?? 0), 0),
 );
 
 /** Mon Nov 9 – Sun Nov 15 vs the week before. This week sums to the 7-day views (1.2M, +8%). */

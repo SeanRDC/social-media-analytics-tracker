@@ -6,13 +6,14 @@ import { CountUp } from "@/components/motion/CountUp";
 import { useRange } from "@/components/shell/RangeProvider";
 import { ArrowButton } from "@/components/ui/ArrowButton";
 import type { Metrics, Range } from "@/lib/data/types";
-import { formatCompact, formatPercent, formatSigned } from "@/lib/format";
+import { formatPercent, formatSigned, NO_DATA, orNoData, sinceNote } from "@/lib/format";
 import s from "./Summary.module.css";
 
-/** Growth over the period as a percent of where it started. */
-export function growthPercent(m: Metrics): number {
+/** Growth over the period as a percent of where it started; null when the platforms did not report it. */
+export function growthPercent(m: Metrics): number | null {
+  if (m.followers === null || m.followerDelta === null) return null;
   const before = m.followers - m.followerDelta;
-  return before > 0 ? (m.followerDelta / before) * 100 : 0;
+  return before > 0 ? (m.followerDelta / before) * 100 : null;
 }
 
 const signedPct = (n: number) => (n > 0 ? `+${n.toFixed(1)}%` : n < 0 ? `−${(-n).toFixed(1)}%` : "0.0%");
@@ -27,6 +28,7 @@ interface StatementProps {
 export function SummaryStatement({ accountName, connectedCount, metrics }: StatementProps) {
   const { range } = useRange();
   const m = metrics[range];
+  const pct = growthPercent(m);
   return (
     <section className={`${s.statement} card reveal`} style={{ "--i": 1 } as CSSProperties} aria-labelledby="summary-h">
       <span className={s.eyebrow}>
@@ -45,12 +47,23 @@ export function SummaryStatement({ accountName, connectedCount, metrics }: State
           Your audience
         </span>{" "}
         <span className={s.line}>
-          grew <CountUp value={`${growthPercent(m).toFixed(1)}%`} delay={350} className={s.hl} />
+          {pct === null ? (
+            <>
+              {/* no starting total to take a percentage of: show the count itself */}
+              grew <span className={s.hl}>{m.followerDelta === null ? NO_DATA : formatSigned(m.followerDelta)}</span>
+            </>
+          ) : (
+            <>
+              grew <CountUp value={`${pct.toFixed(1)}%`} delay={350} className={s.hl} />
+            </>
+          )}
         </span>
       </h2>
       <div className={s.foot}>
         <p className={s.sub}>
-          {formatSigned(m.followerDelta)} followers in the last {range} days
+          {m.followerDelta === null
+            ? "No follower changes reported for this period yet"
+            : `${formatSigned(m.followerDelta)} followers in the last ${range} days${m.dataSince ? ` (${sinceNote(m.dataSince)})` : ""}`}
         </p>
         <ArrowButton href="/reports">View report</ArrowButton>
       </div>
@@ -70,10 +83,19 @@ interface Kpi {
 export function KpiTiles({ metrics }: { metrics: Record<Range, Metrics> }) {
   const { range } = useRange();
   const m = metrics[range];
+  // a change vs the last period is only shown when both periods were fully reported
+  // fully reported but nothing the period before: say so rather than "no comparison"
+  const partial = m.comparable ? "No views the period before" : m.dataSince ? sinceNote(m.dataSince) : "No comparison yet";
   const kpis: Kpi[] = [
-    { icon: "users", label: "Followers", value: formatCompact(m.followers), note: `${formatSigned(m.followerDelta)} this period`, tone: "cobalt" },
-    { icon: "eye", label: "Views", value: formatCompact(m.views), note: `${signedPct(m.viewsChange)} vs last period`, tone: "lime" },
-    { icon: "heart", label: "Engagement", value: formatPercent(m.engagement), note: `${m.engagementChange >= 0 ? "+" : "−"}${Math.abs(m.engagementChange).toFixed(1)} pts`, tone: "lilac" },
+    { icon: "users", label: "Followers", value: orNoData(m.followers), note: m.followerDelta === null ? "No data yet" : `${formatSigned(m.followerDelta)} this period`, tone: "cobalt" },
+    { icon: "eye", label: "Views", value: orNoData(m.views), note: m.views === null ? "No data yet" : m.viewsChange === null ? partial : `${signedPct(m.viewsChange)} vs last period`, tone: "lime" },
+    {
+      icon: "heart",
+      label: "Engagement",
+      value: orNoData(m.engagement, formatPercent),
+      note: m.engagement === null ? "No data yet" : m.engagementChange === null ? partial : `${m.engagementChange >= 0 ? "+" : "−"}${Math.abs(m.engagementChange).toFixed(1)} pts`,
+      tone: "lilac",
+    },
     { icon: "grid", label: "Posts", value: String(m.posts), note: `in ${range} days`, tone: "ink" },
   ];
   return (

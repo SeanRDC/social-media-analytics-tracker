@@ -36,6 +36,13 @@
       "when": 1795100992462,
       "tag": "0004_terms_acceptance",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795103188540,
+      "tag": "0005_daily_unknown_values",
+      "breakpoints": true
     }
   ]
 }

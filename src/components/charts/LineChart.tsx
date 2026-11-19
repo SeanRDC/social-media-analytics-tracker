@@ -8,8 +8,12 @@ import s from "./LineChart.module.css";
 export interface Series {
   key: string;
   label: string;
-  /** May be shorter than `xCount` (e.g. today stops at the current hour). */
-  values: number[];
+  /**
+   * May be shorter than `xCount` (e.g. today stops at the current hour). null
+   * marks a day the platform did not report: the line breaks there instead of
+   * dropping to zero.
+   */
+  values: (number | null)[];
   color: string;
   glow?: boolean;
   area?: boolean;
@@ -45,8 +49,24 @@ export function LineChart({ series, xCount, xLabels, yMin, yMax, yTicks, height 
   const step = (W - PAD.l - PAD.r) / (xCount - 1);
   const x = (i: number) => PAD.l + i * step;
   const y = linearScale(yMin, yMax, H - PAD.b, PAD.t);
-  const pts = (vals: number[]): Point[] => vals.map((v, i) => [x(i), y(v)]);
-  const path = (vals: number[]) => (smooth ? smoothPath(pts(vals), PAD.t, H - PAD.b) : linePath(pts(vals)));
+  /** Unbroken stretches of reported values, each drawn as its own line. */
+  const runs = (vals: (number | null)[]) => {
+    const out: { from: number; to: number; pts: Point[] }[] = [];
+    let cur: (typeof out)[number] | null = null;
+    vals.forEach((v, i) => {
+      if (v == null) {
+        cur = null;
+        return;
+      }
+      if (!cur) out.push((cur = { from: i, to: i, pts: [] }));
+      cur.to = i;
+      cur.pts.push([x(i), y(v)]);
+    });
+    return out;
+  };
+  // a lone reported day still shows as a dot-sized stroke
+  const path = (p: Point[]) => (p.length === 1 ? `M${p[0][0]},${p[0][1]}h0.01` : smooth ? smoothPath(p, PAD.t, H - PAD.b) : linePath(p));
+  const at = (se: Series | undefined, i: number) => (se ? (se.values[i] ?? null) : null);
   const byKey = (k: string) => series.find((se) => se.key === k);
 
   const pick = (e: PointerEvent<SVGSVGElement>) => {
@@ -61,7 +81,7 @@ export function LineChart({ series, xCount, xLabels, yMin, yMax, yTicks, height 
     } else if (e.key === "Escape") setHover(null);
   };
 
-  const tipTop = hover == null ? 0 : Math.min(...series.map((se) => (se.values[hover] != null ? y(se.values[hover]) : H)));
+  const tipTop = hover == null ? 0 : Math.min(...series.map((se) => (se.values[hover] != null ? y(se.values[hover]!) : H)));
   // near the top edge the readout flips below the point so the card never clips it
   const below = tipTop < 64;
   const peakSeries = peak && byKey(peak.series);
@@ -109,31 +129,34 @@ export function LineChart({ series, xCount, xLabels, yMin, yMax, yTicks, height 
           </text>
         ))}
 
-        {series.map((se) => {
-          const d = path(se.values);
-          const last = se.values.length - 1;
-          return (
-            <g key={se.key}>
-              {se.area && <path d={areaPath(d, x(0), x(last), H - PAD.b)} fill={`url(#${uid}-a-${se.key})`} className={s.fade} />}
-              {se.glow && <path d={d} pathLength={1} fill="none" stroke={se.color} strokeWidth={5} strokeOpacity={0.4} filter={`url(#${uid}-glow)`} className={s.draw} />}
-              <path d={d} pathLength={1} fill="none" stroke={se.color} strokeWidth={se.glow ? 2 : 1.6} strokeLinecap="round" className={s.draw} />
-            </g>
-          );
-        })}
+        {series.map((se) => (
+          <g key={se.key}>
+            {runs(se.values).map((r) => {
+              const d = path(r.pts);
+              return (
+                <g key={r.from}>
+                  {se.area && r.to > r.from && <path d={areaPath(d, x(r.from), x(r.to), H - PAD.b)} fill={`url(#${uid}-a-${se.key})`} className={s.fade} />}
+                  {se.glow && <path d={d} pathLength={1} fill="none" stroke={se.color} strokeWidth={5} strokeOpacity={0.4} filter={`url(#${uid}-glow)`} className={s.draw} />}
+                  <path d={d} pathLength={1} fill="none" stroke={se.color} strokeWidth={se.glow ? 2 : 1.6} strokeLinecap="round" className={s.draw} />
+                </g>
+              );
+            })}
+          </g>
+        ))}
 
-        {peak && peakSeries && (
+        {peak && at(peakSeries, peak.i) != null && (
           <g className={s.peak}>
-            <rect x={x(peak.i) - 18} y={y(peakSeries.values[peak.i]) - 24} width={36} height={17} rx={8.5} className={s.pill} />
-            <text x={x(peak.i)} y={y(peakSeries.values[peak.i]) - 12} textAnchor="middle" className={s.pillText}>
+            <rect x={x(peak.i) - 18} y={y(at(peakSeries, peak.i)!) - 24} width={36} height={17} rx={8.5} className={s.pill} />
+            <text x={x(peak.i)} y={y(at(peakSeries, peak.i)!) - 12} textAnchor="middle" className={s.pillText}>
               {peak.label}
             </text>
-            <circle cx={x(peak.i)} cy={y(peakSeries.values[peak.i])} r={3} className={s.pill} />
+            <circle cx={x(peak.i)} cy={y(at(peakSeries, peak.i)!)} r={3} className={s.pill} />
           </g>
         )}
-        {pulse && pulseSeries && (
+        {pulse && pulseSeries && at(pulseSeries, pulse.i) != null && (
           <g>
-            <circle cx={x(pulse.i)} cy={y(pulseSeries.values[pulse.i])} r={4} fill={pulseSeries.color} className={s.pulse} />
-            <circle cx={x(pulse.i)} cy={y(pulseSeries.values[pulse.i])} r={4} fill={pulseSeries.color} className={s.ring} />
+            <circle cx={x(pulse.i)} cy={y(at(pulseSeries, pulse.i)!)} r={4} fill={pulseSeries.color} className={s.pulse} />
+            <circle cx={x(pulse.i)} cy={y(at(pulseSeries, pulse.i)!)} r={4} fill={pulseSeries.color} className={s.ring} />
           </g>
         )}
 
@@ -141,7 +164,7 @@ export function LineChart({ series, xCount, xLabels, yMin, yMax, yTicks, height 
           <g>
             <line x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={H - PAD.b} className={s.cross} />
             {series.map((se) =>
-              se.values[hover] != null ? <circle key={se.key} cx={x(hover)} cy={y(se.values[hover])} r={4} fill={se.color} className={s.ring} /> : null,
+              se.values[hover] != null ? <circle key={se.key} cx={x(hover)} cy={y(se.values[hover]!)} r={4} fill={se.color} className={s.ring} /> : null,
             )}
           </g>
         )}
@@ -160,7 +183,7 @@ export function LineChart({ series, xCount, xLabels, yMin, yMax, yTicks, height 
             {[...series].reverse().map((se) => (
               <span key={se.key} className={s.tipRow}>
                 <i style={{ background: se.color }} />
-                {se.label} <b>{se.values[hover] != null ? formatValue(se.values[hover]) : "not yet"}</b>
+                {se.label} <b>{se.values[hover] != null ? formatValue(se.values[hover]!) : "no data"}</b>
               </span>
             ))}
           </>

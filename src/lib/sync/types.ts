@@ -1,12 +1,15 @@
 import type { PostKind } from "@/lib/data/types";
 
-/** One day of account totals. `followers` is the total at the end of that day. */
+/**
+ * One day of account numbers exactly as the platform reported them. `followers`
+ * is the total at the end of that day. null = not reported (never an estimate).
+ */
 export interface DailyRow {
   date: string;
-  followers: number;
-  followersGained: number;
-  views: number;
-  engagements: number;
+  followers: number | null;
+  followersGained: number | null;
+  views: number | null;
+  engagements: number | null;
   posts: number;
   watchMinutes: number | null;
 }

@@ -110,7 +110,11 @@ export const connection = pgTable(
   (t) => [unique("connection_user_platform_uq").on(t.userId, t.platform), index("connection_user_id_idx").on(t.userId)],
 );
 
-/** Account totals captured once a day. Most APIs only expose today's numbers, so history is built from these. */
+/**
+ * One day of account numbers. Values are exactly what the platform reported for
+ * that day; null means the platform did not report it (for example days before
+ * a connection that only shares totals), never an estimate and never "zero".
+ */
 export const dailyStat = pgTable(
   "daily_stat",
   {
@@ -119,10 +123,10 @@ export const dailyStat = pgTable(
       .notNull()
       .references(() => connection.id, { onDelete: "cascade" }),
     date: date("date").notNull(),
-    followers: integer("followers").notNull(),
-    followersGained: integer("followers_gained").notNull().default(0),
-    views: bigint("views", { mode: "number" }).notNull().default(0),
-    engagements: integer("engagements").notNull().default(0),
+    followers: integer("followers"),
+    followersGained: integer("followers_gained"),
+    views: bigint("views", { mode: "number" }),
+    engagements: integer("engagements"),
     posts: integer("posts").notNull().default(0),
     watchMinutes: bigint("watch_minutes", { mode: "number" }),
   },

@@ -25,45 +25,58 @@ export interface ConnectionView {
   syncError?: string | null;
 }
 
+/*
+ * Numbers are exactly what the platforms reported. null means "not reported"
+ * (no data yet for that period), never zero and never an estimate. When a
+ * period is only partly reported, `dataSince` is the first reported day in it.
+ */
+
 export interface Platform {
   id: PlatformId;
   name: string;
   /** Account name or handle on that platform. */
   account: string;
   status: ConnectionStatus;
-  followers: number;
-  /** Followers gained in each range. */
-  followerGrowth: Record<Range, number>;
-  /** Engagement rate, percent, last 30 days. */
-  engagement: number;
-  views30: number;
+  /** Latest reported total. */
+  followers: number | null;
+  /** Followers gained in each range, from reported days only. */
+  followerGrowth: Record<Range, number | null>;
+  /** Engagement rate, percent, last 30 days, from reported days only. */
+  engagement: number | null;
+  views30: number | null;
+  /** First reported day in the last 30 days, when that is later than the window start. */
+  dataSince: string | null;
   posts30: number;
-  /** Daily follower totals for the last 31 days, oldest first. */
-  trend: number[];
+  /** Reported daily follower totals for the last 31 days, oldest first; null where not reported. */
+  trend: (number | null)[];
   /** What the platform calls its followers. */
   followerNoun: string;
 }
 
 export interface Metrics {
-  followers: number;
-  followerDelta: number;
-  views: number;
-  /** Percent change in views vs. the previous period. */
-  viewsChange: number;
-  engagement: number;
-  /** Change in engagement rate, percentage points. */
-  engagementChange: number;
+  followers: number | null;
+  followerDelta: number | null;
+  views: number | null;
+  /** Percent change in views vs. the previous period; null unless both periods are fully reported. */
+  viewsChange: number | null;
+  engagement: number | null;
+  /** Change in engagement rate, percentage points; null unless both periods are fully reported. */
+  engagementChange: number | null;
   posts: number;
+  /** First day any connected platform reported in this period, when later than its start. */
+  dataSince: string | null;
+  /** Both periods were fully reported (a null change then means the earlier period had no views). */
+  comparable: boolean;
 }
 
 export interface Overview {
   accountName: string;
   connectedCount: number;
   metrics: Record<Range, Metrics>;
-  weekGrowth: { day: string; value: number }[];
+  weekGrowth: { day: string; value: number | null }[];
   topPlatform: PlatformId;
-  /** Daily total followers for the last 31 days. */
-  trend: number[];
+  /** Daily total followers for the last 31 days; null on days a platform did not report. */
+  trend: (number | null)[];
   /** First day of `trend`, ISO date. */
   trendStart: string;
 }
@@ -71,8 +84,8 @@ export interface Overview {
 /** Views per day across all platforms, this week vs last week (Mon–Sun). */
 export interface DailyViews {
   days: string[];
-  thisWeek: number[];
-  lastWeek: number[];
+  thisWeek: (number | null)[];
+  lastWeek: (number | null)[];
   /** Index of today within the week. */
   todayIndex: number;
 }

@@ -15,7 +15,7 @@ import { RANGES } from "@/lib/data/types";
 describe("sample data consistency", () => {
   it("total audience equals the sum of connected platforms", async () => {
     const [overview, platforms] = await Promise.all([getOverview(), getPlatforms()]);
-    const sum = platforms.filter((p) => p.status === "connected").reduce((s, p) => s + p.followers, 0);
+    const sum = platforms.filter((p) => p.status === "connected").reduce((s, p) => s + p.followers!, 0);
     expect(sum).toBe(248600);
     for (const r of RANGES) expect(overview.metrics[r].followers).toBe(sum);
   });
@@ -23,14 +23,14 @@ describe("sample data consistency", () => {
   it("follower growth per range equals the sum across platforms", async () => {
     const [overview, platforms] = await Promise.all([getOverview(), getPlatforms()]);
     for (const r of RANGES) {
-      const sum = platforms.reduce((s, p) => s + p.followerGrowth[r], 0);
+      const sum = platforms.reduce((s, p) => s + p.followerGrowth[r]!, 0);
       expect(sum).toBe(overview.metrics[r].followerDelta);
     }
   });
 
   it("weekly growth bars add up to the 7-day follower gain", async () => {
     const overview = await getOverview();
-    const sum = overview.weekGrowth.reduce((s, d) => s + d.value, 0);
+    const sum = overview.weekGrowth.reduce((s, d) => s + d.value!, 0);
     expect(sum).toBe(overview.metrics[7].followerDelta);
   });
 
@@ -39,7 +39,7 @@ describe("sample data consistency", () => {
       if (p.status !== "connected") continue;
       expect(p.trend).toHaveLength(31);
       expect(p.trend[30]).toBe(p.followers);
-      expect(p.trend[0]).toBe(p.followers - p.followerGrowth[30]);
+      expect(p.trend[0]).toBe(p.followers! - p.followerGrowth[30]!);
     }
   });
 
@@ -48,8 +48,8 @@ describe("sample data consistency", () => {
     expect(daily.days).toHaveLength(7);
     expect(daily.thisWeek).toHaveLength(7);
     expect(daily.lastWeek).toHaveLength(7);
-    const thisWeek = daily.thisWeek.reduce((s, v) => s + v, 0);
-    const lastWeek = daily.lastWeek.reduce((s, v) => s + v, 0);
+    const thisWeek = daily.thisWeek.reduce((s: number, v) => s + v!, 0);
+    const lastWeek = daily.lastWeek.reduce((s: number, v) => s + v!, 0);
     expect(thisWeek).toBe(overview.metrics[7].views);
     expect(Math.round((thisWeek / lastWeek - 1) * 100)).toBe(overview.metrics[7].viewsChange);
   });

@@ -15,6 +15,8 @@ const m = (followers: number, followerDelta: number, views: number, viewsChange:
   engagement: 5.8,
   engagementChange: 0.4,
   posts: 42,
+  dataSince: null,
+  comparable: true,
 });
 const METRICS: Record<Range, Metrics> = {
   7: m(248600, 2000, 1_100_000, -3.2),
@@ -30,7 +32,8 @@ function RangeSwitch() {
 describe("growthPercent", () => {
   it("is the period's gain as a share of where it started", () => {
     expect(growthPercent(m(110, 10, 0, 0))).toBeCloseTo(10);
-    expect(growthPercent(m(0, 0, 0, 0))).toBe(0);
+    // nothing to compare against: unknown, not 0%
+    expect(growthPercent(m(0, 0, 0, 0))).toBeNull();
   });
 });
 

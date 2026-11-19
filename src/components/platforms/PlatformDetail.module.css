@@ -280,3 +280,10 @@
     gap: 10px;
   }
 }
+
+/* "since Nov 19" when a platform only reported part of the period */
+.since {
+  font-weight: 500;
+  color: var(--mu);
+  white-space: nowrap;
+}

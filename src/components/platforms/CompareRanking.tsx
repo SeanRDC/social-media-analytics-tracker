@@ -6,7 +6,7 @@ import { useRange } from "@/components/shell/RangeProvider";
 import { SegmentedControl } from "@/components/shell/SegmentedControl";
 import { useFlip } from "@/hooks/useFlip";
 import type { Platform, Range } from "@/lib/data/types";
-import { formatCompact, formatPercent, formatSigned } from "@/lib/format";
+import { formatCompact, formatPercent, formatSigned, NO_DATA } from "@/lib/format";
 import s from "./Platforms.module.css";
 
 type Metric = "engagement" | "growth" | "views";
@@ -17,7 +17,7 @@ const METRICS = [
   { value: "views", label: "Views" },
 ] as const satisfies readonly { value: Metric; label: string }[];
 
-function read(p: Platform, m: Metric, range: Range): number {
+function read(p: Platform, m: Metric, range: Range): number | null {
   if (m === "engagement") return p.engagement;
   if (m === "growth") return p.followerGrowth[range];
   return p.views30;
@@ -38,12 +38,17 @@ export function CompareRanking({ platforms }: { platforms: Platform[] }) {
       platforms
         .filter((p) => p.status === "connected")
         .map((p) => ({ p, v: read(p, metric, range) }))
-        .sort((a, b) => b.v - a.v),
+        // platforms that did not report this number go last, never ranked as zero
+        .sort((a, b) => (b.v ?? -Infinity) - (a.v ?? -Infinity)),
     [platforms, metric, range],
   );
-  const max = Math.max(...ranked.map((r) => r.v), 1);
-  const avg = ranked.reduce((s, r) => s + r.v * (metric === "engagement" ? r.p.followers : 1), 0) / (metric === "engagement" ? ranked.reduce((s, r) => s + r.p.followers, 0) : ranked.length);
-  const [first, second] = ranked;
+  const reported = ranked.filter((r): r is { p: Platform; v: number } => r.v !== null);
+  const max = Math.max(...reported.map((r) => r.v), 1);
+  const weight = (r: { p: Platform }) => (metric === "engagement" ? (r.p.followers ?? 0) : 1);
+  const weights = reported.reduce((s, r) => s + weight(r), 0);
+  const avg = weights ? reported.reduce((s, r) => s + r.v * weight(r), 0) / weights : 0;
+  const total = reported.reduce((s, r) => s + r.v, 0);
+  const [first, second] = reported;
   const caption = metric === "views" ? "Views, last 30 days" : metric === "growth" ? `New followers, last ${range} days` : "Engagement rate, last 30 days";
 
   return (
@@ -75,14 +80,16 @@ export function CompareRanking({ platforms }: { platforms: Platform[] }) {
               {p.name}
             </span>
             <span className={s.track} aria-hidden="true">
-              <i style={{ transform: `scaleX(${v / max})`, background: `var(--p-${p.id})` }} />
+              <i style={{ transform: `scaleX(${(v ?? 0) / max})`, background: `var(--p-${p.id})` }} />
             </span>
-            <b className={s.rkVal}>{show(v, metric)}</b>
+            <b className={s.rkVal} title={v === null ? "Not reported yet" : undefined}>
+              {v === null ? NO_DATA : show(v, metric)}
+            </b>
           </li>
         ))}
       </ol>
 
-      {first && second && (
+      {first && second && second.v > 0 && total > 0 && (
         <p className={s.insight}>
           <Icon name="sparkle" size={16} />
           <span>
@@ -93,12 +100,12 @@ export function CompareRanking({ platforms }: { platforms: Platform[] }) {
             )}
             {metric === "growth" && (
               <>
-                {first.p.name} brought <b>{Math.round((first.v / ranked.reduce((s, r) => s + r.v, 0)) * 100)}%</b> of your new followers in the last {range} days.
+                {first.p.name} brought <b>{Math.round((first.v / total) * 100)}%</b> of your new followers in the last {range} days.
               </>
             )}
             {metric === "views" && (
               <>
-                {first.p.name} drove <b>{Math.round((first.v / ranked.reduce((s, r) => s + r.v, 0)) * 100)}%</b> of your views this month.
+                {first.p.name} drove <b>{Math.round((first.v / total) * 100)}%</b> of your views this month.
               </>
             )}
           </span>

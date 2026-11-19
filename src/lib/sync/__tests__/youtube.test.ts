@@ -141,7 +141,7 @@ describe("simulatedSnapshot", () => {
 
   it("keeps follower totals consistent with daily gains", () => {
     const { daily } = simulatedSnapshot("tiktok", { start: "2026-10-01", end: "2026-11-15" });
-    for (let i = 1; i < daily.length; i++) expect(daily[i].followers - daily[i - 1].followers).toBe(daily[i].followersGained);
+    for (let i = 1; i < daily.length; i++) expect(daily[i].followers! - daily[i - 1].followers!).toBe(daily[i].followersGained);
   });
 
   it("gives TikTok no demographics, like the real API", () => {

@@ -47,8 +47,11 @@ export interface Report {
   sections: Section[];
 }
 
-const pct = (n: number) => `${Math.round(n * 10) / 10}%`;
-const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
+/** What a report shows where the platform did not report a number. */
+const NONE = "No data";
+const pct = (n: number | null) => (n === null ? NONE : `${Math.round(n * 10) / 10}%`);
+const signed = (n: number | null) => (n === null ? NONE : n > 0 ? `+${n}` : String(n));
+const value = (n: number | null): Cell => (n === null ? NONE : n);
 const date = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
 function summary(m: Metrics, days: Range): Section {
@@ -56,9 +59,9 @@ function summary(m: Metrics, days: Range): Section {
     heading: `Summary (last ${days} days)`,
     columns: ["Metric", "Value", "Change"],
     rows: [
-      ["Followers", m.followers, signed(m.followerDelta)],
-      ["Views", m.views, `${signed(m.viewsChange)}%`],
-      ["Engagement rate", pct(m.engagement), `${signed(Math.round(m.engagementChange * 10) / 10)} pts`],
+      ["Followers", value(m.followers), signed(m.followerDelta)],
+      ["Views", value(m.views), m.viewsChange === null ? (m.comparable ? "No views the period before" : m.dataSince ? `Reported since ${date(m.dataSince)}` : "No comparison") : `${signed(m.viewsChange)}%`],
+      ["Engagement rate", pct(m.engagement), m.engagementChange === null ? "No comparison" : `${signed(Math.round(m.engagementChange * 10) / 10)} pts`],
       ["Posts", m.posts, ""],
     ],
   };
@@ -70,7 +73,7 @@ function platformsSection(d: ReportData): Section {
   return {
     heading: "Platforms",
     columns: ["Platform", "Account", "Followers", "Growth (30 days)", "Views (30 days)", "Engagement rate", "Posts (30 days)"],
-    rows: connected(d).map((p) => [p.name, p.account, p.followers, signed(p.followerGrowth[30]), p.views30, pct(p.engagement), p.posts30]),
+    rows: connected(d).map((p) => [p.name, p.account, value(p.followers), signed(p.followerGrowth[30]), value(p.views30), pct(p.engagement), p.posts30]),
   };
 }
 
@@ -105,7 +108,7 @@ export function buildReport(id: PresetId, d: ReportData): Report {
           {
             heading: "Day by day",
             columns: ["Day", "New followers", "Views", "Views a week earlier"],
-            rows: d.overview.weekGrowth.map((g, i) => [g.day, signed(g.value), d.daily.thisWeek[i] ?? 0, d.daily.lastWeek[i] ?? 0]),
+            rows: d.overview.weekGrowth.map((g, i) => [g.day, signed(g.value), value(d.daily.thisWeek[i] ?? null), value(d.daily.lastWeek[i] ?? null)]),
           },
           postsSection("Best post this week", top(7, 1)),
         ],
@@ -118,7 +121,7 @@ export function buildReport(id: PresetId, d: ReportData): Report {
         period: span(30),
         sections: [
           summary(d.overview.metrics[30], 30),
-          { heading: "Platforms", columns: ["Platform", "Followers", "Growth (30 days)", "Engagement rate"], rows: connected(d).map((p) => [p.name, p.followers, signed(p.followerGrowth[30]), pct(p.engagement)]) },
+          { heading: "Platforms", columns: ["Platform", "Followers", "Growth (30 days)", "Engagement rate"], rows: connected(d).map((p) => [p.name, value(p.followers), signed(p.followerGrowth[30]), pct(p.engagement)]) },
           { heading: "Audience by age", columns: ["Age", "Share"], rows: d.audience.ages.map((a) => [a.label, `${a.share}%`]) },
           { heading: "Audience by country", columns: ["Country", "Share"], rows: d.audience.countries.map((c) => [c.name, `${c.share}%`]) },
           postsSection("Top posts (last 30 days)", top(30, 5)),

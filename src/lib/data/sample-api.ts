@@ -17,7 +17,7 @@ export async function getAsOf(): Promise<string> {
 
 export async function getOverview(): Promise<Overview> {
   const connected = PLATFORMS.filter((p) => p.status === "connected");
-  const top = [...connected].sort((a, b) => b.followers - a.followers)[0];
+  const top = [...connected].sort((a, b) => (b.followers ?? 0) - (a.followers ?? 0))[0];
   return {
     accountName: ACCOUNT_NAME,
     connectedCount: connected.length,

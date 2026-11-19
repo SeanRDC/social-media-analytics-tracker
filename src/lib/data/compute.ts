@@ -8,12 +8,13 @@ import { PLATFORM_NAMES } from "@/lib/platforms";
 import type { Audience, ConnectionStatus, DailyViews, Metrics, Overview, Platform, PlatformId, Post, PostKind, Range } from "./types";
 import { PLATFORM_ORDER, RANGES } from "./types";
 
+/** One day as the platform reported it; null = not reported that day. */
 export interface DayRow {
   date: string;
-  followers: number;
-  followersGained: number;
-  views: number;
-  engagements: number;
+  followers: number | null;
+  followersGained: number | null;
+  views: number | null;
+  engagements: number | null;
 }
 
 export interface ConnectionData {
@@ -59,9 +60,27 @@ const WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const THUMBS = ["a", "b", "c", "d"] as const;
 
 const sum = (xs: number[]) => xs.reduce((s, x) => s + x, 0);
+const known = <T>(xs: (T | null)[]) => xs.filter((x): x is T => x !== null);
+/** Sum of the reported values, or null when none were reported. */
+const sumKnown = (xs: (number | null)[]) => {
+  const k = known(xs);
+  return k.length ? sum(k) : null;
+};
 const round1 = (x: number) => Math.round(x * 10) / 10;
 /** Engagement rate, percent, one decimal. */
 const rate = (engagements: number, views: number) => (views > 0 ? round1((engagements / views) * 100) : 0);
+/** Engagement rate over the days that reported both views and engagement; null if none did. */
+const rateOf = (days: DayRow[]) => {
+  const both = days.filter((d) => d.views !== null && d.engagements !== null);
+  return both.length ? rate(sum(both.map((d) => d.engagements!)), sum(both.map((d) => d.views!))) : null;
+};
+/** Whether every day reported views and engagement (needed for a fair period-over-period change). */
+const complete = (days: DayRow[]) => days.every((d) => d.views !== null && d.engagements !== null);
+/** First day that reported views, when later than the first day of the period. */
+const firstReported = (days: DayRow[]) => {
+  const first = days.find((d) => d.views !== null)?.date ?? null;
+  return first && first > days[0].date ? first : null;
+};
 
 /** The latest stored day across all connections (platforms report with a lag). */
 export function asOfDate(ds: Dataset): string | null {
@@ -70,19 +89,16 @@ export function asOfDate(ds: Dataset): string | null {
   return latest;
 }
 
-/**
- * The `n` days ending `asOf` for one connection. Missing days carry the
- * follower total forward (or back) and count nothing else.
- */
+/** The `n` days ending `asOf` for one connection; days the platform did not report are all null. */
 export function daysEnding(c: ConnectionData, asOf: string, n: number): DayRow[] {
   const byDate = new Map(c.daily.map((d) => [d.date, d]));
-  const dates = dateRange(addDays(asOf, -(n - 1)), asOf);
-  let carry = [...c.daily].reverse().find((d) => d.date < dates[0])?.followers ?? c.daily.find((d) => d.date >= dates[0])?.followers ?? 0;
-  return dates.map((date) => {
-    const hit = byDate.get(date);
-    if (hit) carry = hit.followers;
-    return hit ?? { date, followers: carry, followersGained: 0, views: 0, engagements: 0 };
-  });
+  return dateRange(addDays(asOf, -(n - 1)), asOf).map((date) => byDate.get(date) ?? { date, followers: null, followersGained: null, views: null, engagements: null });
+}
+
+/** The latest follower total the platform reported on or before `asOf`. */
+export function latestFollowers(c: ConnectionData, asOf: string): number | null {
+  for (let i = c.daily.length - 1; i >= 0; i--) if (c.daily[i].date <= asOf && c.daily[i].followers !== null) return c.daily[i].followers;
+  return null;
 }
 
 const live = (ds: Dataset) => ds.connections.filter((c) => c.status === "connected" && c.daily.length > 0);
@@ -98,42 +114,66 @@ export function computePlatforms(ds: Dataset, asOf: string): Platform[] {
   return PLATFORM_ORDER.map((id) => {
     const c = ds.connections.find((x) => x.platform === id);
     const base = { id, name: PLATFORM_NAMES[id], followerNoun: NOUN[id] ?? "followers" };
-    if (!c) return { ...base, account: "", status: "not-connected", followers: 0, followerGrowth: { 7: 0, 30: 0, 90: 0 }, engagement: 0, views30: 0, posts30: 0, trend: [] };
+    if (!c) return { ...base, account: "", status: "not-connected", followers: null, followerGrowth: { 7: null, 30: null, 90: null }, engagement: null, views30: null, dataSince: null, posts30: 0, trend: [] };
     const days90 = daysEnding(c, asOf, 90);
     const last = (n: number) => days90.slice(-n);
-    const growth = (r: Range) => sum(last(r).map((d) => d.followersGained));
+    const growth = (r: Range) => sumKnown(last(r).map((d) => d.followersGained));
     const d30 = last(30);
     return {
       ...base,
       account: c.account,
       status: c.status,
-      followers: days90.at(-1)!.followers,
+      followers: latestFollowers(c, asOf),
       followerGrowth: { 7: growth(7), 30: growth(30), 90: growth(90) },
-      engagement: rate(sum(d30.map((d) => d.engagements)), sum(d30.map((d) => d.views))),
-      views30: sum(d30.map((d) => d.views)),
+      engagement: rateOf(d30),
+      views30: sumKnown(d30.map((d) => d.views)),
+      dataSince: firstReported(d30),
       posts30: postsBetween(ds.posts.filter((p) => p.platform === id), addDays(asOf, -29), asOf).length,
       trend: last(31).map((d) => d.followers),
     };
   });
 }
 
+/** The latest day, at most a week before `asOf`, on which every connection reported views. */
+function lastCompleteDay(conns: ConnectionData[], asOf: string, r: Range): string | null {
+  if (!conns.length) return null;
+  for (let back = 0; back < Math.min(7, r); back++) {
+    const day = addDays(asOf, -back);
+    if (conns.every((c) => c.daily.some((d) => d.date === day && d.views !== null))) return day;
+  }
+  return null;
+}
+
 function metrics(ds: Dataset, asOf: string, r: Range): Metrics {
   const conns = live(ds);
   const days = conns.map((c) => daysEnding(c, asOf, r * 2));
   const cur = days.flatMap((d) => d.slice(r));
-  const prev = days.flatMap((d) => d.slice(0, r));
-  const views = sum(cur.map((d) => d.views));
-  const prevViews = sum(prev.map((d) => d.views));
-  const engagement = rate(sum(cur.map((d) => d.engagements)), views);
-  const prevEngagement = rate(sum(prev.map((d) => d.engagements)), prevViews);
+  const views = sumKnown(cur.map((d) => d.views));
+  const engagement = rateOf(cur);
+  // The change compares two fully reported periods. Platforms report with a lag
+  // (YouTube a day or two), so both periods end on the latest day every platform
+  // has reported, rather than on a day some have not reported yet.
+  const end = lastCompleteDay(conns, asOf, r);
+  const both = end ? conns.map((c) => daysEnding(c, end, r * 2)) : [];
+  const curFull = both.flatMap((d) => d.slice(r));
+  const prevFull = both.flatMap((d) => d.slice(0, r));
+  const comparable = end !== null && complete(curFull) && complete(prevFull);
+  const nowViews = sumKnown(curFull.map((d) => d.views));
+  const prevViews = sumKnown(prevFull.map((d) => d.views));
+  const nowEngagement = rateOf(curFull);
+  const prevEngagement = rateOf(prevFull);
+  const changeable = comparable && prevViews !== null && prevViews > 0;
+  const followers = known(conns.map((c) => latestFollowers(c, asOf)));
   const platforms = new Set(conns.map((c) => c.platform));
   return {
-    followers: sum(days.map((d) => d.at(-1)!.followers)),
-    followerDelta: sum(cur.map((d) => d.followersGained)),
+    followers: followers.length ? sum(followers) : null,
+    followerDelta: sumKnown(cur.map((d) => d.followersGained)),
     views,
-    viewsChange: prevViews > 0 ? Math.round((views / prevViews - 1) * 100) : 0,
+    viewsChange: changeable ? Math.round((nowViews! / prevViews! - 1) * 100) : null,
     engagement,
-    engagementChange: prevViews > 0 ? round1(engagement - prevEngagement) : 0,
+    engagementChange: changeable ? round1(nowEngagement! - prevEngagement!) : null,
+    dataSince: known(days.map((d) => firstReported(d.slice(r)))).sort().at(-1) ?? null,
+    comparable,
     posts: postsBetween(
       ds.posts.filter((p) => platforms.has(p.platform)),
       addDays(asOf, -(r - 1)),
@@ -145,15 +185,19 @@ function metrics(ds: Dataset, asOf: string, r: Range): Metrics {
 export function computeOverview(ds: Dataset, asOf: string): Overview {
   const platforms = computePlatforms(ds, asOf);
   const shown = platforms.filter((p) => live(ds).some((c) => c.platform === p.id));
-  const top = [...shown].sort((a, b) => b.followers - a.followers)[0];
+  const top = [...shown].sort((a, b) => (b.followers ?? -1) - (a.followers ?? -1))[0];
   const last7 = live(ds).map((c) => daysEnding(c, asOf, 7));
   return {
     accountName: top?.account || "Your accounts",
     connectedCount: shown.length,
     metrics: Object.fromEntries(RANGES.map((r) => [r, metrics(ds, asOf, r)])) as Record<Range, Metrics>,
-    weekGrowth: dateRange(addDays(asOf, -6), asOf).map((date, i) => ({ day: weekdayShort(date), value: sum(last7.map((d) => d[i].followersGained)) })),
+    weekGrowth: dateRange(addDays(asOf, -6), asOf).map((date, i) => ({ day: weekdayShort(date), value: sumKnown(last7.map((d) => d[i].followersGained)) })),
     topPlatform: top?.id ?? "youtube",
-    trend: Array.from({ length: 31 }, (_, i) => sum(shown.map((p) => p.trend[i] ?? 0))),
+    // a day's total is only known when every platform reported its followers that day
+    trend: Array.from({ length: 31 }, (_, i) => {
+      const xs = shown.map((p) => p.trend[i] ?? null);
+      return xs.length && xs.every((x) => x !== null) ? sum(xs as number[]) : null;
+    }),
     trendStart: addDays(asOf, -30),
   };
 }
@@ -161,7 +205,7 @@ export function computeOverview(ds: Dataset, asOf: string): Overview {
 /** The last 7 stored days against the 7 before them. */
 export function computeDailyViews(ds: Dataset, asOf: string): DailyViews {
   const days = live(ds).map((c) => daysEnding(c, asOf, 14));
-  const total = (i: number) => sum(days.map((d) => d[i].views));
+  const total = (i: number) => sumKnown(days.map((d) => d[i].views));
   const dates = dateRange(addDays(asOf, -6), asOf);
   return {
     days: dates.map(weekdayShort),
@@ -215,7 +259,7 @@ const regionName = (() => {
 
 export function computeAudience(ds: Dataset, asOf: string): Audience {
   const conns = live(ds);
-  const followers = new Map(conns.map((c) => [c.platform, daysEnding(c, asOf, 1)[0].followers || 1]));
+  const followers = new Map(conns.map((c) => [c.platform, latestFollowers(c, asOf) || 1]));
   const rows = ds.audience.filter((a) => followers.has(a.platform));
   const sources = PLATFORM_ORDER.filter((id) => rows.some((r) => r.platform === id));
 

@@ -65,6 +65,8 @@ export function evaluateAlerts(ds: Dataset | null, asOf: string | null, expired:
   // follower milestones, each multiple of 10K once per platform
   for (const c of live) {
     const [prev, now] = daysEnding(c, asOf, 2).map((d) => d.followers);
+    // only compare two reported totals
+    if (prev === null || now === null) continue;
     const reached = Math.floor(now / MILESTONE) * MILESTONE;
     if (reached >= MILESTONE && Math.floor(prev / MILESTONE) * MILESTONE < reached) {
       alerts.push({
@@ -80,8 +82,9 @@ export function evaluateAlerts(ds: Dataset | null, asOf: string | null, expired:
   // engagement drop, at most once a week
   if (live.length) {
     const m = computeOverview(ds, asOf).metrics[7];
-    const before = m.engagement - m.engagementChange;
-    if (before > 0 && m.engagement < before * 0.8) {
+    // a change exists only when both weeks were fully reported
+    const before = m.engagement !== null && m.engagementChange !== null ? m.engagement - m.engagementChange : null;
+    if (m.engagement !== null && before !== null && before > 0 && m.engagement < before * 0.8) {
       alerts.push({
         kind: "drop",
         key: `week-of:${weekOf(asOf)}`,

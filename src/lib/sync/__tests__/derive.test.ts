@@ -4,8 +4,8 @@ import { migrate } from "drizzle-orm/pglite/migrator";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "@/db";
 import * as schema from "@/db/schema";
-import { derivedToday } from "@/lib/sync/service";
-import type { PlatformSnapshot, PostRow } from "@/lib/sync/types";
+import { derivedToday, storeSnapshot } from "@/lib/sync/service";
+import type { DailyRow, PlatformSnapshot, PostRow } from "@/lib/sync/types";
 
 let db: Db;
 
@@ -46,9 +46,9 @@ async function previous(date: string, followers: number, posts: PostRow[]) {
 }
 
 describe("derivedToday", () => {
-  it("does not count lifetime totals as today's activity on the first sync", async () => {
+  it("leaves the first sync's activity unknown instead of zero, keeping the reported follower total", async () => {
     const [row] = await derivedToday(db, "c1", "2026-11-16", snap(1000, [p("v1", "2026-10-01", 50_000, 900)]));
-    expect(row).toMatchObject({ date: "2026-11-16", followers: 1000, followersGained: 0, views: 0, engagements: 0 });
+    expect(row).toMatchObject({ date: "2026-11-16", followers: 1000, followersGained: null, views: null, engagements: null });
   });
 
   it("counts the change since the previous sync", async () => {
@@ -77,5 +77,24 @@ describe("derivedToday", () => {
     await db.insert(schema.postStat).values({ postId: post.id, date: "2026-11-16", views: 160 });
     await db.insert(schema.dailyStat).values({ connectionId: "c1", date: "2026-11-16", followers: 1000 });
     expect(await derivedToday(db, "c1", "2026-11-16", today)).toEqual(first);
+  });
+});
+
+describe("storeSnapshot", () => {
+  const row = (date: string, v: Partial<DailyRow>) => ({ date, followers: null, followersGained: null, views: null, engagements: null, posts: 0, watchMinutes: null, ...v });
+
+  it("never replaces a reported value with an unknown one", async () => {
+    // an earlier sync read the follower total; a later one only knows views for that day
+    await storeSnapshot(db, "c1", "2026-11-16", { followers: 1000, daily: [row("2026-11-15", { followers: 990 })], posts: [], audience: null });
+    await storeSnapshot(db, "c1", "2026-11-16", { followers: 1000, daily: [row("2026-11-15", { views: 410, engagements: 22 })], posts: [], audience: null });
+    const [d] = await db.select().from(schema.dailyStat);
+    expect(d).toMatchObject({ date: "2026-11-15", followers: 990, views: 410, engagements: 22 });
+  });
+
+  it("does replace a reported value with a newer reported one", async () => {
+    await storeSnapshot(db, "c1", "2026-11-16", { followers: 1000, daily: [row("2026-11-15", { views: 300 })], posts: [], audience: null });
+    await storeSnapshot(db, "c1", "2026-11-16", { followers: 1000, daily: [row("2026-11-15", { views: 410 })], posts: [], audience: null });
+    const [d] = await db.select().from(schema.dailyStat);
+    expect(d.views).toBe(410);
   });
 });

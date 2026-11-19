@@ -59,7 +59,7 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
   let snapshot: PlatformSnapshot;
   try {
     snapshot = simulated ? simulatedSnapshot(row.platform, window) : await fetcher!(await getAccessToken(db, row.id), window, { externalId: row.externalId });
-    await store(db, row.id, window.end, snapshot);
+    await storeSnapshot(db, row.id, window.end, snapshot);
   } catch (e) {
     if (e instanceof ReauthRequired) {
       await db.update(connection).set({ status: "expired", lastSyncError: e.message.slice(0, 200), lastSyncErrorAt: now }).where(eq(connection.id, row.id));
@@ -76,7 +76,8 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
   return { status: "synced", days: snapshot.daily.length, posts: snapshot.posts.length };
 }
 
-async function store(db: Db, connectionId: string, today: string, snapshot: PlatformSnapshot) {
+/** Writes one sync's numbers. A value the platform reported is never replaced by an unknown (null) one. */
+export async function storeSnapshot(db: Db, connectionId: string, today: string, snapshot: PlatformSnapshot) {
   await db.transaction(async (tx) => {
     const s = snapshot.derive ? { ...snapshot, daily: await derivedToday(tx as unknown as Db, connectionId, today, snapshot) } : snapshot;
     if (s.daily.length) {
@@ -86,10 +87,10 @@ async function store(db: Db, connectionId: string, today: string, snapshot: Plat
         .onConflictDoUpdate({
           target: [dailyStat.connectionId, dailyStat.date],
           set: {
-            followers: sql`excluded.followers`,
-            followersGained: sql`excluded.followers_gained`,
-            views: sql`excluded.views`,
-            engagements: sql`excluded.engagements`,
+            followers: sql`coalesce(excluded.followers, ${dailyStat.followers})`,
+            followersGained: sql`coalesce(excluded.followers_gained, ${dailyStat.followersGained})`,
+            views: sql`coalesce(excluded.views, ${dailyStat.views})`,
+            engagements: sql`coalesce(excluded.engagements, ${dailyStat.engagements})`,
             posts: sql`excluded.posts`,
             watchMinutes: sql`excluded.watch_minutes`,
           },
@@ -166,13 +167,15 @@ export async function derivedToday(db: Db, connectionId: string, today: string, 
       engagements += eng;
     }
   }
+  // with no earlier sync there is no baseline: the day's activity is unknown, not zero
+  const baseline = Boolean(prevDay);
   return [
     {
       date: today,
       followers: s.followers,
-      followersGained: prevDay ? s.followers - prevDay.followers : 0,
-      views,
-      engagements,
+      followersGained: prevDay && prevDay.followers !== null ? s.followers - prevDay.followers : null,
+      views: baseline ? views : null,
+      engagements: baseline ? engagements : null,
       posts: s.posts.filter((p) => isoDate(p.publishedAt) === today).length,
       watchMinutes: null,
     },

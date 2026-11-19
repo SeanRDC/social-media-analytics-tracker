@@ -8,7 +8,7 @@ import { CountUp } from "@/components/motion/CountUp";
 import { useRange } from "@/components/shell/RangeProvider";
 import { niceTicks } from "@/lib/chart";
 import type { Platform, Post } from "@/lib/data/types";
-import { formatCompact, formatDate, formatPercent, formatSigned } from "@/lib/format";
+import { formatCompact, formatDate, formatPercent, formatSigned, NO_DATA, sinceNote } from "@/lib/format";
 import s from "./PlatformDetail.module.css";
 import { PostThumb } from "@/components/ui/PostThumb";
 
@@ -43,10 +43,13 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
     );
   }
 
-  const min = Math.min(...p.trend);
-  const max = Math.max(...p.trend);
+  const trend = p.trend.filter((v): v is number => v !== null);
+  const min = trend.length ? Math.min(...trend) : 0;
+  const max = trend.length ? Math.max(...trend) : 1;
   const ticks = niceTicks(min, max, 3);
-  const avgViews = p.posts30 ? Math.round(p.views30 / p.posts30) : 0;
+  // from reported views only; unknown when the platform has not reported views for these 30 days
+  const avgViews = p.views30 !== null && p.posts30 ? Math.round(p.views30 / p.posts30) : null;
+  const since = sinceNote(p.dataSince);
 
   return (
     <div className={s.page} style={{ "--pc": color } as CSSProperties}>
@@ -70,14 +73,14 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
           </span>
         </div>
         <div className={s.bigRow}>
-          <CountUp value={formatCompact(p.followers)} delay={300} className={s.big} />
+          {p.followers === null ? <span className={s.big}>{NO_DATA}</span> : <CountUp value={formatCompact(p.followers)} delay={300} className={s.big} />}
           <span className={s.noun}>{p.followerNoun}</span>
           <span className={s.delta}>
-            {formatSigned(p.followerGrowth[range])} in {range} days
+            {p.followerGrowth[range] === null ? "No follower changes reported yet" : `${formatSigned(p.followerGrowth[range]!)} in ${range} days`}
           </span>
         </div>
         <LineChart
-          ariaLabel={`${p.name} ${p.followerNoun} over the last 30 days, from ${formatCompact(p.trend[0])} to ${formatCompact(p.trend[30])}. Use the arrow keys to read each day.`}
+          ariaLabel={`${p.name} ${p.followerNoun} over the last 30 days${trend.length ? `, from ${formatCompact(trend[0])} to ${formatCompact(trend[trend.length - 1])}` : ", none reported yet"}. Days without a reported total are left blank. Use the arrow keys to read each day.`}
           series={[{ key: "f", label: p.followerNoun[0].toUpperCase() + p.followerNoun.slice(1), values: p.trend, color, area: true }]}
           xCount={p.trend.length}
           xLabels={[0, 15, 30].map((i) => ({ i, label: formatDate(addDays(trendStart, i)) }))}
@@ -93,16 +96,12 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
 
       <dl className={`${s.stats} reveal`} style={{ "--i": 2 } as CSSProperties}>
         <div>
-          <dt>Views · 30 days</dt>
-          <dd>
-            <CountUp value={formatCompact(p.views30)} delay={400} />
-          </dd>
+          <dt>Views · 30 days{since && <small className={s.since}> · {since}</small>}</dt>
+          <dd>{p.views30 === null ? NO_DATA : <CountUp value={formatCompact(p.views30)} delay={400} />}</dd>
         </div>
         <div>
           <dt>Engagement</dt>
-          <dd>
-            <CountUp value={formatPercent(p.engagement)} delay={400} />
-          </dd>
+          <dd>{p.engagement === null ? NO_DATA : <CountUp value={formatPercent(p.engagement)} delay={400} />}</dd>
         </div>
         <div>
           <dt>Posts · 30 days</dt>
@@ -112,9 +111,7 @@ export function PlatformDetail({ platform: p, posts, trendStart }: Props) {
         </div>
         <div>
           <dt>Views per post</dt>
-          <dd>
-            <CountUp value={formatCompact(avgViews)} delay={400} />
-          </dd>
+          <dd>{avgViews === null ? NO_DATA : <CountUp value={formatCompact(avgViews)} delay={400} />}</dd>
         </div>
       </dl>
 

@@ -5,22 +5,23 @@ import { useState, type CSSProperties } from "react";
 import { CountUp } from "@/components/motion/CountUp";
 import { PlatformPill } from "@/components/ui/PlatformPill";
 import type { Metrics, Platform } from "@/lib/data/types";
-import { formatCompact, formatSigned } from "@/lib/format";
+import { formatSigned, NO_DATA, orNoData } from "@/lib/format";
 import { growthPercent } from "./Summary";
 import s from "./Cards.module.css";
 
 interface Props {
   week: Metrics;
-  weekGrowth: { day: string; value: number }[];
+  weekGrowth: { day: string; value: number | null }[];
   top: Platform;
 }
 
 export function GrowthCard({ week, weekGrowth, top }: Props) {
   const [day, setDay] = useState<number | null>(null);
   // bars show gains; days that lost followers sit at zero height (the label still says so)
-  const max = Math.max(1, ...weekGrowth.map((d) => d.value));
+  const max = Math.max(1, ...weekGrowth.map((d) => d.value ?? 0));
   const pct = growthPercent(week);
-  const note = day == null ? "followers this week" : `${weekGrowth[day].day} · ${formatSigned(weekGrowth[day].value)} followers`;
+  const label = (v: number | null) => (v === null ? "no data" : `${formatSigned(v)} followers`);
+  const note = day == null ? (week.followerDelta === null ? "no follower changes reported yet" : "followers this week") : `${weekGrowth[day].day} · ${label(weekGrowth[day].value)}`;
 
   return (
     <section className={`${s.card} ${s.duo} card lift reveal`} style={{ "--i": 3 } as CSSProperties} aria-labelledby="growth-h">
@@ -29,11 +30,13 @@ export function GrowthCard({ week, weekGrowth, top }: Props) {
           Latest growth
         </h2>
         <div className={s.bigRow}>
-          <CountUp value={formatSigned(week.followerDelta)} delay={450} className={s.big} />
-          <span className={s.pillUp}>
-            {pct >= 0 ? "+" : ""}
-            {pct.toFixed(1)}%
-          </span>
+          {week.followerDelta === null ? <span className={s.big}>{NO_DATA}</span> : <CountUp value={formatSigned(week.followerDelta)} delay={450} className={s.big} />}
+          {pct !== null && (
+            <span className={s.pillUp}>
+              {pct >= 0 ? "+" : ""}
+              {pct.toFixed(1)}%
+            </span>
+          )}
         </div>
         <span className={s.note} aria-live="polite">
           {note}
@@ -44,8 +47,8 @@ export function GrowthCard({ week, weekGrowth, top }: Props) {
               key={d.day}
               type="button"
               className={s.bar}
-              style={{ height: `${(Math.max(0, d.value) / max) * 100}%`, "--i": i } as CSSProperties}
-              aria-label={`${d.day}: ${formatSigned(d.value)} followers`}
+              style={{ height: `${(Math.max(0, d.value ?? 0) / max) * 100}%`, "--i": i } as CSSProperties}
+              aria-label={`${d.day}: ${label(d.value)}`}
               onPointerEnter={() => setDay(i)}
               onFocus={() => setDay(i)}
               onBlur={() => setDay(null)}
@@ -53,10 +56,10 @@ export function GrowthCard({ week, weekGrowth, top }: Props) {
           ))}
         </div>
       </div>
-      <Link href={`/platforms/${top.id}`} className={s.tile} aria-label={`Top platform: ${top.name}, ${formatCompact(top.followers)} ${top.followerNoun}`}>
+      <Link href={`/platforms/${top.id}`} className={s.tile} aria-label={`Top platform: ${top.name}, ${orNoData(top.followers)} ${top.followerNoun}`}>
         <i className={`thumb thumb-a ${s.tileThumb}`} aria-hidden="true" />
         <PlatformPill id={top.id} plain />
-        <b className={s.tileVal}>{formatCompact(top.followers)}</b>
+        <b className={s.tileVal}>{orNoData(top.followers)}</b>
         <span className={s.tileSub}>Top platform</span>
       </Link>
     </section>

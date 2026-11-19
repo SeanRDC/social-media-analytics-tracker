@@ -42,46 +42,46 @@ describe("with imported history", () => {
   });
 
   it("total audience equals the sum of connected platforms", () => {
-    const sum = platforms.filter((p) => p.status === "connected").reduce((s, p) => s + p.followers, 0);
+    const sum = platforms.filter((p) => p.status === "connected").reduce((s, p) => s + p.followers!, 0);
     for (const r of RANGES) expect(overview.metrics[r].followers).toBe(sum);
     expect(overview.trend[30]).toBe(sum);
   });
 
   it("follower growth per range equals the sum across platforms", () => {
-    for (const r of RANGES) expect(platforms.reduce((s, p) => s + p.followerGrowth[r], 0)).toBe(overview.metrics[r].followerDelta);
+    for (const r of RANGES) expect(platforms.reduce((s, p) => s + p.followerGrowth[r]!, 0)).toBe(overview.metrics[r].followerDelta);
   });
 
   it("weekly growth bars add up to the 7-day follower gain", () => {
     expect(overview.weekGrowth.map((d) => d.day)).toEqual(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
-    expect(overview.weekGrowth.reduce((s, d) => s + d.value, 0)).toBe(overview.metrics[7].followerDelta);
+    expect(overview.weekGrowth.reduce((s, d) => s + d.value!, 0)).toBe(overview.metrics[7].followerDelta);
   });
 
   it("each platform trend ends at its follower count", () => {
     for (const p of platforms.filter((x) => x.status === "connected")) {
       expect(p.trend).toHaveLength(31);
       expect(p.trend[30]).toBe(p.followers);
-      expect(p.trend[0]).toBe(p.followers - p.followerGrowth[30]);
+      expect(p.trend[0]).toBe(p.followers! - p.followerGrowth[30]!);
     }
   });
 
   it("daily views add up to the 7-day views and match the week-over-week change", () => {
-    const thisWeek = daily.thisWeek.reduce((s, v) => s + v, 0);
-    const lastWeek = daily.lastWeek.reduce((s, v) => s + v, 0);
+    const thisWeek = daily.thisWeek.reduce((s: number, v) => s + v!, 0);
+    const lastWeek = daily.lastWeek.reduce((s: number, v) => s + v!, 0);
     expect(daily.todayIndex).toBe(6);
     expect(thisWeek).toBe(overview.metrics[7].views);
     expect(Math.round((thisWeek / lastWeek - 1) * 100)).toBe(overview.metrics[7].viewsChange);
   });
 
   it("picks the platform with the most followers as top", () => {
-    const top = [...platforms].sort((a, b) => b.followers - a.followers)[0];
+    const top = [...platforms].sort((a, b) => b.followers! - a.followers!)[0];
     expect(overview.topPlatform).toBe(top.id);
     expect(overview.connectedCount).toBe(2);
     expect(overview.accountName).toBe(top.account);
   });
 
-  it("lists platforms that are not connected with zeros", () => {
+  it("lists platforms that are not connected with no numbers rather than zeros", () => {
     const x = platforms.find((p) => p.id === "x")!;
-    expect(x).toMatchObject({ status: "not-connected", followers: 0, trend: [] });
+    expect(x).toMatchObject({ status: "not-connected", followers: null, views30: null, engagement: null, followerGrowth: { 7: null, 30: null, 90: null }, trend: [] });
     expect(platforms.find((p) => p.id === "youtube")?.followerNoun).toBe("subscribers");
   });
 
@@ -104,7 +104,7 @@ describe("with imported history", () => {
 });
 
 describe("edge cases", () => {
-  it("fills gaps by carrying followers forward", () => {
+  it("leaves days the platform did not report empty, never zero or carried over", () => {
     const c = {
       platform: "youtube" as const,
       account: "",
@@ -114,20 +114,44 @@ describe("edge cases", () => {
         { date: "2026-11-13", followers: 104, followersGained: 4, views: 9, engagements: 1 },
       ],
     };
-    expect(daysEnding(c, "2026-11-14", 5).map((d) => d.followers)).toEqual([100, 100, 100, 104, 104]);
-    expect(daysEnding(c, "2026-11-14", 5).map((d) => d.views)).toEqual([5, 0, 0, 9, 0]);
+    expect(daysEnding(c, "2026-11-14", 5).map((d) => d.followers)).toEqual([100, null, null, 104, null]);
+    expect(daysEnding(c, "2026-11-14", 5).map((d) => d.views)).toEqual([5, null, null, 9, null]);
   });
 
-  it("handles a channel with no views, posts or demographics", () => {
+  it("adds up only reported days and says from when the period is covered", () => {
     const ds: Dataset = {
       connections: [{ platform: "youtube", account: "New channel", status: "connected", daily: [{ date: "2026-11-15", followers: 3, followersGained: 0, views: 0, engagements: 0 }] }],
       posts: [],
       audience: [],
     };
     const o = computeOverview(ds, "2026-11-15");
-    expect(o.metrics[30]).toMatchObject({ followers: 3, views: 0, viewsChange: 0, engagement: 0, engagementChange: 0, posts: 0 });
-    expect(computeDailyViews(ds, "2026-11-15").thisWeek).toEqual([0, 0, 0, 0, 0, 0, 0]);
+    // a reported zero is a real zero; the change needs both periods fully reported, so it is unknown
+    expect(o.metrics[30]).toMatchObject({ followers: 3, views: 0, viewsChange: null, engagement: 0, engagementChange: null, posts: 0, dataSince: "2026-11-15" });
+    expect(computeDailyViews(ds, "2026-11-15").thisWeek).toEqual([null, null, null, null, null, null, 0]);
     expect(computeAudience(ds, "2026-11-15")).toMatchObject({ sources: [], ages: [], countries: [] });
+  });
+
+  it("shows no views or engagement for a platform that has only reported its follower total", () => {
+    const ds: Dataset = {
+      connections: [{ platform: "tiktok", account: "@me", status: "connected", daily: [{ date: "2026-11-15", followers: 7, followersGained: null, views: null, engagements: null }] }],
+      posts: [],
+      audience: [],
+    };
+    const tiktok = computePlatforms(ds, "2026-11-15").find((p) => p.id === "tiktok")!;
+    expect(tiktok).toMatchObject({ followers: 7, views30: null, engagement: null, followerGrowth: { 7: null, 30: null, 90: null } });
+    expect(computeOverview(ds, "2026-11-15").metrics[7]).toMatchObject({ followers: 7, followerDelta: null, views: null, viewsChange: null, engagement: null });
+  });
+
+  it("keeps a reported platform's numbers when another platform has not reported yet", () => {
+    const ds = dataset(["youtube"]);
+    const asOf = asOfDate(ds)!;
+    const alone = computeOverview(ds, asOf).metrics[30];
+    ds.connections.push({ platform: "tiktok", account: "@me", status: "connected", daily: [{ date: asOf, followers: 7, followersGained: null, views: null, engagements: null }] });
+    const both = computeOverview(ds, asOf).metrics[30];
+    expect(both.views).toBe(alone.views);
+    expect(both.followers).toBe(alone.followers! + 7);
+    // TikTok did not report the period, so a fair comparison with the last one is not possible
+    expect(both.viewsChange).toBeNull();
   });
 
   it("leaves out expired connections from totals but still lists them", () => {
@@ -149,5 +173,35 @@ describe("edge cases", () => {
     const t = bestTimes([post("2026-11-12T18:00:00Z", 900), post("2026-11-12T19:00:00Z", 100), post("2026-11-16T08:00:00Z", 250)]);
     expect(t[3]).toEqual({ day: "Thu", slots: [0, 0, 1, 0] });
     expect(t[0].slots[0]).toBe(0.5);
+  });
+});
+
+describe("period-over-period change", () => {
+  const day = (date: string, views: number | null) => ({ date, followers: 10, followersGained: 0, views, engagements: views === null ? null : 1 });
+  const days = (start: string, n: number, views: (i: number) => number | null) => Array.from({ length: n }, (_, i) => day(addDaysIso(start, i), views(i)));
+  const addDaysIso = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+
+  it("compares the latest fully reported week when a platform reports a day late", () => {
+    // Facebook reported through Nov 15; YouTube only through Nov 14 (its usual lag)
+    const ds: Dataset = {
+      connections: [
+        { platform: "facebook", account: "", status: "connected", daily: days("2026-11-01", 15, (i) => (i < 7 ? 100 : 150)) },
+        { platform: "youtube", account: "", status: "connected", daily: days("2026-11-01", 14, () => 50) },
+      ],
+      posts: [],
+      audience: [],
+    };
+    const m = computeOverview(ds, "2026-11-15").metrics[7];
+    // weeks Nov 8–14 vs Nov 1–7: (150*7 + 50*7) / (100*7 + 50*7) - 1 = +33%
+    expect(m.viewsChange).toBe(33);
+  });
+
+  it("has no change when the earlier period was not fully reported", () => {
+    const ds: Dataset = {
+      connections: [{ platform: "facebook", account: "", status: "connected", daily: days("2026-11-10", 6, () => 100) }],
+      posts: [],
+      audience: [],
+    };
+    expect(computeOverview(ds, "2026-11-15").metrics[7].viewsChange).toBeNull();
   });
 });

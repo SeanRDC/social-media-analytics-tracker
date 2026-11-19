@@ -38,3 +38,16 @@ export function formatDate(iso: string): string {
 export function formatNumber(n: number): string {
   return n.toLocaleString("en-US");
 }
+
+/** Shown wherever a platform did not report a number: never "0". */
+export const NO_DATA = "—";
+
+/** Formats a reported number, or the no-data mark when nothing was reported. */
+export function orNoData(n: number | null | undefined, format: (n: number) => string = formatCompact): string {
+  return n == null ? NO_DATA : format(n);
+}
+
+/** "since Nov 19" when a period is only partly reported, else "". */
+export function sinceNote(dataSince: string | null | undefined): string {
+  return dataSince ? `since ${formatDate(dataSince)}` : "";
+}

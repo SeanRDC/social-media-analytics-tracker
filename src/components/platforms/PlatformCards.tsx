@@ -7,7 +7,7 @@ import { Icon } from "@/components/icons/Icon";
 import { CountUp } from "@/components/motion/CountUp";
 import { useRange } from "@/components/shell/RangeProvider";
 import type { Platform } from "@/lib/data/types";
-import { formatCompact, formatPercent, formatSigned } from "@/lib/format";
+import { formatCompact, formatPercent, formatSigned, NO_DATA, orNoData } from "@/lib/format";
 import s from "./Platforms.module.css";
 
 export function PlatformCards({ platforms }: { platforms: Platform[] }) {
@@ -35,7 +35,7 @@ export function PlatformCards({ platforms }: { platforms: Platform[] }) {
         }
         return (
           <li key={p.id} className={`${s.pcard} card lift reveal`} style={style}>
-            <Link href={`/platforms/${p.id}`} className={s.cover} aria-label={`${p.name}: ${formatCompact(p.followers)} ${p.followerNoun}, open details`} />
+            <Link href={`/platforms/${p.id}`} className={s.cover} aria-label={`${p.name}: ${orNoData(p.followers)} ${p.followerNoun}, open details`} />
             <div className={s.pTop}>
               <span className={s.mark} aria-hidden="true">
                 {p.name.charAt(0)}
@@ -49,18 +49,18 @@ export function PlatformCards({ platforms }: { platforms: Platform[] }) {
               </span>
             </div>
             <div className={s.pNum}>
-              <CountUp value={formatCompact(p.followers)} delay={300} className={s.pBig} />
+              {p.followers === null ? <span className={s.pBig}>{NO_DATA}</span> : <CountUp value={formatCompact(p.followers)} delay={300} className={s.pBig} />}
               <span className={s.pNoun}>{p.followerNoun}</span>
             </div>
-            <Sparkline values={p.trend} color="var(--pc)" height={48} label={`${p.name} followers over the last 30 days, rising to ${formatCompact(p.followers)}`} />
+            <Sparkline values={p.trend} color="var(--pc)" height={48} label={`${p.name} followers over the last 30 days, now ${orNoData(p.followers)}`} />
             <dl className={s.pStats}>
               <div>
                 <dt>{range}-day growth</dt>
-                <dd className="up">{formatSigned(p.followerGrowth[range])}</dd>
+                <dd className={p.followerGrowth[range] === null ? undefined : "up"}>{orNoData(p.followerGrowth[range], formatSigned)}</dd>
               </div>
               <div>
                 <dt>Engagement</dt>
-                <dd>{formatPercent(p.engagement)}</dd>
+                <dd>{orNoData(p.engagement, formatPercent)}</dd>
               </div>
               <div>
                 <dt>Posts · 30d</dt>

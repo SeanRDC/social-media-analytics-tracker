@@ -50,8 +50,8 @@ describe("connect → import → dashboard", () => {
     const platforms = computePlatforms(loaded.dataset, asOf);
     const overview = computeOverview(loaded.dataset, asOf);
     expect(overview.connectedCount).toBe(2);
-    expect(overview.metrics[30].followers).toBe(platforms.reduce((s, p) => s + p.followers, 0));
-    expect(computeDailyViews(loaded.dataset, asOf).thisWeek.reduce((s, v) => s + v, 0)).toBe(overview.metrics[7].views);
+    expect(overview.metrics[30].followers).toBe(platforms.reduce((s, p) => s + p.followers!, 0));
+    expect(computeDailyViews(loaded.dataset, asOf).thisWeek.reduce((s: number, v) => s + v!, 0)).toBe(overview.metrics[7].views);
 
     const posts = computePosts(loaded.dataset);
     expect(posts.length).toBeGreaterThan(50);
