@@ -1,0 +1,27 @@
+.wrap {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.sk {
+  display: block;
+  height: 170px;
+  border-radius: var(--r-card);
+  background: linear-gradient(100deg, #ebeae5 30%, #f6f5f1 50%, #ebeae5 70%) 0 0 / 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+.wide {
+  grid-column: 1 / -1;
+  height: 240px;
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (max-width: 799px) {
+  .wrap {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
