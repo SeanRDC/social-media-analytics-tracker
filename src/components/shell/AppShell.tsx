@@ -30,7 +30,7 @@ async function SignedIn({ children }: { children: ReactNode }) {
     <>
       <TopNav accountName={user.name} image={user.image} />
       <main className={s.main}>
-        <Header accountName={user.name} />
+        <Header />
         {source === "simulated" && (
           <p className={s.notice}>
             <span className={s.noticeIcon}>
