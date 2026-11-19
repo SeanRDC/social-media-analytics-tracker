@@ -15,14 +15,11 @@ export const MAIN_NAV: NavItem[] = [
   { href: "/reports", label: "Reports", icon: "chart" },
 ];
 
-/** Phone tab bar: five thumb-reachable destinations. */
-export const TAB_NAV: NavItem[] = [
-  { href: "/overview", label: "Overview", icon: "home" },
-  { href: "/platforms", label: "Platforms", icon: "grid" },
-  { href: "/content", label: "Content", icon: "play" },
-  { href: "/reports", label: "Reports", icon: "chart" },
-  { href: "/settings", label: "Profile", icon: "user" },
-];
+/**
+ * Phone tab bar: the same five sections as the navbar.
+ * Settings is reached from the avatar in the top bar.
+ */
+export const TAB_NAV: NavItem[] = MAIN_NAV;
 
 const TITLES: [string, string][] = [
   ["/overview", "Channel Analytics"],
