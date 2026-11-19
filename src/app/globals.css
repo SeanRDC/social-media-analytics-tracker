@@ -126,6 +126,15 @@ textarea {
   color: inherit;
 }
 
+/* browsers paint autofilled fields blue or yellow; keep the field's own look */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--tx);
+  caret-color: var(--tx);
+  transition: background-color 9999s ease-out 0s;
+}
+
 button {
   background: none;
   border: 0;

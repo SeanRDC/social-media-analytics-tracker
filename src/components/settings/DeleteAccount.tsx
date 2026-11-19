@@ -25,6 +25,8 @@ export function DeleteAccount({ email, onDelete }: Props) {
 
   return (
     <form
+      // the app explains a mismatch itself instead of the browser's own popup
+      noValidate
       className={s.deleteForm}
       onSubmit={(e) => {
         e.preventDefault();
