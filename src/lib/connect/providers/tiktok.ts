@@ -26,21 +26,25 @@ const tokens = (body: Record<string, unknown>): TokenSet => ({
 export function tiktokProvider(c: { clientId: string; clientSecret: string }): Provider {
   return {
     platform: "tiktok",
-    pkce: false,
+    // TikTok now refuses web logins without PKCE, and expects a hex challenge
+    pkce: true,
+    pkceEncoding: "hex",
     refreshWindowSeconds: 30 * 60,
-    authorizeUrl: ({ redirectUri, state }) =>
+    authorizeUrl: ({ redirectUri, state, codeChallenge }) =>
       withQuery("https://www.tiktok.com/v2/auth/authorize/", {
         client_key: c.clientId,
         redirect_uri: redirectUri,
         response_type: "code",
         scope: TIKTOK_SCOPES.join(","),
         state,
+        code_challenge: codeChallenge,
+        code_challenge_method: "S256",
       }),
-    async exchangeCode({ code, redirectUri }) {
+    async exchangeCode({ code, redirectUri, codeVerifier }) {
       return tokens(
         await postForm(
           TOKEN_URL,
-          { client_key: c.clientId, client_secret: c.clientSecret, code, grant_type: "authorization_code", redirect_uri: redirectUri },
+          { client_key: c.clientId, client_secret: c.clientSecret, code, code_verifier: codeVerifier, grant_type: "authorization_code", redirect_uri: redirectUri },
           "TikTok token exchange",
         ),
       );

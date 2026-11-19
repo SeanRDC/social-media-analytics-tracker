@@ -110,9 +110,10 @@ export function withQuery(base: string, params: Record<string, string>): string 
   return u.toString();
 }
 
-export function pkcePair(): { verifier: string; challenge: string } {
+/** PKCE verifier and S256 challenge. TikTok wants the SHA-256 hex-encoded; the standard (RFC 7636) is base64url. */
+export function pkcePair(encoding: "base64url" | "hex" = "base64url"): { verifier: string; challenge: string } {
   const verifier = randomBytes(32).toString("base64url");
-  return { verifier, challenge: createHash("sha256").update(verifier).digest("base64url") };
+  return { verifier, challenge: createHash("sha256").update(verifier).digest(encoding) };
 }
 
 export function expiresIn(seconds: unknown): Date | null {

@@ -58,6 +58,7 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 
 - **API:** Login Kit + Display API.
 - **Scopes:** `user.info.basic`, `user.info.profile`, `user.info.stats` (follower, following, likes and video counts), `video.list` (recent videos).
+- **PKCE (2026-11-19):** TikTok now rejects web logins without `code_challenge`. It wants S256 with the SHA-256 **hex**-encoded (not base64url), and `code_verifier` on the token exchange.
 - **Gotchas:** Users can approve some scopes and decline others; read the granted `scope` from the token response. Access tokens are short-lived (about 24 hours), so refresh is mandatory. Confirm `view_count` on the video list endpoint against the official spec. No audience demographics in the Display API.
 - Sources: [scopes](https://developers.tiktok.com/doc/tiktok-api-scopes/), [user info scope migration](https://developers.tiktok.com/bulletin/user-info-scope-migration), [Display API overview](https://developers.tiktok.com/docs/en/display-api-get-started)
 

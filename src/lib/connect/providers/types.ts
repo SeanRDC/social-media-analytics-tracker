@@ -25,6 +25,8 @@ export interface Provider {
   platform: PlatformId;
   /** Send a PKCE code challenge with the authorize request. */
   pkce: boolean;
+  /** How the PKCE challenge is encoded; TikTok uses hex. Defaults to base64url. */
+  pkceEncoding?: "base64url" | "hex";
   /** Refresh once the access token expires within this many seconds. */
   refreshWindowSeconds: number;
   authorizeUrl(a: { redirectUri: string; state: string; codeChallenge: string }): string;

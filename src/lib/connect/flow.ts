@@ -43,7 +43,7 @@ export function beginConnect(a: { platform: string; userId: string; returnTo: st
   if (!resolved) return { location: result(returnTo, a.platform, { ok: false, reason: "unavailable" }) };
   const { provider } = resolved;
   const state = randomBytes(24).toString("base64url");
-  const { verifier, challenge } = pkcePair();
+  const { verifier, challenge } = pkcePair(provider.pkceEncoding);
   const payload: State = { state, verifier: provider.pkce ? verifier : "", platform: a.platform, userId: a.userId, returnTo };
   return {
     location: provider.authorizeUrl({ redirectUri: callbackUrl(a.baseUrl, a.platform), state, codeChallenge: challenge }),

@@ -4,6 +4,8 @@ import { facebookProvider } from "@/lib/connect/providers/facebook";
 import { instagramProvider } from "@/lib/connect/providers/instagram";
 import { linkedinProvider } from "@/lib/connect/providers/linkedin";
 import { tiktokProvider } from "@/lib/connect/providers/tiktok";
+import { pkcePair } from "@/lib/connect/providers/oauth";
+import { createHash } from "node:crypto";
 import { youtubeProvider } from "@/lib/connect/providers/youtube";
 
 const C = { clientId: "cid", clientSecret: "csecret" };
@@ -45,6 +47,16 @@ describe("authorize URLs", () => {
     const p = params(tiktokProvider(C).authorizeUrl(a));
     expect(p.client_key).toBe("cid");
     expect(p.scope).toBe("user.info.basic,user.info.profile,user.info.stats,video.list");
+    expect(p).toMatchObject({ code_challenge: "ch", code_challenge_method: "S256" });
+  });
+
+  it("makes a hex SHA-256 challenge for TikTok and base64url for everyone else", () => {
+    const hex = pkcePair("hex");
+    expect(hex.challenge).toMatch(/^[0-9a-f]{64}$/);
+    expect(hex.challenge).toBe(createHash("sha256").update(hex.verifier).digest("hex"));
+    const std = pkcePair();
+    expect(std.challenge).toBe(createHash("sha256").update(std.verifier).digest("base64url"));
+    expect(tiktokProvider(C)).toMatchObject({ pkce: true, pkceEncoding: "hex" });
   });
 
   it("requests Instagram through Facebook Login with the Meta app", () => {
@@ -147,6 +159,12 @@ describe("Facebook", () => {
 });
 
 describe("TikTok", () => {
+  it("sends the PKCE verifier with the code exchange", async () => {
+    const calls = stubFetch({ body: { access_token: "at", refresh_token: "rt", expires_in: 86400, scope: "user.info.basic" } });
+    await tiktokProvider(C).exchangeCode({ code: "c", redirectUri: REDIRECT, codeVerifier: "v123" });
+    expect(String(calls[0].init?.body)).toContain("code_verifier=v123");
+  });
+
   it("treats error code ok as success", async () => {
     stubFetch({ body: { data: { user: { open_id: "o1", display_name: "Northbay", username: "northbay" } }, error: { code: "ok", message: "" } } });
     expect(await tiktokProvider(C).fetchAccount({ accessToken: "t", refreshToken: null, expiresAt: null, scopes: null })).toEqual({
