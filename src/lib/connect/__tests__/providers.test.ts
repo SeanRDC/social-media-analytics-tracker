@@ -50,7 +50,7 @@ describe("authorize URLs", () => {
   it("requests Instagram through Facebook Login with the Meta app", () => {
     const url = instagramProvider(C).authorizeUrl(a);
     expect(url).toContain("www.facebook.com/v26.0/dialog/oauth");
-    expect(params(url)).toMatchObject({ client_id: "cid", scope: "instagram_basic,instagram_manage_insights,pages_show_list,pages_read_engagement" });
+    expect(params(url)).toMatchObject({ client_id: "cid", scope: "instagram_basic,instagram_manage_insights,pages_show_list,pages_read_engagement,business_management" });
   });
 
   it("uses the configured Graph API version for Facebook", () => {
@@ -120,6 +120,11 @@ describe("Instagram", () => {
     const r = await instagramProvider(C).fetchAccount({ accessToken: "user", refreshToken: null, expiresAt: new Date(), scopes: "s" });
     expect(r).toMatchObject({ ok: true, externalId: "1784", name: "@northbay", tokens: { accessToken: "page-token", expiresAt: null } });
     expect(params(calls[0].url).fields).toContain("instagram_business_account{id,username}");
+  });
+
+  it("also accepts an account reported as connected_instagram_account", async () => {
+    stubFetch({ body: { data: [{ id: "p1", name: "Page", access_token: "pt", connected_instagram_account: { id: "1785", username: "northbay" } }] } });
+    expect(await instagramProvider(C).fetchAccount({ accessToken: "u", refreshToken: null, expiresAt: null, scopes: null })).toMatchObject({ ok: true, externalId: "1785", name: "@northbay" });
   });
 
   it("reports when no Page has a linked Professional Instagram account", async () => {
