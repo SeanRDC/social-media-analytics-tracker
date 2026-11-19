@@ -5,7 +5,8 @@ import { AlertSettings } from "@/components/settings/AlertSettings";
 import { Connections } from "@/components/settings/Connections";
 import { SignOutButton } from "@/components/settings/SignOutButton";
 import s from "@/components/settings/Settings.module.css";
-import { Avatar } from "@/components/ui/Avatar";
+import { AvatarEditor } from "@/components/settings/AvatarEditor";
+import { deleteAvatar, uploadAvatar } from "@/app/actions/avatar";
 import { disconnectPlatform } from "@/app/actions/connections";
 import { importPlatform } from "@/app/actions/sync";
 import { deleteAccount } from "@/app/actions/account";
@@ -29,7 +30,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
   return (
     <div className={s.grid}>
       <section className={`${s.card} ${s.profile} ${s.wide} card reveal`} style={reveal(1)} aria-label="Profile">
-        <Avatar size={56} />
+        <AvatarEditor name={user.name} src={user.image} onUpload={uploadAvatar} onRemove={deleteAvatar} />
         <div className={s.profileText}>
           <b>{user.name}</b>
           <small>{user.email}</small>

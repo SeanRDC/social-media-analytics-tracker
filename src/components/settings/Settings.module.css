@@ -38,9 +38,6 @@
   color: #fff;
   border: 0;
 }
-.profile > span:first-child {
-  box-shadow: 0 0 0 4px var(--lime);
-}
 .profileText {
   flex: 1;
   min-width: 0;

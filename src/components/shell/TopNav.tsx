@@ -15,7 +15,7 @@ import s from "./TopNav.module.css";
  * shortcuts and the account button on the right. On phones only the brand and
  * avatar stay; the bottom tab bar carries the sections.
  */
-export function TopNav({ accountName }: { accountName: string }) {
+export function TopNav({ accountName, image = null }: { accountName: string; image?: string | null }) {
   const pathname = usePathname();
   const active = MAIN_NAV.find((n) => isActive(pathname, n.href))?.href ?? null;
   const { container, indicator } = useSlidingIndicator(active);
@@ -64,7 +64,6 @@ export function TopNav({ accountName }: { accountName: string }) {
                   onFocus={(e) => showHover(e.currentTarget)}
                   onBlur={hideHover}
                 >
-                  {on && <span className={s.dot} aria-hidden="true" />}
                   {n.label}
                 </Link>
               );
@@ -83,7 +82,7 @@ export function TopNav({ accountName }: { accountName: string }) {
             <span className="sr-only">Settings</span>
           </Link>
           <Link href="/settings" className={s.account} aria-label={`Account: ${accountName}`}>
-            <Avatar size={30} />
+            <Avatar size={30} src={image} />
             <span className={s.acctName}>{accountName}</span>
           </Link>
         </div>

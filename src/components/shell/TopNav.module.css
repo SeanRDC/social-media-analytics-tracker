@@ -87,13 +87,6 @@
   outline: 2px solid var(--lime);
   outline-offset: 2px;
 }
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--lime);
-  box-shadow: 0 0 0 3px rgba(215, 242, 90, 0.18);
-}
 
 .hover,
 .ind {

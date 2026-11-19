@@ -109,6 +109,12 @@ const PATHS = {
   refresh: <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4h-4" />,
   filter: <path d="M4.5 6.5h15M7.5 12h9M10.5 17.5h3" />,
   logout: <path d="M14 5H6.5A1.5 1.5 0 0 0 5 6.5v11A1.5 1.5 0 0 0 6.5 19H14M10 12h10M16.5 8.5L20 12l-3.5 3.5" />,
+  camera: (
+    <>
+      <path d="M4.5 8.5a2 2 0 0 1 2-2h1.8l1.4-2h4.6l1.4 2h1.8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2z" />
+      <circle cx="12" cy="13" r="3.4" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof PATHS;

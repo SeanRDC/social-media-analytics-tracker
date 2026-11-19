@@ -271,3 +271,14 @@ export const jobLease = pgTable("job_lease", {
   holder: text("holder").notNull(),
   lockedUntil: timestamp("locked_until", { withTimezone: true }).notNull(),
 });
+
+/** The person's uploaded profile photo, kept apart from the auth tables so storage can move later. */
+export const userAvatar = pgTable("user_avatar", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  mime: text("mime").notNull(),
+  /** Base64 image bytes (256×256, at most 200 KB before encoding). */
+  data: text("data").notNull(),
+  updatedAt: updatedAt(),
+});
