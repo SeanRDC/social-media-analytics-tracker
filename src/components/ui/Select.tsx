@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "@/components/icons/Icon";
+import { useAnchoredMenu } from "@/hooks/useAnchoredMenu";
 import s from "./Select.module.css";
 
 interface Option<T> {
@@ -26,13 +28,22 @@ interface Props<T extends string | number> {
  * Keyboard: ↑/↓/Enter/Space open; ↑/↓/Home/End move; Enter/Space choose;
  * Escape/Tab close; typing a letter jumps to the next option starting with it.
  */
-export function Select<T extends string | number>({ label, value, options, onChange, variant = "pill", disabled, className }: Props<T>) {
+export function Select<T extends string | number>({
+  label,
+  value,
+  options,
+  onChange,
+  variant = "pill",
+  disabled,
+  className,
+}: Props<T>) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const wrap = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const id = useId();
+  useAnchoredMenu(button, list, open);
   const selected = Math.max(
     0,
     options.findIndex((o) => o.value === value),
@@ -61,13 +72,18 @@ export function Select<T extends string | number>({ label, value, options, onCha
 
   // keep the active option visible while moving through a long list
   useEffect(() => {
-    if (open) list.current?.querySelector<HTMLElement>(`[data-index="${active}"]`)?.scrollIntoView?.({ block: "nearest" });
+    if (open)
+      list.current
+        ?.querySelector<HTMLElement>(`[data-index="${active}"]`)
+        ?.scrollIntoView?.({ block: "nearest" });
   }, [open, active]);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
-      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (!wrap.current?.contains(t) && !list.current?.contains(t))
+        setOpen(false);
     };
     document.addEventListener("pointerdown", onDown);
     return () => {
@@ -113,13 +129,18 @@ export function Select<T extends string | number>({ label, value, options, onCha
         close();
         break;
       case "Tab":
-        close(false);
+        // the list lives at the end of <body>; hand focus back so Tab continues from the button
+        close();
         break;
       default:
         if (e.key.length === 1 && /\S/.test(e.key)) {
           const k = e.key.toLowerCase();
-          const order = [...options.keys()].map((n) => (active + 1 + n) % options.length);
-          const hit = order.find((n) => options[n].label.toLowerCase().startsWith(k));
+          const order = [...options.keys()].map(
+            (n) => (active + 1 + n) % options.length,
+          );
+          const hit = order.find((n) =>
+            options[n].label.toLowerCase().startsWith(k),
+          );
           if (hit !== undefined) setActive(hit);
         }
     }
@@ -142,35 +163,37 @@ export function Select<T extends string | number>({ label, value, options, onCha
         <span className={s.value}>{current}</span>
         <Icon name="down" size={13} className={s.chev} />
       </button>
-      {open && (
-        <ul
-          ref={list}
-          id={`${id}-list`}
-          role="listbox"
-          aria-label={label}
-          aria-activedescendant={`${id}-${active}`}
-          tabIndex={-1}
-          className={s.menu}
-          onKeyDown={onListKey}
-        >
-          {options.map((o, i) => (
-            <li
-              key={String(o.value)}
-              id={`${id}-${i}`}
-              data-index={i}
-              role="option"
-              aria-selected={i === selected}
-              data-active={i === active}
-              className={s.item}
-              onPointerMove={() => setActive(i)}
-              onClick={() => choose(i)}
-            >
-              {o.label}
-              {i === selected && <Icon name="check" size={14} />}
-            </li>
-          ))}
-        </ul>
-      )}
+      {open &&
+        createPortal(
+          <ul
+            ref={list}
+            id={`${id}-list`}
+            role="listbox"
+            aria-label={label}
+            aria-activedescendant={`${id}-${active}`}
+            tabIndex={-1}
+            className={s.menu}
+            onKeyDown={onListKey}
+          >
+            {options.map((o, i) => (
+              <li
+                key={String(o.value)}
+                id={`${id}-${i}`}
+                data-index={i}
+                role="option"
+                aria-selected={i === selected}
+                data-active={i === active}
+                className={s.item}
+                onPointerMove={() => setActive(i)}
+                onClick={() => choose(i)}
+              >
+                {o.label}
+                {i === selected && <Icon name="check" size={14} />}
+              </li>
+            ))}
+          </ul>,
+          document.body,
+        )}
     </div>
   );
 }

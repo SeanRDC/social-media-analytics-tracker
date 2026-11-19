@@ -64,3 +64,22 @@ describe("Select", () => {
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 });
+
+describe("Select placement", () => {
+  it("opens its list at the top level of the page, so cards can't cover it", async () => {
+    const { user, button } = setup();
+    const { container } = render(<div className="card" />);
+    await user.click(button);
+    const list = screen.getByRole("listbox");
+    expect(list.parentElement).toBe(document.body);
+    expect(container.contains(list)).toBe(false);
+    expect(list.style.position).toBe("fixed");
+  });
+
+  it("chooses an option inside the top-level list without treating it as an outside click", async () => {
+    const { user, button, onChange } = setup();
+    await user.click(button);
+    await user.click(screen.getByRole("option", { name: "Wednesday" }));
+    expect(onChange).toHaveBeenCalledWith(3);
+  });
+});
