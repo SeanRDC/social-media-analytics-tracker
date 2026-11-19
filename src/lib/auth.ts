@@ -6,12 +6,15 @@ import { getDb, schema } from "@/db";
 import { appleCredentials, googleCredentials } from "@/lib/auth-providers";
 import { APP_NAME } from "@/lib/brand";
 import { sendSignInEmail } from "@/lib/email";
+import { authLog } from "@/lib/safe-error";
 
 function createAuth() {
   return betterAuth({
     appName: APP_NAME,
     baseURL: process.env.BETTER_AUTH_URL,
     secret: process.env.BETTER_AUTH_SECRET,
+    // its default logger prints failed queries with their values (the session token)
+    logger: { log: authLog },
     database: drizzleAdapter(getDb(), {
       provider: "pg",
       schema: { user: schema.user, session: schema.session, account: schema.account, verification: schema.verification, rateLimit: schema.rateLimit },

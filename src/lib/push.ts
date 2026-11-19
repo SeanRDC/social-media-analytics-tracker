@@ -2,6 +2,7 @@
  * Web push (VAPID). Optional: without NEXT_PUBLIC_VAPID_PUBLIC_KEY and
  * VAPID_PRIVATE_KEY the option stays hidden and nothing is sent.
  */
+import { describeError } from "@/lib/safe-error";
 import { eq } from "drizzle-orm";
 import webpush from "web-push";
 import type { Db } from "@/db";
@@ -48,7 +49,7 @@ export async function sendPush(db: Db, userId: string, payload: PushPayload): Pr
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode;
       if (status === 404 || status === 410) await db.delete(pushSubscription).where(eq(pushSubscription.id, s.id));
-      else console.error("[push] send failed:", status ?? (e instanceof Error ? e.message : e));
+      else console.error("[push] send failed:", status ?? describeError(e));
     }
   }
   return sent;

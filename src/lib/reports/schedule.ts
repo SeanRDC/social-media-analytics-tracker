@@ -4,6 +4,7 @@
  * in the person's time zone and it hasn't gone out since, so a daily cron sends
  * it at its next run and an hourly cron sends it on the hour.
  */
+import { describeError } from "@/lib/safe-error";
 import { eq } from "drizzle-orm";
 import { getDb, type Db } from "@/db";
 import { reportSchedule, user } from "@/db/schema";
@@ -98,7 +99,7 @@ export async function sendWeeklyReports(db: Db, now = new Date(), appUrl = proce
       result.sent++;
     } catch (e) {
       result.failed++;
-      console.error(`[weekly email] ${s.userId} failed:`, e instanceof Error ? e.message : e);
+      console.error(`[weekly email] ${s.userId} failed:`, describeError(e));
     }
   }
   return result;

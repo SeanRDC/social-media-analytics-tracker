@@ -3,12 +3,13 @@
  * State and the PKCE verifier travel in a short-lived encrypted cookie tied to
  * the signed-in user; the callback reports back with ?connect=ok|error.
  */
+import { describeError } from "@/lib/safe-error";
 import { randomBytes } from "node:crypto";
 import type { Db } from "@/db";
 import type { PlatformId } from "@/lib/data/types";
 import { seal, unseal } from "./crypto";
 import { pkcePair } from "./providers/oauth";
-import { ProviderError, ReauthRequired, resolveProvider } from "./providers";
+import { resolveProvider } from "./providers";
 import type { ConnectReason as ConnectErrorReason } from "./result";
 import { refreshSiblings, saveConnection } from "./service";
 
@@ -76,7 +77,7 @@ export async function completeConnect(a: { platform: string; query: URLSearchPar
     return { location: result(returnTo, a.platform, { ok: true }) };
   } catch (e) {
     // never log tokens: provider errors carry only status and error code
-    console.error(`[connect] ${a.platform} failed:`, e instanceof ProviderError || e instanceof ReauthRequired ? e.message : e);
+    console.error(`[connect] ${a.platform} failed:`, describeError(e));
     return fail("failed");
   }
 }

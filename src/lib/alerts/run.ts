@@ -2,6 +2,7 @@
  * Daily job step: evaluate each user's alerts, record the new ones (once per
  * key), and deliver them by email and web push.
  */
+import { describeError } from "@/lib/safe-error";
 import { and, eq } from "drizzle-orm";
 import { getDb, type Db } from "@/db";
 import { alertEvent, alertSetting, connection, user } from "@/db/schema";
@@ -66,7 +67,7 @@ export async function runAlerts(db: Db, now = new Date(), appUrl = process.env.B
       }
     } catch (e) {
       result.failed++;
-      console.error(`[alerts] ${u.id} failed:`, e instanceof Error ? e.message : e);
+      console.error(`[alerts] ${u.id} failed:`, describeError(e));
     }
   }
   return result;

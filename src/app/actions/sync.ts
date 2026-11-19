@@ -1,5 +1,6 @@
 "use server";
 
+import { describeError } from "@/lib/safe-error";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { connection } from "@/db/schema";
@@ -31,7 +32,7 @@ export async function importPlatform(platform: PlatformId): Promise<ImportOutcom
     if (out.status === "deferred") return "busy";
     return out.status === "expired" ? "reconnect" : "failed";
   } catch (e) {
-    console.error(`[import] ${platform} failed:`, e instanceof Error ? e.message : e);
+    console.error(`[import] ${platform} failed:`, describeError(e));
     return "failed";
   }
 }
