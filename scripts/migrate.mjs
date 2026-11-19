@@ -15,11 +15,13 @@ const url = process.env.DATABASE_URL;
 const migrationsFolder = "drizzle";
 
 if (url) {
-  const { default: postgres } = await import("postgres");
-  const { drizzle } = await import("drizzle-orm/postgres-js");
-  const { migrate } = await import("drizzle-orm/postgres-js/migrator");
-  const client = postgres(url, { max: 1, prepare: false });
-  await migrate(drizzle(client), { migrationsFolder });
+  const { default: pg } = await import("pg");
+  const { drizzle } = await import("drizzle-orm/node-postgres");
+  const { migrate } = await import("drizzle-orm/node-postgres/migrator");
+  // same strict certificate check as src/db/index.ts (pg will weaken sslmode=require in v9)
+  const client = new pg.Client({ connectionString: url.replace(/([?&]sslmode=)(require|prefer|verify-ca)(?=&|$)/, "$1verify-full") });
+  await client.connect();
+  await migrate(drizzle({ client }), { migrationsFolder });
   await client.end();
   console.log("Migrations applied to DATABASE_URL.");
 } else {
