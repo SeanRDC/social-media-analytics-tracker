@@ -3,7 +3,8 @@ import type { CSSProperties } from "react";
 import { BestTimes } from "@/components/audience/BestTimes";
 import { ShareBars } from "@/components/audience/ShareBars";
 import s from "@/components/audience/Audience.module.css";
-import { getAudience } from "@/lib/data/api";
+import { NoData } from "@/components/ui/NoData";
+import { getAudience, hasData } from "@/lib/data/api";
 import { PLATFORM_NAMES } from "@/lib/platforms";
 
 export const metadata: Metadata = { title: "Audience" };
@@ -12,6 +13,7 @@ export const metadata: Metadata = { title: "Audience" };
 const withArticle = (country: string) => (/^(United|Philippines|Netherlands)/.test(country) ? `the ${country}` : country);
 
 export default async function AudiencePage() {
+  if (!(await hasData())) return <NoData />;
   const a = await getAudience();
   const sourceNames = a.sources.map((id) => PLATFORM_NAMES[id]).join(" and ");
 

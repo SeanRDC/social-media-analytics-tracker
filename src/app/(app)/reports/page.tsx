@@ -6,6 +6,7 @@ import { ScheduleCard } from "@/components/reports/ScheduleCard";
 import s from "@/components/reports/Reports.module.css";
 import { ExportButton } from "@/components/ui/ExportButton";
 import { getSchedule } from "@/lib/reports/schedule";
+import { hasData } from "@/lib/data/api";
 import { PRESETS } from "@/lib/reports/build";
 import { requireUser } from "@/lib/dal";
 
@@ -13,7 +14,7 @@ export const metadata: Metadata = { title: "Reports" };
 
 export default async function ReportsPage() {
   const user = await requireUser();
-  const schedule = await getSchedule(user.id);
+  const [schedule, ready] = await Promise.all([getSchedule(user.id), hasData()]);
   return (
     <div className={s.grid}>
       {PRESETS.map((p, i) => (
@@ -31,14 +32,16 @@ export default async function ReportsPage() {
             ))}
           </ul>
           <div className={s.exports}>
-            <ExportButton format="PDF" report={p.title} href={`/reports/print/${p.id}`} />
-            <ExportButton format="CSV" report={p.title} href={`/api/export/${p.id}`} />
+            <ExportButton format="PDF" report={p.title} href={`/reports/print/${p.id}`} disabled={!ready} />
+            <ExportButton format="CSV" report={p.title} href={`/api/export/${p.id}`} disabled={!ready} />
           </div>
         </section>
       ))}
       <ScheduleCard email={user.email} initial={schedule} onSave={saveSchedule} />
       <p className={`${s.footnote} reveal`} style={{ "--i": 6 } as CSSProperties}>
-        CSV opens in any spreadsheet. PDF opens a print-ready page: choose Save as PDF in the print dialog.
+        {ready
+          ? "CSV opens in any spreadsheet. PDF opens a print-ready page: choose Save as PDF in the print dialog."
+          : "Nothing to export yet: reports fill in after your first platform import."}
       </p>
     </div>
   );

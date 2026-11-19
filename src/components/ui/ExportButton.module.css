@@ -23,6 +23,10 @@
 .btn[aria-disabled="true"] {
   cursor: default;
 }
+.off {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .done {
   background: #fff;
   color: var(--tx);

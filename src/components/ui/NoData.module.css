@@ -1,0 +1,67 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: clamp(24px, 4vw, 44px);
+  background-image:
+    linear-gradient(rgba(20, 20, 22, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 20, 22, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.badges .b1,
+.badges .b2 {
+  width: 64px;
+  height: 64px;
+}
+.b1 {
+  background: var(--lime);
+  color: var(--tx);
+}
+.b2 {
+  background: var(--acc);
+  color: #fff;
+}
+.h {
+  max-width: 18ch;
+  font-size: clamp(32px, 4.4vw, 56px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+.p {
+  max-width: 52ch;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--mu);
+}
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 6px 6px 6px 20px;
+  border-radius: 14px;
+  background: var(--tx);
+  color: #fff;
+  font-family: var(--display);
+  font-size: 15.5px;
+  font-weight: 600;
+  transition: transform 0.14s var(--out);
+}
+.cta span {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--lime);
+  color: var(--tx);
+  transition: transform 0.35s var(--spring);
+}
+.cta:hover span {
+  transform: rotate(45deg);
+}
+.cta:active {
+  transform: scale(0.97);
+}

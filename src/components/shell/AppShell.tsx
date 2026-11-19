@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { getDataSource } from "@/lib/data/api";
-import type { DataSource } from "@/lib/data/live";
 import { requireUser } from "@/lib/dal";
 import { Header } from "./Header";
 import { RangeProvider } from "./RangeProvider";
@@ -29,15 +28,15 @@ async function SignedIn({ children }: { children: ReactNode }) {
   const [user, source] = await Promise.all([requireUser(), getDataSource()]);
   return (
     <>
-      <TopNav accountName={user.name} />
+      <TopNav accountName={user.name} image={user.image} />
       <main className={s.main}>
         <Header accountName={user.name} />
-        {source !== "live" && (
+        {source === "simulated" && (
           <p className={s.notice}>
             <span className={s.noticeIcon}>
               <Icon name="sparkle" size={14} />
             </span>
-            <span>{NOTICE[source]}</span>
+            <span>{SIMULATED_NOTICE}</span>
             <Link href="/settings">Connected accounts</Link>
           </p>
         )}
@@ -47,10 +46,7 @@ async function SignedIn({ children }: { children: ReactNode }) {
   );
 }
 
-const NOTICE: Record<Exclude<DataSource, "live">, string> = {
-  sample: "You're looking at sample data. Your own numbers appear here once your platforms are connected and imported.",
-  simulated: "Some accounts are simulated locally, so their numbers are generated. Add platform credentials to import real ones.",
-};
+const SIMULATED_NOTICE = "Some accounts are simulated locally, so their numbers are generated. Add platform credentials to import real ones.";
 
 function ShellLoading() {
   return (

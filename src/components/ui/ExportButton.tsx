@@ -11,13 +11,15 @@ interface Props {
   report: string;
   /** The CSV download, or the print-ready page for PDF. */
   href: string;
+  /** No imported data yet: shown, but not usable. */
+  disabled?: boolean;
 }
 
 /**
  * One continuous control: download icon → spinner → check → back to idle.
  * CSV downloads in place; PDF opens the print-ready report in a new tab.
  */
-export function ExportButton({ format, report, href }: Props) {
+export function ExportButton({ format, report, href, disabled = false }: Props) {
   const [state, setState] = useState<State>("idle");
 
   useEffect(() => {
@@ -25,6 +27,17 @@ export function ExportButton({ format, report, href }: Props) {
     const t = window.setTimeout(() => setState(state === "working" ? "done" : "idle"), state === "working" ? 1200 : 2500);
     return () => window.clearTimeout(t);
   }, [state]);
+
+  if (disabled) {
+    return (
+      <span className={`${s.btn} ${s.off}`} role="img" aria-disabled="true" aria-label={`Export ${report} as ${format}: nothing to export yet`} title="Nothing to export yet">
+        <span className={s.icon} aria-hidden="true">
+          <Icon name="download" size={15} strokeWidth={1.8} />
+        </span>
+        <span aria-hidden="true">{format}</span>
+      </span>
+    );
+  }
 
   return (
     <>

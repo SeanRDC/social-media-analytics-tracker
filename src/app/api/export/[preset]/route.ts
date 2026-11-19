@@ -12,6 +12,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/export/[pre
   const limit = await hit(getDb(), `export:${user.id}`, LIMITS.export);
   if (!limit.ok) return new Response("Too many exports. Please try again later.", { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } });
   const data = await getReportData();
+  if (!data) return new Response("Nothing to export yet. Connect and import a platform first.", { status: 404 });
   const report = buildReport(preset, data);
   return new Response(toCsv(report), {
     headers: {

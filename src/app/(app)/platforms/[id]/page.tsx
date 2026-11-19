@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PlatformDetail } from "@/components/platforms/PlatformDetail";
-import { getOverview, getPlatform, getPosts } from "@/lib/data/api";
+import { NoData } from "@/components/ui/NoData";
+import { getOverview, getPlatform, getPosts, hasData } from "@/lib/data/api";
 import { PLATFORM_ORDER } from "@/lib/data/types";
 import { PLATFORM_NAMES } from "@/lib/platforms";
 
@@ -17,6 +18,7 @@ export async function generateMetadata({ params }: PageProps<"/platforms/[id]">)
 
 export default async function PlatformPage({ params }: PageProps<"/platforms/[id]">) {
   const { id } = await params;
+  if (!(await hasData())) return <NoData />;
   const platform = await getPlatform(id);
   if (!platform) notFound();
   const [posts, overview] = await Promise.all([getPosts({ platform: platform.id, sort: "date" }), getOverview()]);

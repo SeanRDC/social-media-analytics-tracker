@@ -35,6 +35,7 @@ async function Report({ params }: Pick<PageProps<"/reports/print/[preset]">, "pa
     return <p className={s.loading}>Too many exports in the last hour. Please try again later.</p>;
   }
   const data = await getReportData();
+  if (!data) return <p className={s.loading}>Nothing to report yet. Connect and import a platform first.</p>;
   const r = buildReport(preset, data);
   return (
     <main className={s.page}>

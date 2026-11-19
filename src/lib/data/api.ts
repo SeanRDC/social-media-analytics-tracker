@@ -23,6 +23,11 @@ const imported = cache(async () => {
   return loaded && asOf ? { ...loaded, asOf } : null;
 });
 
+/** Whether any of the person's platforms has imported numbers yet. */
+export async function hasData(): Promise<boolean> {
+  return (await imported()) != null;
+}
+
 /** Where the dashboard's numbers come from, for the notice in the shell. */
 export async function getDataSource(): Promise<DataSource> {
   return (await imported())?.source ?? "sample";
@@ -70,17 +75,11 @@ export async function getAudience(): Promise<Audience> {
   return d ? computeAudience(d.dataset, d.asOf) : sample.getAudience();
 }
 
-/** Everything a report needs, for the signed-in user. Loads once (also outside React rendering, e.g. route handlers). */
-export async function getReportData(): Promise<ReportData> {
+/**
+ * Everything a report needs, for the signed-in user, or null before any import
+ * (reports never fall back to sample numbers). Loads once (also outside React rendering, e.g. route handlers).
+ */
+export async function getReportData(): Promise<ReportData | null> {
   const d = await imported();
-  if (d) return reportDataFrom(d.dataset, d.asOf);
-  const [asOf, overview, daily, platforms, posts, audience] = await Promise.all([
-    sample.getAsOf(),
-    sample.getOverview(),
-    sample.getDailyViews(),
-    sample.getPlatforms(),
-    sample.getPosts(),
-    sample.getAudience(),
-  ]);
-  return { asOf, sample: true, overview, daily, platforms, posts, audience };
+  return d ? reportDataFrom(d.dataset, d.asOf) : null;
 }

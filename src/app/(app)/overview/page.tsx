@@ -3,12 +3,14 @@ import { DailyViewsCard } from "@/components/overview/DailyViewsCard";
 import { GrowthCard } from "@/components/overview/GrowthCard";
 import { KpiTiles, SummaryStatement } from "@/components/overview/Summary";
 import { TopPostsTable } from "@/components/overview/TopPostsTable";
-import { getAsOf, getDailyViews, getOverview, getPlatform, getPosts } from "@/lib/data/api";
+import { NoData } from "@/components/ui/NoData";
+import { getAsOf, getDailyViews, getOverview, getPlatform, getPosts, hasData } from "@/lib/data/api";
 import s from "./overview.module.css";
 
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function OverviewPage() {
+  if (!(await hasData())) return <NoData />;
   const [overview, views, posts, asOf] = await Promise.all([getOverview(), getDailyViews(), getPosts(), getAsOf()]);
   const top = await getPlatform(overview.topPlatform);
 
