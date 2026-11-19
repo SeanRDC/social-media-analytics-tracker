@@ -31,6 +31,7 @@ const NO_ACCOUNT: Partial<Record<PlatformId, string>> = {
   youtube: "That Google account has no YouTube channel. Choose the account that owns your channel.",
   facebook: "We couldn't find a Facebook Page you manage. Use the account that manages your Page.",
   linkedin: "We couldn't find a LinkedIn Page you administer. Only company Pages can be connected.",
+  instagram: "We couldn't find a Professional Instagram account linked to a Facebook Page you manage. Link it to your Page, then try again.",
 };
 
 export function connectMessage(r: ConnectResult): string {

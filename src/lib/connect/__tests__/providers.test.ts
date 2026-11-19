@@ -47,10 +47,10 @@ describe("authorize URLs", () => {
     expect(p.scope).toBe("user.info.basic,user.info.profile,user.info.stats,video.list");
   });
 
-  it("requests Instagram business scopes on instagram.com", () => {
+  it("requests Instagram through Facebook Login with the Meta app", () => {
     const url = instagramProvider(C).authorizeUrl(a);
-    expect(url.startsWith("https://www.instagram.com/oauth/authorize")).toBe(true);
-    expect(params(url).scope).toBe("instagram_business_basic,instagram_business_manage_insights");
+    expect(url).toContain("www.facebook.com/v26.0/dialog/oauth");
+    expect(params(url)).toMatchObject({ client_id: "cid", scope: "instagram_basic,instagram_manage_insights,pages_show_list,pages_read_engagement" });
   });
 
   it("uses the configured Graph API version for Facebook", () => {
@@ -101,31 +101,30 @@ describe("YouTube", () => {
 });
 
 describe("Instagram", () => {
-  it("swaps the short-lived token for a 60-day one", async () => {
-    const calls = stubFetch(
-      { body: { access_token: "short", user_id: 17841, permissions: ["instagram_business_basic"] } },
-      { body: { access_token: "long", token_type: "bearer", expires_in: 5184000 } },
-    );
+  it("swaps the code for a long-lived user token", async () => {
+    const calls = stubFetch({ body: { access_token: "short" } }, { body: { access_token: "long", expires_in: 5184000 } });
     const t = await instagramProvider(C).exchangeCode({ code: "c", redirectUri: REDIRECT, codeVerifier: "" });
-    expect(t).toMatchObject({ accessToken: "long", refreshToken: null, scopes: "instagram_business_basic" });
-    expect(params(calls[1].url)).toMatchObject({ grant_type: "ig_exchange_token", access_token: "short", client_secret: "csecret" });
+    expect(t).toMatchObject({ accessToken: "long", refreshToken: null });
+    expect(params(calls[1].url)).toMatchObject({ grant_type: "fb_exchange_token", fb_exchange_token: "short", client_secret: "csecret" });
   });
 
-  it("needs a Professional account", async () => {
-    stubFetch({ body: { user_id: "1", username: "me", account_type: "PERSONAL" } });
-    expect(await instagramProvider(C).fetchAccount({ accessToken: "t", refreshToken: null, expiresAt: null, scopes: null })).toEqual({
-      ok: false,
-      reason: "needs-professional",
+  it("connects the Instagram account linked to a Page, keeping the Page token", async () => {
+    const calls = stubFetch({
+      body: {
+        data: [
+          { id: "p0", name: "No Instagram", access_token: "t0" },
+          { id: "p1", name: "Northbay", access_token: "page-token", instagram_business_account: { id: "1784", username: "northbay" } },
+        ],
+      },
     });
+    const r = await instagramProvider(C).fetchAccount({ accessToken: "user", refreshToken: null, expiresAt: new Date(), scopes: "s" });
+    expect(r).toMatchObject({ ok: true, externalId: "1784", name: "@northbay", tokens: { accessToken: "page-token", expiresAt: null } });
+    expect(params(calls[0].url).fields).toContain("instagram_business_account{id,username}");
   });
 
-  it("connects a Creator account by its handle", async () => {
-    stubFetch({ body: { user_id: "1784", username: "northbay", account_type: "MEDIA_CREATOR" } });
-    expect(await instagramProvider(C).fetchAccount({ accessToken: "t", refreshToken: null, expiresAt: null, scopes: null })).toEqual({
-      ok: true,
-      externalId: "1784",
-      name: "@northbay",
-    });
+  it("reports when no Page has a linked Professional Instagram account", async () => {
+    stubFetch({ body: { data: [{ id: "p0", name: "Page", access_token: "t0" }] } });
+    expect(await instagramProvider(C).fetchAccount({ accessToken: "u", refreshToken: null, expiresAt: null, scopes: null })).toEqual({ ok: false, reason: "no-account" });
   });
 });
 

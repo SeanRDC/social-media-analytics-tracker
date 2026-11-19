@@ -96,17 +96,17 @@ describe("simulated round trip", () => {
 });
 
 describe("live providers", () => {
-  it("sends Instagram personal accounts back with needs-professional", async () => {
-    vi.stubEnv("INSTAGRAM_APP_ID", "id");
-    vi.stubEnv("INSTAGRAM_APP_SECRET", "secret");
-    const replies = [{ access_token: "short", user_id: 1 }, { access_token: "long", expires_in: 5184000 }, { user_id: "1", username: "me", account_type: "PERSONAL" }];
+  it("sends Instagram back with no-account when no Page has a linked Professional account", async () => {
+    vi.stubEnv("META_APP_ID", "id");
+    vi.stubEnv("META_APP_SECRET", "secret");
+    const replies = [{ access_token: "short" }, { access_token: "long", expires_in: 5184000 }, { data: [{ id: "p1", name: "Page", access_token: "pt" }] }];
     vi.stubGlobal("fetch", vi.fn(async () => Response.json(replies.shift())));
     const s = start("instagram", "/onboarding/connect");
-    expect(s.url.host).toBe("www.instagram.com");
+    expect(s.url.host).toBe("www.facebook.com");
     expect(s.url.searchParams.get("redirect_uri")).toBe(`${BASE}/api/connect/instagram/callback`);
     const q = new URLSearchParams({ code: "c", state: s.url.searchParams.get("state")! });
     const { location } = await completeConnect({ platform: "instagram", query: q, cookie: s.cookie, userId: "u1", baseUrl: BASE, db });
-    expect(location).toBe("/onboarding/connect?connect=error&platform=instagram&reason=needs-professional");
+    expect(location).toBe("/onboarding/connect?connect=error&platform=instagram&reason=no-account");
     expect(await db.select().from(schema.connection)).toHaveLength(0);
   });
 

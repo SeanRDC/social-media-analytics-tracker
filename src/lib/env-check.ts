@@ -20,8 +20,8 @@ export function checkProductionEnv(env: Env): { errors: string[]; warnings: stri
   if (Boolean(env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) !== Boolean(env.VAPID_PRIVATE_KEY)) warnings.push("Set both NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY, or neither");
   const platforms: [string, string, string][] = [
     ["YouTube", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
-    ["Facebook", "META_APP_ID", "META_APP_SECRET"],
-    ["Instagram", "INSTAGRAM_APP_ID", "INSTAGRAM_APP_SECRET"],
+    // Instagram uses the same Meta app (Facebook Login)
+    ["Facebook and Instagram", "META_APP_ID", "META_APP_SECRET"],
     ["TikTok", "TIKTOK_CLIENT_KEY", "TIKTOK_CLIENT_SECRET"],
     ["LinkedIn", "LINKEDIN_CLIENT_ID", "LINKEDIN_CLIENT_SECRET"],
   ];

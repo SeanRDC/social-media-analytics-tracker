@@ -30,6 +30,6 @@ describe("checkProductionEnv", () => {
 
   it("warns about half-configured platforms and push", () => {
     const { warnings } = checkProductionEnv({ ...GOOD, META_APP_ID: "x", NEXT_PUBLIC_VAPID_PUBLIC_KEY: "k" });
-    expect(warnings).toEqual(["Set both NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY, or neither", "Facebook: set both META_APP_ID and META_APP_SECRET"]);
+    expect(warnings).toEqual(["Set both NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY, or neither", "Facebook and Instagram: set both META_APP_ID and META_APP_SECRET"]);
   });
 });

@@ -12,7 +12,7 @@ const HINT: Record<PlatformId, string> = {
   facebook: "Page followers, reach and posts",
   tiktok: "Followers, views and video stats",
   linkedin: "Company page followers and posts",
-  instagram: "Needs a Professional account",
+  instagram: "Professional account linked to a Facebook Page",
   x: "Posts and followers",
 };
 

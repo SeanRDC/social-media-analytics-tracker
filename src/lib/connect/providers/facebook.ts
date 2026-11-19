@@ -17,10 +17,15 @@ export function facebookCredentials() {
   return clientId && clientSecret ? { clientId, clientSecret } : null;
 }
 
-export function facebookProvider(c: { clientId: string; clientSecret: string }): Provider {
-  const graph = (path: string) => `https://graph.facebook.com/${graphVersion()}${path}`;
+export const graph = (path: string) => `https://graph.facebook.com/${graphVersion()}${path}`;
+
+/**
+ * Facebook Login shared by Facebook and Instagram (Meta no longer offers
+ * Instagram Login to new apps): the authorize URL and the code exchange that
+ * ends with a long-lived user token.
+ */
+export function metaLogin(c: { clientId: string; clientSecret: string }, scopes: string[], label: string): Pick<Provider, "pkce" | "refreshWindowSeconds" | "authorizeUrl" | "exchangeCode"> {
   return {
-    platform: "facebook",
     pkce: false,
     refreshWindowSeconds: 0,
     authorizeUrl: ({ redirectUri, state }) =>
@@ -28,13 +33,13 @@ export function facebookProvider(c: { clientId: string; clientSecret: string }):
         client_id: c.clientId,
         redirect_uri: redirectUri,
         response_type: "code",
-        scope: FACEBOOK_SCOPES.join(","),
+        scope: scopes.join(","),
         state,
       }),
     async exchangeCode({ code, redirectUri }) {
       const short = await getJson(
         withQuery(graph("/oauth/access_token"), { client_id: c.clientId, client_secret: c.clientSecret, redirect_uri: redirectUri, code }),
-        "Facebook token exchange",
+        `${label} token exchange`,
       );
       const long = await getJson(
         withQuery(graph("/oauth/access_token"), {
@@ -43,10 +48,17 @@ export function facebookProvider(c: { clientId: string; clientSecret: string }):
           client_secret: c.clientSecret,
           fb_exchange_token: str(short.access_token) ?? "",
         }),
-        "Facebook long-lived token",
+        `${label} long-lived token`,
       );
-      return { accessToken: str(long.access_token) ?? "", refreshToken: null, expiresAt: expiresIn(long.expires_in), scopes: FACEBOOK_SCOPES.join(",") };
+      return { accessToken: str(long.access_token) ?? "", refreshToken: null, expiresAt: expiresIn(long.expires_in), scopes: scopes.join(",") };
     },
+  };
+}
+
+export function facebookProvider(c: { clientId: string; clientSecret: string }): Provider {
+  return {
+    platform: "facebook",
+    ...metaLogin(c, FACEBOOK_SCOPES, "Facebook"),
     async fetchAccount(tokens) {
       const body = await getJson(graph("/me/accounts?fields=id,name,access_token&limit=25"), "Facebook Page lookup", {
         Authorization: `Bearer ${tokens.accessToken}`,

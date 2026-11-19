@@ -1,71 +1,39 @@
 /**
- * Instagram through Instagram Login (no Facebook Page needed). Only
- * Professional (Business or Creator) accounts have insights. The short-lived
- * token is swapped for a 60-day one, refreshed while still valid.
+ * Instagram through Facebook Login, using the same Meta app as Facebook (Meta
+ * no longer offers Instagram Login to new apps). The Instagram account has to
+ * be a Professional (Business or Creator) account linked to a Facebook Page the
+ * person manages. Like Facebook, the Page token (which does not expire) is
+ * stored; it can read the linked Instagram account's profile, media and insights.
  */
-import { expiresIn, getJson, postForm, str, withQuery } from "./oauth";
-import type { Provider, TokenSet } from "./types";
+import { facebookCredentials, graph, metaLogin } from "./facebook";
+import { getJson } from "./oauth";
+import type { Provider } from "./types";
 
-export const INSTAGRAM_SCOPES = ["instagram_business_basic", "instagram_business_manage_insights"];
-const PROFESSIONAL = new Set(["BUSINESS", "MEDIA_CREATOR"]);
+export const INSTAGRAM_SCOPES = ["instagram_basic", "instagram_manage_insights", "pages_show_list", "pages_read_engagement"];
 
-export function instagramCredentials() {
-  const clientId = process.env.INSTAGRAM_APP_ID;
-  const clientSecret = process.env.INSTAGRAM_APP_SECRET;
-  return clientId && clientSecret ? { clientId, clientSecret } : null;
-}
+/** Same Meta app as Facebook. */
+export const instagramCredentials = facebookCredentials;
 
-const longLived = (body: Record<string, unknown>, scopes: string | null): TokenSet => ({
-  accessToken: str(body.access_token) ?? "",
-  refreshToken: null,
-  expiresAt: expiresIn(body.expires_in),
-  scopes,
-});
+type PageWithInstagram = { id: string; access_token?: string; instagram_business_account?: { id: string; username?: string } };
 
 export function instagramProvider(c: { clientId: string; clientSecret: string }): Provider {
   return {
     platform: "instagram",
-    pkce: false,
-    // long-lived tokens last 60 days; refresh in the last 10
-    refreshWindowSeconds: 10 * 24 * 60 * 60,
-    authorizeUrl: ({ redirectUri, state }) =>
-      withQuery("https://www.instagram.com/oauth/authorize", {
-        client_id: c.clientId,
-        redirect_uri: redirectUri,
-        response_type: "code",
-        scope: INSTAGRAM_SCOPES.join(","),
-        state,
-      }),
-    async exchangeCode({ code, redirectUri }) {
-      const short = await postForm(
-        "https://api.instagram.com/oauth/access_token",
-        { client_id: c.clientId, client_secret: c.clientSecret, grant_type: "authorization_code", redirect_uri: redirectUri, code },
-        "Instagram token exchange",
-      );
-      // older responses wrap the token in data[0]
-      const first = (Array.isArray(short.data) ? short.data[0] : short) as Record<string, unknown>;
-      const granted = Array.isArray(first.permissions) ? first.permissions.join(",") : str(first.permissions);
-      const long = await getJson(
-        withQuery("https://graph.instagram.com/access_token", { grant_type: "ig_exchange_token", client_secret: c.clientSecret, access_token: str(first.access_token) ?? "" }),
-        "Instagram long-lived token",
-      );
-      return longLived(long, granted);
-    },
-    async fetchAccount({ accessToken }) {
-      const me = await getJson(withQuery("https://graph.instagram.com/me", { fields: "user_id,username,account_type" }), "Instagram account lookup", {
-        Authorization: `Bearer ${accessToken}`,
+    ...metaLogin(c, INSTAGRAM_SCOPES, "Instagram"),
+    async fetchAccount(tokens) {
+      const body = await getJson(graph("/me/accounts?fields=id,name,access_token,instagram_business_account{id,username}&limit=25"), "Instagram account lookup", {
+        Authorization: `Bearer ${tokens.accessToken}`,
       });
-      if (!PROFESSIONAL.has(String(me.account_type))) return { ok: false, reason: "needs-professional" };
-      const id = str(me.user_id) ?? str(me.id);
-      if (!id) return { ok: false, reason: "no-account" };
-      return { ok: true, externalId: id, name: me.username ? `@${me.username}` : "Instagram account" };
-    },
-    async refresh({ accessToken }) {
-      const body = await getJson(
-        withQuery("https://graph.instagram.com/refresh_access_token", { grant_type: "ig_refresh_token", access_token: accessToken }),
-        "Instagram token refresh",
-      );
-      return longLived(body, null);
+      // only Professional accounts linked to a Page show up here
+      const page = (body.data as PageWithInstagram[] | undefined)?.find((p) => p.access_token && p.instagram_business_account?.id);
+      const ig = page?.instagram_business_account;
+      if (!page?.access_token || !ig) return { ok: false, reason: "no-account" };
+      return {
+        ok: true,
+        externalId: ig.id,
+        name: ig.username ? `@${ig.username}` : "Instagram account",
+        tokens: { accessToken: page.access_token, refreshToken: null, expiresAt: null, scopes: tokens.scopes },
+      };
     },
   };
 }

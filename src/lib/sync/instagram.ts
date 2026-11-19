@@ -1,16 +1,17 @@
 /**
- * Instagram Professional account numbers through Instagram Login.
+ * Instagram Professional account numbers through Facebook Login (graph.facebook.com),
+ * read by the Instagram account id with the linked Page's token.
  * The API reports current totals (followers, each post's views and counts), so
  * daily rows are derived by the sync from the change since the last sync.
  * Demographics need 100+ followers and are optional.
  */
 import { ProviderError, RateLimited } from "@/lib/connect/providers";
+import { graph } from "@/lib/connect/providers/facebook";
 import { getJson, withQuery } from "@/lib/connect/providers/oauth";
 import type { PostKind } from "@/lib/data/types";
 import { ageLabel, sharesOf, titleFrom } from "./daily";
 import type { AudienceRow, FetchContext, PlatformSnapshot, PostRow, SyncWindow } from "./types";
 
-const BASE = "https://graph.instagram.com";
 const MAX_POSTS = 100;
 
 type Media = {
@@ -30,24 +31,24 @@ type Media = {
 const GENDER: Record<string, string> = { F: "female", M: "male", U: "user_specified" };
 
 export async function fetchInstagram(accessToken: string, _window: SyncWindow, ctx: FetchContext): Promise<PlatformSnapshot> {
-  const get = (path: string, params: Record<string, string>) => getJson(withQuery(`${BASE}${path}`, params), `Instagram ${path}`, { Authorization: `Bearer ${accessToken}` });
+  const get = (path: string, params: Record<string, string>) => getJson(withQuery(graph(path), params), `Instagram ${path}`, { Authorization: `Bearer ${accessToken}` });
 
-  const me = await get("/me", { fields: "user_id,username,followers_count,media_count" });
+  const userId = ctx.externalId;
+  const me = await get(`/${encodeURIComponent(userId)}`, { fields: "username,followers_count,media_count" });
   const followers = Number(me.followers_count ?? 0) || 0;
-  const userId = String(me.user_id ?? ctx.externalId);
 
-  const posts = await fetchMedia(get);
+  const posts = await fetchMedia(get, userId);
   const audience = await fetchDemographics(get, userId);
   return { followers, daily: [], posts, audience, derive: true };
 }
 
-async function fetchMedia(get: (path: string, params: Record<string, string>) => Promise<Record<string, unknown>>): Promise<PostRow[]> {
+async function fetchMedia(get: (path: string, params: Record<string, string>) => Promise<Record<string, unknown>>, userId: string): Promise<PostRow[]> {
   const base = "id,caption,media_type,media_product_type,timestamp,permalink,thumbnail_url,media_url,like_count,comments_count";
   const list = async (fields: string) => {
     const out: Media[] = [];
     let after: string | undefined;
     do {
-      const body = await get("/me/media", { fields, limit: "50", ...(after ? { after } : {}) });
+      const body = await get(`/${encodeURIComponent(userId)}/media`, { fields, limit: "50", ...(after ? { after } : {}) });
       out.push(...((body.data as Media[] | undefined) ?? []));
       const paging = body.paging as { cursors?: { after?: string }; next?: string } | undefined;
       after = paging?.next ? paging.cursors?.after : undefined;

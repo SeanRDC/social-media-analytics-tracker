@@ -84,9 +84,9 @@ describe("fetchFacebook", () => {
 
 describe("fetchInstagram", () => {
   const routes: [RegExp, Route][] = [
-    [/^\/me\?/, () => ({ body: { user_id: "178", username: "northbay", followers_count: 1200 } })],
+    [/^\/v26\.0\/178\?/, () => ({ body: { id: "178", username: "northbay", followers_count: 1200 } })],
     [
-      /^\/me\/media/,
+      /^\/v26\.0\/178\/media/,
       (u) =>
         u.searchParams.get("fields")!.includes("insights")
           ? {
@@ -115,7 +115,7 @@ describe("fetchInstagram", () => {
   ];
 
   it("reads totals for the sync to derive today's row", async () => {
-    api(routes);
+    const calls = api(routes);
     const s = await fetchInstagram("t", W, { externalId: "178" });
     expect(s).toMatchObject({ followers: 1200, daily: [], derive: true });
     expect(s.posts[0]).toMatchObject({ title: "Golden hour on the pier", kind: "reel", views: 4000, likes: 80, comments: 6, shares: 9, thumbnailUrl: "https://cdn/m1.jpg" });
@@ -126,6 +126,7 @@ describe("fetchInstagram", () => {
         { dimension: "gender", key: "female", share: 75 },
       ]),
     );
+    expect(calls.every((u) => u.host === "graph.facebook.com")).toBe(true);
   });
 });
 

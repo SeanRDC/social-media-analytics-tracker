@@ -10,7 +10,7 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 |---|---|---|---|
 | YouTube | about 1 hour | refresh token (PKCE, `access_type=offline`, `prompt=consent`) | user token |
 | Facebook | Page token does not expire | none needed | first managed Page's token |
-| Instagram | 60 days | `ig_refresh_token` within the last 10 days | long-lived user token |
+| Instagram | never (Page token) | none | Page token of the Page the Instagram account is linked to |
 | TikTok | about 24 hours | refresh token (about a year) | user token |
 | LinkedIn | 60 days | refresh tokens only for approved partners; otherwise reconnect | user token |
 
@@ -37,10 +37,10 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 
 ## Instagram (phase 4)
 
-**As built (2026-11-16):** `src/lib/sync/instagram.ts`. `/me?fields=user_id,username,followers_count`, `/me/media` (100 most recent, with `insights.metric(views,shares)`; retried without insights if refused), `follower_demographics` with `metric_type=total_value` and `breakdown=age|country|gender` (optional). Instagram reports totals, so daily rows are derived from the change between syncs and history starts on the day of connection. **Verify with an approved account:** the `views`/`shares` media insight names and the demographics response shape.
+**As built (2026-11-16):** `src/lib/sync/instagram.ts`. `/{ig-id}?fields=username,followers_count`, `/{ig-id}/media` (100 most recent, with `insights.metric(views,shares)`; retried without insights if refused), `follower_demographics` with `metric_type=total_value` and `breakdown=age|country|gender` (optional). Instagram reports totals, so daily rows are derived from the change between syncs and history starts on the day of connection. **Verify with an approved account:** the `views`/`shares` media insight names and the demographics response shape.
 
-- **API:** Instagram API with Instagram Login (`graph.instagram.com`) now includes account and media insights, so a linked Facebook Page is no longer required for that path.
-- **Permissions:** `instagram_business_basic`, `instagram_business_manage_insights`. Advanced access (App Review) is needed for users outside the app's roles.
+- **API (changed 2026-11-19):** Instagram API with **Facebook Login** (`graph.facebook.com`), through the same Meta app as Facebook. Meta no longer offers Instagram Login to new apps: every new app gets Facebook Login for Business, and the Instagram use case only shows "Unified login" and "Facebook login". The Instagram account must be Professional and linked to a Facebook Page; it is found with `/me/accounts?fields=instagram_business_account{id,username}` and read by its id with the Page token. Unified Login (business portfolio + `config_id`, system-user tokens) is the possible future path.
+- **Permissions:** `instagram_basic`, `instagram_manage_insights`, `pages_show_list`, `pages_read_engagement`. Advanced access (App Review) is needed for users outside the app's roles.
 - **Limits:** Professional (Business or Creator) accounts only. `follower_count` and `online_followers` are unavailable under 100 followers. Data can lag up to 48 hours. `impressions` is deprecated; use the current metric list.
 - Sources: [account insights](https://developers.facebook.com/docs/instagram-platform/api-reference/instagram-user/insights), [Instagram Login insights announcement](https://developers.facebook.com/blog/post/2025/03/24/user-and-media-insights-on-instagram-api-with-instagram-login/), [media insights](https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights/)
 
