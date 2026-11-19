@@ -72,7 +72,10 @@ async function parse(res: Response, what: string): Promise<Json> {
     if (res.status === 429 || (code && META_RATE_CODES.has(code)) || (reason && GOOGLE_RATE_REASONS.has(reason)) || code === "rate_limit_exceeded") {
       throw new RateLimited(`${what} is rate limited (${reason ?? code ?? res.status})`, res.status, reason ?? code);
     }
-    throw new ProviderError(`${what} failed (${res.status}${code ? `, ${code}` : ""})`, res.status, code);
+    // keep the platform's own explanation (e.g. Google's "accessNotConfigured" and its message) so logs say what to fix
+    const label = reason ?? code;
+    const detail = err && typeof err === "object" && err.message ? `: ${err.message}` : "";
+    throw new ProviderError(`${what} failed (${res.status}${label ? `, ${label}` : ""})${detail}`, res.status, code);
   }
   return body;
 }

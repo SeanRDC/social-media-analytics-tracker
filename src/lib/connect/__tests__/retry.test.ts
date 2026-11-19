@@ -16,6 +16,18 @@ function replies(...rs: (Response | Error)[]) {
 }
 
 describe("platform requests", () => {
+  it("keeps Google's reason for a refusal so the log says what to fix", async () => {
+    replies(
+      Response.json(
+        { error: { code: 403, message: "YouTube Analytics API has not been used in project 123 before or it is disabled.", errors: [{ reason: "accessNotConfigured" }] } },
+        { status: 403 },
+      ),
+    );
+    const err = await getJson("https://api.example/x", "YouTube Analytics").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ProviderError);
+    expect((err as Error).message).toBe("YouTube Analytics failed (403, accessNotConfigured): YouTube Analytics API has not been used in project 123 before or it is disabled.");
+  });
+
   it("retries a server error and succeeds", async () => {
     const f = replies(new Response("", { status: 503 }), Response.json({ ok: 1 }));
     expect(await getJson("https://api.example/x", "Thing")).toEqual({ ok: 1 });
