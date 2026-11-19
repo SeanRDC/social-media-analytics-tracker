@@ -80,6 +80,16 @@
   font-weight: 600;
   color: var(--tx);
 }
+.doc h3 {
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--tx);
+}
+.doc b {
+  font-weight: 600;
+  color: var(--tx);
+}
 .doc ul,
 .doc ol {
   margin: 0;

@@ -16,7 +16,7 @@ export default function DataDeletionPage() {
       <ol>
         <li>Sign in to {APP_NAME} and open Settings.</li>
         <li>Under Connected accounts, choose Disconnect next to the platform and confirm.</li>
-        <li>We delete that platform&apos;s access tokens immediately and its statistics within 30 days.</li>
+        <li>We delete that platform&apos;s access tokens and statistics immediately.</li>
       </ol>
 
       <h2>Delete everything</h2>
@@ -28,7 +28,18 @@ export default function DataDeletionPage() {
       </ol>
 
       <h2>Revoke access from the platform side</h2>
-      <p>You can also remove {APP_NAME} from the connected apps settings of Google (YouTube), Facebook, Instagram, TikTok or LinkedIn. We stop receiving data straight away; follow the steps above to remove what we already stored.</p>
+      <p>You can also remove {APP_NAME} in each platform&apos;s own settings. We stop receiving data straight away; follow the steps above to remove what we already stored.</p>
+      <ul>
+        <li>
+          Google (YouTube):{" "}
+          <a href="https://myaccount.google.com/permissions" target="_blank" rel="noreferrer">
+            myaccount.google.com/permissions
+          </a>
+        </li>
+        <li>Facebook and Instagram: in Facebook, Settings &amp; privacy, then Settings, then Business integrations.</li>
+        <li>TikTok: in the app, Settings and privacy, then Security and permissions, then Apps and services permissions.</li>
+        <li>LinkedIn: Settings, then Data privacy, then Permitted services.</li>
+      </ul>
     </article>
   );
 }
