@@ -114,7 +114,33 @@ describe("fetchInstagram", () => {
     [/breakdown=gender/, () => ({ body: { data: [{ total_value: { breakdowns: [{ results: [{ dimension_values: ["F"], value: 3 }, { dimension_values: ["M"], value: 1 }] }] } }] } })],
   ];
 
-  it("reads totals for the sync to derive today's row", async () => {
+  // Meta account insights: one total per day, asked for one UTC day at a time
+  const dayInsights: [RegExp, Route] = [
+    /\/178\/insights\?.*metric_type=total_value/,
+    (u) => {
+      if (u.searchParams.has("breakdown")) return { status: 400, body: { error: { code: 100, message: "n/a" } } };
+      const since = new Date(Number(u.searchParams.get("since")) * 1000).toISOString().slice(0, 10);
+      const until = new Date(Number(u.searchParams.get("until")) * 1000).toISOString().slice(0, 10);
+      const reported: Record<string, [number, number]> = { "2026-11-13": [410, 22], "2026-11-15": [95, 4] };
+      // 2026-11-14 is not reported (empty data), so it must stay unknown, not 0
+      const v = reported[since];
+      expect(until).toBe(new Date(Date.parse(`${since}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10));
+      return { body: { data: v ? [{ name: "views", total_value: { value: v[0] } }, { name: "total_interactions", total_value: { value: v[1] } }] : [] } };
+    },
+  ];
+
+  it("stores each day exactly as Meta reports it and leaves unreported days empty", async () => {
+    api([dayInsights, ...routes]);
+    const s = await fetchInstagram("t", W, { externalId: "178" });
+    expect(s.derive).toBeFalsy();
+    expect(s.daily).toEqual([
+      { date: "2026-11-13", followers: null, followersGained: null, views: 410, engagements: 22, posts: 0, watchMinutes: null },
+      { date: "2026-11-14", followers: null, followersGained: null, views: null, engagements: null, posts: 1, watchMinutes: null },
+      { date: "2026-11-15", followers: 1200, followersGained: null, views: 95, engagements: 4, posts: 0, watchMinutes: null },
+    ]);
+  });
+
+  it("falls back to day-over-day totals when Meta shares no daily insights", async () => {
     const calls = api(routes);
     const s = await fetchInstagram("t", W, { externalId: "178" });
     expect(s).toMatchObject({ followers: 1200, daily: [], derive: true });
