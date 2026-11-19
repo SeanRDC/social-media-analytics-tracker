@@ -8,6 +8,14 @@ import type { Provider } from "./types";
 
 // pages_read_user_content is needed to list the Page's posts (/published_posts)
 export const FACEBOOK_SCOPES = ["pages_show_list", "pages_read_engagement", "pages_read_user_content", "read_insights"];
+// business_management: Pages and Instagram accounts in a business portfolio only show their link with it
+const INSTAGRAM_ONLY = ["instagram_basic", "instagram_manage_insights", "business_management"];
+/**
+ * Facebook and Instagram ask for the same permissions: each new Meta login
+ * replaces the app's access to the Page (the old Page token then fails with
+ * 190/492), so either login has to produce a token that serves both.
+ */
+export const META_SCOPES = [...FACEBOOK_SCOPES, ...INSTAGRAM_ONLY];
 
 export const graphVersion = () => process.env.META_GRAPH_VERSION || "v26.0";
 
@@ -58,12 +66,12 @@ export function metaLogin(c: { clientId: string; clientSecret: string }, scopes:
 export function facebookProvider(c: { clientId: string; clientSecret: string }): Provider {
   return {
     platform: "facebook",
-    ...metaLogin(c, FACEBOOK_SCOPES, "Facebook"),
+    ...metaLogin(c, META_SCOPES, "Facebook"),
     async fetchAccount(tokens) {
-      const body = await getJson(graph("/me/accounts?fields=id,name,access_token&limit=25"), "Facebook Page lookup", {
+      const body = await getJson(graph("/me/accounts?fields=id,name,access_token,instagram_business_account{id}&limit=25"), "Facebook Page lookup", {
         Authorization: `Bearer ${tokens.accessToken}`,
       });
-      const page = (body.data as { id: string; name?: string; access_token?: string }[] | undefined)?.find((p) => p.access_token);
+      const page = (body.data as { id: string; name?: string; access_token?: string; instagram_business_account?: { id: string } }[] | undefined)?.find((p) => p.access_token);
       if (!page?.access_token) return { ok: false, reason: "no-account" };
       return {
         ok: true,
@@ -71,6 +79,7 @@ export function facebookProvider(c: { clientId: string; clientSecret: string }):
         name: page.name || "Facebook Page",
         // Page tokens made from a long-lived user token do not expire
         tokens: { accessToken: page.access_token, refreshToken: null, expiresAt: null, scopes: tokens.scopes },
+        siblings: page.instagram_business_account?.id ? [{ platform: "instagram" as const, externalId: page.instagram_business_account.id }] : [],
       };
     },
   };

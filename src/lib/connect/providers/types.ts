@@ -18,6 +18,11 @@ export type AccountResult =
       name: string;
       /** Replaces the user tokens, e.g. a Facebook Page token. */
       tokens?: TokenSet;
+      /**
+       * Other connections the same token can read (Facebook and Instagram share
+       * one Page token). A new login invalidates the old token, so these get it too.
+       */
+      siblings?: { platform: PlatformId; externalId: string }[];
     }
   | { ok: false; reason: "needs-professional" | "no-account" };
 

@@ -10,7 +10,7 @@ import { seal, unseal } from "./crypto";
 import { pkcePair } from "./providers/oauth";
 import { ProviderError, ReauthRequired, resolveProvider } from "./providers";
 import type { ConnectReason as ConnectErrorReason } from "./result";
-import { saveConnection } from "./service";
+import { refreshSiblings, saveConnection } from "./service";
 
 export const STATE_COOKIE = "connect_state";
 export const STATE_TTL_SECONDS = 10 * 60;
@@ -70,7 +70,9 @@ export async function completeConnect(a: { platform: string; query: URLSearchPar
     const tokens = await provider.exchangeCode({ code, redirectUri: callbackUrl(a.baseUrl, a.platform), codeVerifier: saved.verifier });
     const account = await provider.fetchAccount(tokens);
     if (!account.ok) return fail(account.reason);
-    await saveConnection(a.db, a.userId, a.platform as PlatformId, account.tokens ?? tokens, { externalId: account.externalId, name: account.name });
+    const stored = account.tokens ?? tokens;
+    await saveConnection(a.db, a.userId, a.platform as PlatformId, stored, { externalId: account.externalId, name: account.name });
+    if (account.siblings?.length) await refreshSiblings(a.db, a.userId, stored, account.siblings);
     return { location: result(returnTo, a.platform, { ok: true }) };
   } catch (e) {
     // never log tokens: provider errors carry only status and error code

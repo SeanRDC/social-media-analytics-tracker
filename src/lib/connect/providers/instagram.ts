@@ -5,12 +5,12 @@
  * person manages. Like Facebook, the Page token (which does not expire) is
  * stored; it can read the linked Instagram account's profile, media and insights.
  */
-import { facebookCredentials, graph, metaLogin } from "./facebook";
+import { facebookCredentials, graph, META_SCOPES, metaLogin } from "./facebook";
 import { getJson } from "./oauth";
 import type { Provider } from "./types";
 
-// business_management: Pages and Instagram accounts in a business portfolio only show their link with it
-export const INSTAGRAM_SCOPES = ["instagram_basic", "instagram_manage_insights", "pages_show_list", "pages_read_engagement", "business_management"];
+/** Same permissions as Facebook, so one Meta login serves both connections. */
+export const INSTAGRAM_SCOPES = META_SCOPES;
 
 /** Same Meta app as Facebook. */
 export const instagramCredentials = facebookCredentials;
@@ -37,6 +37,7 @@ export function instagramProvider(c: { clientId: string; clientSecret: string })
         externalId: ig.id,
         name: ig.username ? `@${ig.username}` : "Instagram account",
         tokens: { accessToken: page.access_token, refreshToken: null, expiresAt: null, scopes: tokens.scopes },
+        siblings: [{ platform: "facebook", externalId: page.id }],
       };
     },
   };

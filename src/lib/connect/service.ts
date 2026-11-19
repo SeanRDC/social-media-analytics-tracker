@@ -39,6 +39,20 @@ export async function saveConnection(db: Db, userId: string, platform: PlatformI
   return row.id;
 }
 
+/**
+ * Gives the same fresh token to the user's other connections that read through
+ * it (Facebook and Instagram share a Page token). Only existing connections for
+ * the same account are touched; nothing new is connected.
+ */
+export async function refreshSiblings(db: Db, userId: string, tokens: TokenSet, siblings: { platform: PlatformId; externalId: string }[]) {
+  for (const s of siblings) {
+    await db
+      .update(connection)
+      .set({ accessTokenEnc: encrypt(tokens.accessToken), tokenExpiresAt: tokens.expiresAt, scopes: tokens.scopes, status: "connected", lastSyncError: null, lastSyncErrorAt: null })
+      .where(and(eq(connection.userId, userId), eq(connection.platform, s.platform), eq(connection.externalId, s.externalId)));
+  }
+}
+
 /** Every platform in display order, with the user's status for each. */
 export async function listConnections(db: Db, userId: string): Promise<ConnectionView[]> {
   const rows = await db.select().from(connection).where(eq(connection.userId, userId));

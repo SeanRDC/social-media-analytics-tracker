@@ -15,6 +15,7 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 | LinkedIn | 60 days | refresh tokens only for approved partners; otherwise reconnect | user token |
 
 - **Versions:** Graph API `v26.0` (released 2026-07-29), override with `META_GRAPH_VERSION`. LinkedIn `LinkedIn-Version: 202607`, override with `LINKEDIN_API_VERSION`; retired versions return 426.
+- **Facebook + Instagram share one Meta login (2026-11-19):** each new Facebook Login for the app replaces its access to the Page, so the Page token stored for the other connection fails with `190/492` ("must be an administrator, editor, or moderator of the page"). Both providers therefore request the same scopes (`META_SCOPES`), and after either connects, the other connection for the same Page/Instagram account gets the fresh Page token (`refreshSiblings`).
 - **Multiple Pages:** v1 connects the first Facebook Page or LinkedIn organization the person manages. A picker can come later.
 - Sources: [Graph API v26.0](https://developers.facebook.com/docs/graph-api/changelog/version26.0), [LinkedIn versioning](https://learn.microsoft.com/en-us/linkedin/marketing/versioning), [Business Login for Instagram](https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-instagram-login/business-login), [LinkedIn organization access control](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/organizations/organization-access-control-by-role)
 

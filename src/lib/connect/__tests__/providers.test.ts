@@ -62,7 +62,11 @@ describe("authorize URLs", () => {
   it("requests Instagram through Facebook Login with the Meta app", () => {
     const url = instagramProvider(C).authorizeUrl(a);
     expect(url).toContain("www.facebook.com/v26.0/dialog/oauth");
-    expect(params(url)).toMatchObject({ client_id: "cid", scope: "instagram_basic,instagram_manage_insights,pages_show_list,pages_read_engagement,business_management" });
+    expect(params(url)).toMatchObject({ client_id: "cid", scope: "pages_show_list,pages_read_engagement,pages_read_user_content,read_insights,instagram_basic,instagram_manage_insights,business_management" });
+  });
+
+  it("asks for the same Meta permissions from Facebook and Instagram, so either login serves both", () => {
+    expect(params(facebookProvider(C).authorizeUrl(a)).scope).toBe("pages_show_list,pages_read_engagement,pages_read_user_content,read_insights,instagram_basic,instagram_manage_insights,business_management");
   });
 
   it("uses the configured Graph API version for Facebook", () => {
@@ -130,7 +134,7 @@ describe("Instagram", () => {
       },
     });
     const r = await instagramProvider(C).fetchAccount({ accessToken: "user", refreshToken: null, expiresAt: new Date(), scopes: "s" });
-    expect(r).toMatchObject({ ok: true, externalId: "1784", name: "@northbay", tokens: { accessToken: "page-token", expiresAt: null } });
+    expect(r).toMatchObject({ ok: true, externalId: "1784", name: "@northbay", tokens: { accessToken: "page-token", expiresAt: null }, siblings: [{ platform: "facebook", externalId: "p1" }] });
     expect(params(calls[0].url).fields).toContain("instagram_business_account{id,username}");
   });
 
@@ -150,6 +154,12 @@ describe("Facebook", () => {
     stubFetch({ body: { data: [{ id: "p1", name: "Northbay", access_token: "page-token" }] } });
     const r = await facebookProvider(C).fetchAccount({ accessToken: "user", refreshToken: null, expiresAt: new Date(), scopes: "x" });
     expect(r).toMatchObject({ ok: true, externalId: "p1", name: "Northbay", tokens: { accessToken: "page-token", expiresAt: null } });
+  });
+
+  it("names the linked Instagram account as a sibling that shares the Page token", async () => {
+    stubFetch({ body: { data: [{ id: "p1", name: "Northbay", access_token: "page-token", instagram_business_account: { id: "1784" } }] } });
+    const r = await facebookProvider(C).fetchAccount({ accessToken: "user", refreshToken: null, expiresAt: new Date(), scopes: "x" });
+    expect(r).toMatchObject({ ok: true, externalId: "p1", siblings: [{ platform: "instagram", externalId: "1784" }] });
   });
 
   it("asks to reconnect on Meta's invalid-token error", async () => {

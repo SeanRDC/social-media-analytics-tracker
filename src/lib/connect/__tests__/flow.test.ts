@@ -4,7 +4,8 @@ import { migrate } from "drizzle-orm/pglite/migrator";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Db } from "@/db";
 import * as schema from "@/db/schema";
-import { seal } from "@/lib/connect/crypto";
+import { decrypt, seal } from "@/lib/connect/crypto";
+import { saveConnection } from "@/lib/connect/service";
 import { beginConnect, completeConnect, safeReturnTo } from "@/lib/connect/flow";
 
 const BASE = "http://localhost:3000";
@@ -96,6 +97,41 @@ describe("simulated round trip", () => {
 });
 
 describe("live providers", () => {
+  it("refreshes the Facebook connection when Instagram is connected through the same Page", async () => {
+    vi.stubEnv("META_APP_ID", "id");
+    vi.stubEnv("META_APP_SECRET", "secret");
+    await saveConnection(db, "u1", "facebook", { accessToken: "old-page-token", refreshToken: null, expiresAt: null, scopes: null }, { externalId: "p1", name: "Northbay" });
+    await db.update(schema.connection).set({ status: "expired", lastSyncError: "Facebook (190/492): …" });
+    const replies = [
+      { access_token: "short" },
+      { access_token: "long", expires_in: 5184000 },
+      { data: [{ id: "p1", name: "Northbay", access_token: "new-page-token", instagram_business_account: { id: "1784", username: "northbay" } }] },
+    ];
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json(replies.shift())));
+    const s = start("instagram");
+    const q = new URLSearchParams({ code: "c", state: s.url.searchParams.get("state")! });
+    const { location } = await completeConnect({ platform: "instagram", query: q, cookie: s.cookie, userId: "u1", baseUrl: BASE, db });
+    expect(location).toBe("/settings?connect=ok&platform=instagram");
+    const rows = await db.select().from(schema.connection);
+    const fb = rows.find((r) => r.platform === "facebook")!;
+    expect(fb).toMatchObject({ status: "connected", lastSyncError: null, externalId: "p1" });
+    expect(decrypt(fb.accessTokenEnc!)).toBe("new-page-token");
+    expect(decrypt(rows.find((r) => r.platform === "instagram")!.accessTokenEnc!)).toBe("new-page-token");
+  });
+
+  it("leaves a sibling alone when it belongs to a different Page", async () => {
+    vi.stubEnv("META_APP_ID", "id");
+    vi.stubEnv("META_APP_SECRET", "secret");
+    await saveConnection(db, "u1", "facebook", { accessToken: "other-token", refreshToken: null, expiresAt: null, scopes: null }, { externalId: "p9", name: "Other" });
+    const replies = [{ access_token: "short" }, { access_token: "long" }, { data: [{ id: "p1", access_token: "new", instagram_business_account: { id: "1784" } }] }];
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json(replies.shift())));
+    const s = start("instagram");
+    const q = new URLSearchParams({ code: "c", state: s.url.searchParams.get("state")! });
+    await completeConnect({ platform: "instagram", query: q, cookie: s.cookie, userId: "u1", baseUrl: BASE, db });
+    const fb = (await db.select().from(schema.connection)).find((r) => r.platform === "facebook")!;
+    expect(decrypt(fb.accessTokenEnc!)).toBe("other-token");
+  });
+
   it("sends Instagram back with no-account when no Page has a linked Professional account", async () => {
     vi.stubEnv("META_APP_ID", "id");
     vi.stubEnv("META_APP_SECRET", "secret");
