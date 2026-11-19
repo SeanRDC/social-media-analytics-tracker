@@ -30,12 +30,12 @@ export function ExportButton({ format, report, href, disabled = false }: Props) 
 
   if (disabled) {
     return (
-      <span className={`${s.btn} ${s.off}`} role="img" aria-disabled="true" aria-label={`Export ${report} as ${format}: nothing to export yet`} title="Nothing to export yet">
+      <button type="button" disabled className={`${s.btn} ${s.off}`} aria-disabled="true" aria-label={`Export ${report} as ${format}: nothing to export yet`} title="Nothing to export yet">
         <span className={s.icon} aria-hidden="true">
           <Icon name="download" size={15} strokeWidth={1.8} />
         </span>
         <span aria-hidden="true">{format}</span>
-      </span>
+      </button>
     );
   }
 

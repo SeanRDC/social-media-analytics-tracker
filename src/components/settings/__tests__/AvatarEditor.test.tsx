@@ -12,7 +12,7 @@ const photo = new File(["x"], "me.jpg", { type: "image/jpeg" });
 
 describe("AvatarEditor", () => {
   it("offers to change the photo and uploads the resized picture", async () => {
-    const onUpload = vi.fn(async (_fd: FormData) => undefined);
+    const onUpload = vi.fn<(fd: FormData) => Promise<undefined>>(async () => undefined);
     render(<AvatarEditor name="Sam" src={null} onUpload={onUpload} onRemove={vi.fn()} resize={resize} />);
     const input = screen.getByLabelText("Change photo") as HTMLInputElement;
     await userEvent.upload(input, photo);

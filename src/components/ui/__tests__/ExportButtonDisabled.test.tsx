@@ -9,5 +9,6 @@ describe("ExportButton without data", () => {
     const btn = screen.getByText("CSV").closest("[aria-disabled]");
     expect(btn).toHaveAttribute("aria-disabled", "true");
     expect(btn).toHaveAccessibleName("Export Monthly performance as CSV: nothing to export yet");
+    expect(screen.getByRole("button", { name: /nothing to export yet/ })).toBeDisabled();
   });
 });
