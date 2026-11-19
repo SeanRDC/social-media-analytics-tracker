@@ -28,6 +28,12 @@ describe("platform requests", () => {
     expect((err as Error).message).toBe("YouTube Analytics failed (403, accessNotConfigured): YouTube Analytics API has not been used in project 123 before or it is disabled.");
   });
 
+  it("keeps an OAuth error_description (TikTok's invalid_client)", async () => {
+    replies(Response.json({ error: "invalid_client", error_description: "Client secret is invalid.", log_id: "1" }));
+    const err = await getJson("https://api.example/x", "TikTok token exchange").catch((e: unknown) => e);
+    expect((err as Error).message).toBe("TikTok token exchange failed (200, invalid_client): Client secret is invalid.");
+  });
+
   it("retries a server error and succeeds", async () => {
     const f = replies(new Response("", { status: 503 }), Response.json({ ok: 1 }));
     expect(await getJson("https://api.example/x", "Thing")).toEqual({ ok: 1 });

@@ -79,7 +79,9 @@ async function parse(res: Response, what: string): Promise<Json> {
     }
     // keep the platform's own explanation (e.g. Google's "accessNotConfigured" and its message) so logs say what to fix
     const label = reason ?? code;
-    const detail = err && typeof err === "object" && err.message ? `: ${err.message}` : "";
+    // TikTok and plain OAuth errors put the explanation in error_description
+    const description = typeof body.error_description === "string" ? body.error_description : null;
+    const detail = err && typeof err === "object" && err.message ? `: ${err.message}` : description ? `: ${description}` : "";
     throw new ProviderError(`${what} failed (${res.status}${label ? `, ${label}` : ""})${detail}`, res.status, code);
   }
   return body;
