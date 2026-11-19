@@ -18,7 +18,8 @@ describe("ScheduleCard", () => {
   it("saves the chosen day", async () => {
     const onSave = vi.fn(async () => {});
     render(<ScheduleCard email="a@example.com" initial={{ ...OFF, enabled: true }} onSave={onSave} />);
-    await userEvent.selectOptions(screen.getByRole("combobox"), "Friday");
+    await userEvent.click(screen.getByRole("button", { name: "Send on: Monday" }));
+    await userEvent.click(screen.getByRole("option", { name: "Friday" }));
     expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({ dayOfWeek: 5 }));
   });
 

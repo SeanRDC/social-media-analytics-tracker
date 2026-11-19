@@ -2,11 +2,13 @@
 
 import { useState, useTransition, type CSSProperties } from "react";
 import { Icon } from "@/components/icons/Icon";
+import { Select } from "@/components/ui/Select";
 import { Switch } from "@/components/ui/Switch";
 import type { ScheduleView } from "@/lib/reports/schedule";
 import s from "./Reports.module.css";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DAY_OPTIONS = DAYS.map((label, i) => ({ value: i + 1, label }));
 
 const hourLabel = (h: number) => `${h % 12 || 12}:00 ${h < 12 ? "a.m." : "p.m."}`;
 
@@ -59,17 +61,11 @@ export function ScheduleCard({ email, initial, onSave }: Props) {
         <Switch label="Send weekly email report" hideLabel checked={v.enabled} onChange={(on) => save({ ...v, enabled: on })} />
       </div>
       <div className={`${s.schedBody} ${v.enabled ? "" : s.off}`} aria-hidden={!v.enabled}>
-        <label className={s.field}>
-          <span>Send on</span>
-          <span className={s.selectWrap}>
-            <select value={day} onChange={(e) => save({ ...v, dayOfWeek: DAYS.indexOf(e.target.value) + 1 })} disabled={!v.enabled}>
-              {DAYS.map((d) => (
-                <option key={d}>{d}</option>
-              ))}
-            </select>
-            <Icon name="down" size={13} />
-          </span>
-        </label>
+        {/* not a <label>: clicking an option inside a label would re-click the button and reopen the list */}
+        <div className={s.field}>
+          <span aria-hidden="true">Send on</span>
+          <Select label="Send on" variant="field" value={v.dayOfWeek} options={DAY_OPTIONS} onChange={(d) => save({ ...v, dayOfWeek: d })} disabled={!v.enabled} />
+        </div>
         <div className={s.field}>
           <span>At</span>
           <b>{hourLabel(v.hour)}</b>

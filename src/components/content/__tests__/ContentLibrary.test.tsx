@@ -43,7 +43,8 @@ describe("ContentLibrary", () => {
 
   it("filters by platform", async () => {
     renderLib();
-    await userEvent.selectOptions(screen.getByLabelText("Platform"), "youtube");
+    await userEvent.click(screen.getByRole("button", { name: "Platform: All platforms" }));
+    await userEvent.click(screen.getByRole("option", { name: "YouTube" }));
     expect(cards()).toHaveLength(4);
   });
 

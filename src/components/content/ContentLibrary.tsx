@@ -6,6 +6,7 @@ import { Icon } from "@/components/icons/Icon";
 import { useRange } from "@/components/shell/RangeProvider";
 import { SegmentedControl } from "@/components/shell/SegmentedControl";
 import { PlatformPill } from "@/components/ui/PlatformPill";
+import { Select } from "@/components/ui/Select";
 import { SortMenu } from "@/components/ui/SortMenu";
 import { useFlip } from "@/hooks/useFlip";
 import { SORT_LABELS, postsInRange, sortPosts } from "@/lib/data/sort";
@@ -65,18 +66,12 @@ export function ContentLibrary({ posts, asOf }: { posts: Post[]; asOf: string })
         <div className={s.scroll}>
           <SegmentedControl label="Format" options={KINDS} value={kind} onChange={setKind} />
         </div>
-        <label className={s.select}>
-          <span className="sr-only">Platform</span>
-          <select aria-label="Platform" value={platform} onChange={(e) => setPlatform(e.target.value as "all" | PlatformId)}>
-            <option value="all">All platforms</option>
-            {platforms.map((id) => (
-              <option key={id} value={id}>
-                {PLATFORM_NAMES[id]}
-              </option>
-            ))}
-          </select>
-          <Icon name="down" size={13} />
-        </label>
+        <Select
+          label="Platform"
+          value={platform}
+          options={[{ value: "all" as const, label: "All platforms" }, ...platforms.map((id) => ({ value: id, label: PLATFORM_NAMES[id] }))]}
+          onChange={setPlatform}
+        />
         <span className={s.count} aria-live="polite">
           {shown.length} {shown.length === 1 ? "post" : "posts"}
         </span>

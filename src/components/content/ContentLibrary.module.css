@@ -19,30 +19,6 @@
   display: none;
 }
 
-.select {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-.select select {
-  appearance: none;
-  min-height: 44px;
-  padding: 8px 38px 8px 16px;
-  border-radius: 14px;
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight: 600;
-  background: var(--track);
-  border: 0;
-  color: var(--tx);
-  cursor: pointer;
-}
-.select svg {
-  position: absolute;
-  right: 14px;
-  pointer-events: none;
-  color: var(--mu);
-}
 .count {
   margin-left: auto;
   padding: 6px 12px;
@@ -162,9 +138,6 @@
   .bar {
     padding: 6px;
     border-radius: 18px;
-  }
-  .select select {
-    font-size: 16px;
   }
   .count {
     margin-left: 0;

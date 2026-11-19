@@ -123,28 +123,6 @@
 .field b {
   font-weight: 600;
 }
-.selectWrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-.selectWrap select {
-  appearance: none;
-  min-height: 40px;
-  padding: 6px 34px 6px 14px;
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid var(--cardb);
-  color: var(--tx);
-  font-size: 14px;
-  font-weight: 500;
-}
-.selectWrap svg {
-  position: absolute;
-  right: 12px;
-  pointer-events: none;
-  color: var(--mu);
-}
 .status {
   display: flex;
   align-items: center;
@@ -181,8 +159,5 @@
   }
   .preset {
     min-height: 0;
-  }
-  .selectWrap select {
-    font-size: 16px;
   }
 }
