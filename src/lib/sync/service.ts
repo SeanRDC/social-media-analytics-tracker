@@ -62,7 +62,8 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
     await store(db, row.id, window.end, snapshot);
   } catch (e) {
     if (e instanceof ReauthRequired) {
-      await db.update(connection).set({ status: "expired" }).where(eq(connection.id, row.id));
+      await db.update(connection).set({ status: "expired", lastSyncError: e.message.slice(0, 200), lastSyncErrorAt: now }).where(eq(connection.id, row.id));
+      logEvent("warn", "sync_reauth", { platform: row.platform, connectionId: row.id, message: e.message.slice(0, 200) });
       return { status: "expired" };
     }
     await db.update(connection).set({ lastSyncError: e instanceof RateLimited ? "The platform asked us to slow down; we'll try again later." : reasonOf(e), lastSyncErrorAt: now }).where(eq(connection.id, row.id));

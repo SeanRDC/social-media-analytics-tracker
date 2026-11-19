@@ -27,6 +27,9 @@ export async function saveConnection(db: Db, userId: string, platform: PlatformI
     accessTokenEnc: encrypt(tokens.accessToken),
     refreshTokenEnc: tokens.refreshToken ? encrypt(tokens.refreshToken) : null,
     tokenExpiresAt: tokens.expiresAt,
+    // a reconnect clears the reason the old connection stopped
+    lastSyncError: null,
+    lastSyncErrorAt: null,
   };
   const [row] = await db
     .insert(connection)

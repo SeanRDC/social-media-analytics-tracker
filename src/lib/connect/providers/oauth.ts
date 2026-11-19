@@ -63,11 +63,16 @@ async function parse(res: Response, what: string): Promise<Json> {
     /* non-JSON error page */
   }
   // TikTok and Meta return errors inside a 200 or 4xx JSON body
-  const err = body.error as string | { code?: string | number; message?: string; type?: string } | undefined;
+  const err = body.error as string | { code?: string | number; message?: string; type?: string; error_subcode?: number } | undefined;
   const code = typeof err === "string" ? err : err && typeof err === "object" ? String(err.code ?? err.type ?? "") : undefined;
   const failed = !res.ok || (typeof err === "string" && err !== "") || (err && typeof err === "object" && code !== "ok" && code !== "");
   if (failed) {
-    if (res.status === 401 || (code && REAUTH_CODES.has(code))) throw new ReauthRequired(`${what}: ${code ?? res.status}`);
+    if (res.status === 401 || (code && REAUTH_CODES.has(code))) {
+      // keep the platform's reason (e.g. Meta's subcode 460/463/467) so Settings and logs say why
+      const sub = err && typeof err === "object" && err.error_subcode ? `/${err.error_subcode}` : "";
+      const why = err && typeof err === "object" && err.message ? `: ${err.message}` : "";
+      throw new ReauthRequired(`${what} (${code ?? res.status}${sub})${why}`);
+    }
     const reason = (err as { errors?: { reason?: string }[] } | undefined)?.errors?.[0]?.reason;
     if (res.status === 429 || (code && META_RATE_CODES.has(code)) || (reason && GOOGLE_RATE_REASONS.has(reason)) || code === "rate_limit_exceeded") {
       throw new RateLimited(`${what} is rate limited (${reason ?? code ?? res.status})`, res.status, reason ?? code);
