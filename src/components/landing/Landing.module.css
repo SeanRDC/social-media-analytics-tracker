@@ -189,24 +189,64 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+/* "Works with": the platform names set like a printed credit line, not chips */
+.worksWith {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.worksLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mu);
+}
 .platforms {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: baseline;
 }
 .platforms li {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: var(--card);
-  border: 1px solid var(--cardb);
-  font-size: 14px;
-  font-weight: 500;
+  position: relative;
+  padding: 0 18px;
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--tx);
+}
+.platforms li:first-child {
+  padding-left: 0;
+}
+.platforms li + li {
+  border-left: 1px solid var(--line);
+}
+/* the platform's own colour shows only as a thin rule under its name */
+.platforms li::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: -4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--pc);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s var(--out);
+}
+.platforms li:first-child::after {
+  left: 0;
+}
+.platforms li:hover::after {
+  transform: scaleX(1);
 }
 
 /* ---------- product preview ---------- */
@@ -496,6 +536,20 @@
 @media (max-width: 719px) {
   .navLinks {
     display: none;
+  }
+  .platforms {
+    row-gap: 6px;
+  }
+  .platforms li {
+    font-size: 19px;
+    padding: 0 14px 0 0;
+  }
+  .platforms li + li {
+    border-left: 0;
+  }
+  .platforms li::after {
+    left: 0;
+    right: 14px;
   }
   .nav {
     grid-template-columns: 1fr auto;

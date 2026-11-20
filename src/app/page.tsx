@@ -89,14 +89,18 @@ export default async function Landing() {
             </div>
           </div>
 
-          <ul className={`${s.platforms} reveal`} style={reveal(3)} aria-label="Supported platforms">
-            {connections.map((c) => (
-              <li key={c.id}>
-                <span className="dot" style={{ background: `var(--p-${c.id})` }} />
-                {c.name}
-              </li>
-            ))}
-          </ul>
+          <div className={`${s.worksWith} reveal`} style={reveal(3)}>
+            <span className={s.worksLabel} id="works-with">
+              Works with
+            </span>
+            <ul className={s.platforms} aria-labelledby="works-with">
+              {connections.map((c) => (
+                <li key={c.id} style={{ "--pc": `var(--p-${c.id})` } as CSSProperties}>
+                  {c.name}
+                </li>
+              ))}
+            </ul>
+          </div>
         </section>
 
         <section id="preview" className={`${s.preview} reveal`} style={reveal(4)} aria-label="Dashboard preview with sample data">
