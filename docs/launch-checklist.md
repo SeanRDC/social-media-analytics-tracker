@@ -46,4 +46,3 @@ Everything the code can do is built (phases 0–7). This is what stands between 
 - A strict Content-Security-Policy (scripts with nonces) is not set yet; only framing and form targets are restricted.
 - The PDF export uses the browser's print dialog rather than a generated file.
 - Facebook and LinkedIn connect the first Page the person manages; there is no Page picker yet.
-- "Best time to post" uses UTC.
