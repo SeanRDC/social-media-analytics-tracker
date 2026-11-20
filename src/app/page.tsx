@@ -42,7 +42,6 @@ export default async function Landing() {
           <nav className={s.navLinks} aria-label="Site">
             <a href="#features">Features</a>
             <a href="#preview">Preview</a>
-            <Link href="/overview">Live demo</Link>
             <Link href="/sign-in">Sign in</Link>
           </nav>
           <Link href="/sign-in" className={s.navCta}>
@@ -80,8 +79,8 @@ export default async function Landing() {
             <p className={s.lead}>Connect your accounts once and see how your audience is growing across every platform, which posts are working, and when to post next.</p>
             <div className={s.ctas}>
               <ArrowButton href="/sign-in">Start free</ArrowButton>
-              <ArrowButton href="/overview" tone="soft">
-                Open the live demo
+              <ArrowButton href="#preview" tone="soft">
+                See a preview
               </ArrowButton>
             </div>
           </div>
