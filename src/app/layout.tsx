@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Urbanist } from "next/font/google";
-import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
+import { APP_NAME, APP_TAGLINE, SITE_URL } from "@/lib/brand";
 import { THEME_BG, THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
@@ -16,12 +16,16 @@ const urbanist = Urbanist({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: APP_NAME,
     template: `%s · ${APP_NAME}`,
   },
   description: APP_TAGLINE,
   applicationName: APP_NAME,
+  // the preview card shown when a link is shared (the image is app/opengraph-image.tsx)
+  openGraph: { type: "website", siteName: APP_NAME, title: `${APP_NAME} · Every channel, one calm dashboard`, description: APP_TAGLINE, url: "/" },
+  twitter: { card: "summary_large_image", title: `${APP_NAME} · Every channel, one calm dashboard`, description: APP_TAGLINE },
   appleWebApp: {
     capable: true,
     title: APP_NAME,

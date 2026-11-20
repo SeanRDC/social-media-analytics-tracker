@@ -2,6 +2,9 @@
 export const APP_NAME = "Ispector";
 export const APP_TAGLINE = "Track followers, views and engagement across every social platform in one place.";
 
+/** The public address of the site, for links in previews, the sitemap and robots.txt. */
+export const SITE_URL = (process.env.BETTER_AUTH_URL || "https://ispector.site").replace(/\/$/, "");
+
 /** Where people send privacy and data requests. Set LEGAL_CONTACT_EMAIL before any platform review. */
 export const LEGAL_CONTACT = process.env.LEGAL_CONTACT_EMAIL ?? "privacy@example.com";
 export const LEGAL_UPDATED = "November 20, 2026";
