@@ -7,9 +7,10 @@ import { computeOverview, daysEnding, type Dataset } from "@/lib/data/compute";
 import type { PlatformId } from "@/lib/data/types";
 import { formatCompact } from "@/lib/format";
 import { PLATFORM_NAMES } from "@/lib/platforms";
+import type { AlertKind } from "./kinds";
 
-export type AlertKind = "spike" | "milestone" | "drop" | "reconnect";
-export const ALERT_KINDS: AlertKind[] = ["spike", "milestone", "drop", "reconnect"];
+export { ALERT_KINDS, type AlertKind } from "./kinds";
+
 export const ALERT_DEFAULTS: Record<AlertKind, boolean> = { spike: true, milestone: true, drop: false, reconnect: true };
 
 export interface Alert {

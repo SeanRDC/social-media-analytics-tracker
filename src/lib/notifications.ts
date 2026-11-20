@@ -5,13 +5,14 @@
 import { and, count, desc, eq, isNull, ne } from "drizzle-orm";
 import type { Db } from "@/db";
 import { alertEvent } from "@/db/schema";
+import type { NotificationKind } from "@/lib/alerts/kinds";
 import { APP_NAME } from "@/lib/brand";
 import { sendEmail } from "@/lib/email";
 import { appLink, emailFrame } from "@/lib/emails/layout";
 import { sendPush } from "@/lib/push";
 import { describeError } from "@/lib/safe-error";
 
-export type NotificationKind = (typeof alertEvent.$inferSelect)["kind"];
+export type { NotificationKind } from "@/lib/alerts/kinds";
 
 export interface Notification {
   id: string;

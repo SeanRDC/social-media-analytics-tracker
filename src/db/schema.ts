@@ -3,6 +3,7 @@
  * the rest store connections and the daily snapshots the dashboard reads.
  */
 import { bigint, boolean, date, index, integer, pgTable, primaryKey, real, text, timestamp, unique } from "drizzle-orm/pg-core";
+import type { AlertKind, NotificationKind } from "@/lib/alerts/kinds";
 import type { ConnectionStatus, PlatformId, PostKind } from "@/lib/data/types";
 
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -198,7 +199,7 @@ export const alertSetting = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    kind: text("kind").$type<"spike" | "milestone" | "drop" | "reconnect">().notNull(),
+    kind: text("kind").$type<AlertKind>().notNull(),
     enabled: boolean("enabled").notNull(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.kind] })],
@@ -228,7 +229,7 @@ export const alertEvent = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    kind: text("kind").$type<"spike" | "milestone" | "drop" | "reconnect" | "report">().notNull(),
+    kind: text("kind").$type<NotificationKind>().notNull(),
     key: text("key").notNull(),
     /** Empty on alerts sent before the inbox existed; those stay out of it. */
     title: text("title").notNull().default(""),
