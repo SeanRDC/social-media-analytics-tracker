@@ -26,7 +26,7 @@ export default function Image() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={{ fontSize: 76, fontWeight: 700, lineHeight: 1.02, letterSpacing: -3, color: "#141416" }}>Every channel, one calm dashboard</div>
-            <div style={{ fontSize: 28, color: "#4a4a52" }}>YouTube · Facebook · Instagram · TikTok · LinkedIn</div>
+            <div style={{ fontSize: 23, color: "#4a4a52" }}>YouTube · Facebook · Instagram · TikTok · LinkedIn</div>
           </div>
         </div>
         <div style={{ width: 420, display: "flex", flexWrap: "wrap", gap: 16, alignContent: "center" }}>
