@@ -21,7 +21,7 @@ Reviewers can't receive our sign-in emails, so they get a password account. Sign
    Running it again resets the password and signs out earlier reviewer sessions.
 4. In Vercel, set `REVIEWER_EMAIL=review@ispector.site` (Production) and redeploy. The sign-in page then shows a collapsed **App reviewer sign-in** section.
 5. Give reviewers these instructions:
-   > Open https://ispector.site/sign-in, expand "App reviewer sign-in" at the bottom, and sign in with the email and password below. Accept the terms on the next screen. Then choose "Connect" for the platform under review (or go to Settings → Connected accounts) and approve access with your test account.
+   > Open https://ispector.site/sign-in, expand "App reviewer sign-in" at the bottom, and sign in with the email and password below. On the next screen, scroll to the end of the Terms of Service; the Privacy Policy opens by itself, so scroll to its end too. Then tick the box and choose "Agree and continue". Then choose "Connect" for the platform under review (or go to Settings → Connected accounts) and approve access with your test account.
 6. After all reviews are approved, remove `REVIEWER_EMAIL` from Vercel to turn password sign-in off.
 
 Password sign-in allows 5 attempts per 10 minutes per IP address.
