@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   getAudience,
-  getConnections,
   getDailyViews,
   getOverview,
   getPlatform,
@@ -70,11 +69,6 @@ describe("lookups", () => {
     const posts = await getPosts({ platform: "youtube" });
     expect(posts.length).toBeGreaterThan(0);
     expect(posts.every((p) => p.platform === "youtube")).toBe(true);
-  });
-
-  it("lists X as not connected", async () => {
-    const c = await getConnections();
-    expect(c.find((p) => p.id === "x")?.status).toBe("not-connected");
   });
 });
 

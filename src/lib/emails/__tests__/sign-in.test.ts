@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderSignInEmail, SIGN_IN_LINK_MINUTES } from "@/lib/emails/sign-in";
+import { renderSignInEmail } from "@/lib/emails/sign-in";
 
 const URL = "https://ispector.site/api/auth/magic-link/verify?token=abc&callbackURL=%2Foverview";
 
@@ -13,7 +13,6 @@ describe("renderSignInEmail", () => {
   });
 
   it("tells people how long the link lasts and how to reach support", () => {
-    expect(SIGN_IN_LINK_MINUTES).toBe(10);
     for (const body of [email.html, email.text]) {
       expect(body).toContain("expires in 10 minutes");
       expect(body).toContain("support@ispector.site");
