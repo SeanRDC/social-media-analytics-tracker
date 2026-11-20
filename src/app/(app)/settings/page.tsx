@@ -9,7 +9,8 @@ import { AvatarEditor } from "@/components/settings/AvatarEditor";
 import { deleteAvatar, uploadAvatar } from "@/app/actions/avatar";
 import { disconnectPlatform } from "@/app/actions/connections";
 import { importPlatform } from "@/app/actions/sync";
-import { deleteAccount } from "@/app/actions/account";
+import { deleteAccount, updateName } from "@/app/actions/account";
+import { ProfileName } from "@/components/settings/ProfileName";
 import { setAlert, subscribePush, unsubscribePush } from "@/app/actions/alerts";
 import { DeleteAccount } from "@/components/settings/DeleteAccount";
 import { PushToggle } from "@/components/settings/PushToggle";
@@ -33,7 +34,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
       <section className={`${s.card} ${s.profile} ${s.wide} card reveal`} style={reveal(1)} aria-label="Profile">
         <AvatarEditor name={user.name} src={user.image} onUpload={uploadAvatar} onRemove={deleteAvatar} />
         <div className={s.profileText}>
-          <b>{user.name}</b>
+          <ProfileName name={user.name} onSave={updateName} />
           <small>{user.email}</small>
         </div>
         <SignOutButton />

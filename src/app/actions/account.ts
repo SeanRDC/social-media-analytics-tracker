@@ -22,3 +22,14 @@ export async function deleteAccount(confirmEmail: string): Promise<{ error: stri
   logEvent("info", "account_deleted", { userId: user.id });
   redirect("/sign-in?deleted=1");
 }
+
+const NAME_MAX = 60;
+
+/** Renames the signed-in person. Names are trimmed, single-spaced and 1–60 characters. */
+export async function updateName(name: string): Promise<{ error: string } | void> {
+  await requireSignedInUser();
+  const clean = String(name).replace(/\s+/g, " ").trim();
+  if (!clean) return { error: "Enter a name." };
+  if (clean.length > NAME_MAX) return { error: `Keep it under ${NAME_MAX} characters.` };
+  await getAuth().api.updateUser({ body: { name: clean }, headers: await headers() });
+}

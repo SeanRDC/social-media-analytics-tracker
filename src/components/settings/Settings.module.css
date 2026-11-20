@@ -55,6 +55,65 @@
   color: var(--nav-mu);
   font-size: 14px;
 }
+.nameRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-width: 0;
+}
+.nameRow b {
+  overflow-wrap: anywhere;
+}
+.nameEdit {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--nav-mu);
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+.nameEdit:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+.nameForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.nameInput {
+  flex: 1 1 200px;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 600;
+}
+.nameInput:focus {
+  outline: 2px solid var(--lime);
+  outline-offset: 1px;
+}
+.nameSave {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  background: var(--lime);
+  color: var(--on-bright);
+  font-weight: 600;
+  cursor: pointer;
+}
+.nameError {
+  flex-basis: 100%;
+  color: #ff9b93;
+}
 .profile .ghost {
   background: #fff;
   color: var(--on-bright);
