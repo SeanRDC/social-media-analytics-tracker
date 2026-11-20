@@ -65,3 +65,22 @@
     display: none;
   }
 }
+
+/* ---------- iPhone: glass (see globals.css) ---------- */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :global(html[data-ios="true"]) .bar {
+    background: var(--glass-nav);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-shine), 0 18px 40px -18px rgba(0, 0, 0, 0.55);
+  }
+  :global(html[data-ios="true"]) .ind {
+    background: rgba(255, 255, 255, 0.14);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :global(html[data-ios="true"]) .bar {
+    background: var(--nav);
+  }
+}

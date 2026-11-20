@@ -7,10 +7,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   margin-bottom: 8px;
 }
 .h {
+  min-width: 0;
   font-size: 20px;
   font-weight: 600;
 }
@@ -32,6 +34,7 @@
 .table td {
   padding: 12px;
   vertical-align: middle;
+  white-space: nowrap;
   border-bottom: 1px solid var(--line);
   transition: background-color 0.2s var(--out);
 }
@@ -52,6 +55,15 @@
   transform: scale(1.06) rotate(-2deg);
 }
 
+/*
+ * The post column takes whatever width is left (max-width: 0 with width: 100%),
+ * so a long title is cut with "…" instead of stretching the table, and with it
+ * the whole page, wider than a phone screen.
+ */
+.postCell {
+  width: 100%;
+  max-width: 0;
+}
 .post {
   display: flex;
   align-items: center;

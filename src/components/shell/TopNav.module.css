@@ -234,3 +234,26 @@
     padding: 0 6px;
   }
 }
+
+/* ---------- iPhone and iPad: glass (see globals.css) ---------- */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :global(html[data-ios="true"]) .wrap {
+    /* only the status bar strip stays solid; below it the page shows through the glass */
+    background: linear-gradient(var(--bg) var(--safe-t), transparent calc(var(--safe-t) + 1px));
+  }
+  :global(html[data-ios="true"]) .bar {
+    background: var(--glass-nav);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-shine), 0 18px 40px -22px rgba(0, 0, 0, 0.5);
+  }
+  :global(html[data-ios="true"]) .links {
+    background: var(--glass-inset);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :global(html[data-ios="true"]) .bar {
+    background: var(--nav);
+  }
+}

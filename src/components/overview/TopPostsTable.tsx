@@ -62,7 +62,7 @@ export function TopPostsTable({ posts, asOf, limit = 5, className = "" }: Props)
               key={p.id}
               ref={register(p.id)}
             >
-              <td>
+              <td className={s.postCell}>
                 <div className={s.post}>
                   <PostThumb post={p} className={s.thumb} />
                   <div className={s.pt}>

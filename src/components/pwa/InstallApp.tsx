@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { useDismiss } from "@/hooks/useDismiss";
+import { isIos } from "@/lib/platform";
 import s from "./InstallApp.module.css";
 
 /** Chrome and Edge's install offer; not in the standard DOM types yet. */
@@ -14,8 +15,6 @@ interface InstallPromptEvent extends Event {
 type Mode = "hidden" | "prompt" | "ios";
 
 const installed = () => window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
-/** iPhone and iPad (iPadOS reports itself as a Mac with a touch screen). */
-const isIos = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
 /**
  * "Install app": Chrome and Edge get their own install dialog; iPhone and iPad

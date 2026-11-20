@@ -31,10 +31,11 @@ describe("InstallApp", () => {
   });
 
   it("shows the Home Screen steps on iPhone, where Safari has no install dialog", async () => {
-    vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1");
+    document.documentElement.dataset.ios = "true";
     render(<InstallApp />);
     const button = await screen.findByRole("button", { name: "Install app" });
     fireEvent.click(button);
     expect(screen.getByRole("dialog", { name: "Add Ispector to your Home Screen" })).toHaveTextContent("Add to Home Screen");
+    delete document.documentElement.dataset.ios;
   });
 });
