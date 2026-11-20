@@ -141,6 +141,10 @@ export function PrivacyText() {
           When you disconnect a platform, we delete its tokens and statistics immediately. For YouTube, TikTok and LinkedIn we also ask the platform to revoke our access; for
           Facebook and Instagram, remove {APP_NAME} in Facebook&apos;s settings as described above.
         </li>
+        <li>
+          If you remove {APP_NAME} in a platform&apos;s own settings, or a platform stops giving us access and you don&apos;t reconnect it within 7 days, we delete that
+          platform&apos;s tokens, statistics and posts. We tell you before this happens and when it is done.
+        </li>
         <li>When you delete your account, we delete your account, connections, statistics, photo and settings immediately.</li>
         <li>Deleted data can remain for a short time in our database provider&apos;s automatic backups, and error logs are kept by our hosting provider for a short time.</li>
       </ul>

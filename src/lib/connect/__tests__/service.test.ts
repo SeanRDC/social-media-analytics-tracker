@@ -7,7 +7,9 @@ import type { Db } from "@/db";
 import * as schema from "@/db/schema";
 import { decrypt } from "@/lib/connect/crypto";
 import { ReauthRequired } from "@/lib/connect/providers";
+import { purgeLostAccess } from "@/lib/connect/retention";
 import { disconnect, getAccessToken, listConnections, refreshExpiring, saveConnection } from "@/lib/connect/service";
+import { listNotifications } from "@/lib/notifications";
 
 let db: Db;
 const HOUR = 60 * 60 * 1000;
@@ -165,5 +167,47 @@ describe("refreshExpiring", () => {
     expect(await refreshExpiring(db)).toEqual({ checked: 2, expired: 1, failed: 0 });
     expect(decrypt((await row(ok)).accessTokenEnc!)).toBe("new");
     expect((await row(bad)).status).toBe("expired");
+  });
+});
+
+describe("losing access and the 7-day deletion", () => {
+  const DAY = 24 * HOUR;
+  const expire = async (id: string) => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ error: "invalid_grant" }, { status: 400 })));
+    await expect(getAccessToken(db, id)).rejects.toBeInstanceOf(ReauthRequired);
+  };
+
+  it("records when access was first lost, keeps that time on later failures and clears it on reconnect", async () => {
+    const id = await saveConnection(db, "u1", "youtube", tokens({ expiresAt: new Date(Date.now() - 1000) }), { externalId: "UC1", name: "N" });
+    await expire(id);
+    const first = (await row(id)).accessLostAt!;
+    expect(first).toBeInstanceOf(Date);
+    await db.update(schema.connection).set({ status: "connected" }).where(eq(schema.connection.id, id));
+    await expire(id);
+    expect((await row(id)).accessLostAt!.getTime()).toBe(first.getTime());
+    const [view] = (await listConnections(db, "u1")).filter((c) => c.id === "youtube");
+    expect(new Date(view.deleteOn!).getTime()).toBe(first.getTime() + 7 * DAY);
+    await saveConnection(db, "u1", "youtube", tokens(), { externalId: "UC1", name: "N" });
+    expect((await row(id)).accessLostAt).toBeNull();
+  });
+
+  it("deletes a connection and its statistics after 7 days without access, and tells the person", async () => {
+    vi.spyOn(console, "info").mockImplementation(() => {});
+    const id = await saveConnection(db, "u1", "youtube", tokens(), { externalId: "UC1", name: "N" });
+    const keep = await saveConnection(db, "u1", "tiktok", tokens(), { externalId: "t1", name: "@me" });
+    await db.insert(schema.dailyStat).values({ connectionId: id, date: "2026-11-01", followers: 10, followersGained: 1, views: 5, engagements: 1 });
+    const now = new Date("2026-11-20T04:00:00Z");
+    await db.update(schema.connection).set({ status: "expired", accessLostAt: new Date(now.getTime() - 7 * DAY - 1000) }).where(eq(schema.connection.id, id));
+    await db.update(schema.connection).set({ status: "expired", accessLostAt: new Date(now.getTime() - 6 * DAY) }).where(eq(schema.connection.id, keep));
+
+    expect(await purgeLostAccess(db, now, "https://ispector.site")).toEqual({ deleted: 1, failed: 0 });
+    expect(await row(id)).toBeUndefined();
+    expect(await db.select().from(schema.dailyStat)).toEqual([]);
+    expect((await row(keep)).status).toBe("expired");
+    const [n] = await listNotifications(db, "u1");
+    expect(n).toMatchObject({ title: "We deleted your YouTube data", url: "/settings" });
+    // running again changes nothing
+    expect(await purgeLostAccess(db, now)).toEqual({ deleted: 0, failed: 0 });
+    vi.restoreAllMocks();
   });
 });

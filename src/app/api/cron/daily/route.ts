@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { getDb } from "@/db";
 import { refreshExpiring } from "@/lib/connect/service";
 import { runAlerts } from "@/lib/alerts/run";
+import { purgeLostAccess } from "@/lib/connect/retention";
 import { runJob } from "@/lib/jobs";
 import { sendWeeklyReports } from "@/lib/reports/schedule";
 import { syncAll } from "@/lib/sync/service";
@@ -14,7 +15,8 @@ const digest = (s: string) => createHash("sha256").update(s).digest();
 /**
  * Daily job (vercel.json): refreshes platform tokens before they lapse, saves
  * today's snapshot for every connected account, then sends weekly emails that
- * are due and any new alerts. Each step carries on if the one before had failures.
+ * are due and any new alerts, and finally deletes connections that have been
+ * without access for 7 days. Each step carries on if the one before had failures.
  * Runs under a lease (overlapping runs are skipped) and is scheduled twice a
  * night: every step is idempotent, so the second run only finishes what the
  * first ran out of time for.
@@ -36,9 +38,11 @@ export async function GET(request: Request) {
       const sync = await syncAll(db);
       const weeklyEmails = await sendWeeklyReports(db);
       const alerts = await runAlerts(db);
-      return { tokens, sync, weeklyEmails, alerts };
+      // last, so a connection that came back during this run keeps its data
+      const retention = await purgeLostAccess(db);
+      return { tokens, sync, weeklyEmails, alerts, retention };
     },
-    (r) => r.tokens.failed + r.sync.failed + r.weeklyEmails.failed + r.alerts.failed === 0,
+    (r) => r.tokens.failed + r.sync.failed + r.weeklyEmails.failed + r.alerts.failed + r.retention.failed === 0,
   );
   return Response.json(outcome, { status: outcome.ran && !outcome.ok && outcome.error ? 500 : 200 });
 }

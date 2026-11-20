@@ -104,6 +104,11 @@ export const connection = pgTable(
     /** Why the last sync attempt failed (cleared on success); shown in Settings. */
     lastSyncError: text("last_sync_error"),
     lastSyncErrorAt: timestamp("last_sync_error_at", { withTimezone: true }),
+    /**
+     * When the platform stopped giving us access (token revoked or expired).
+     * Cleared on reconnect. After ACCESS_GRACE_DAYS the connection and its data are deleted.
+     */
+    accessLostAt: timestamp("access_lost_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

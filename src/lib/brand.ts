@@ -4,7 +4,7 @@ export const APP_TAGLINE = "Track followers, views and engagement across every s
 
 /** Where people send privacy and data requests. Set LEGAL_CONTACT_EMAIL before any platform review. */
 export const LEGAL_CONTACT = process.env.LEGAL_CONTACT_EMAIL ?? "privacy@example.com";
-export const LEGAL_UPDATED = "November 19, 2026";
+export const LEGAL_UPDATED = "November 20, 2026";
 /**
  * Version people agree to on /welcome. Change it (with LEGAL_UPDATED) when the
  * terms or privacy policy change in a way people should agree to again.

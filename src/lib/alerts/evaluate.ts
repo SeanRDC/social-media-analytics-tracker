@@ -32,14 +32,37 @@ const median = (xs: number[]) => {
 /** Monday of the week containing `iso`. */
 const weekOf = (iso: string) => addDays(iso, -((parseIso(iso).getUTCDay() + 6) % 7));
 
-export function evaluateAlerts(ds: Dataset | null, asOf: string | null, expired: { platform: PlatformId; since: string }[]): Alert[] {
-  const alerts: Alert[] = expired.map(({ platform, since }) => ({
-    kind: "reconnect",
-    key: `${platform}:${since}`,
-    title: `${PLATFORM_NAMES[platform]} needs reconnecting`,
-    body: `${PLATFORM_NAMES[platform]} stopped sharing your stats with us. Reconnect it in Settings to keep your numbers up to date.`,
-    url: "/settings",
-  }));
+/** A connection that lost access: since when (ISO date) and how many whole days remain before its data is deleted. */
+export interface LostAccess {
+  platform: PlatformId;
+  since: string;
+  daysLeft: number;
+}
+
+const days = (n: number) => (n === 1 ? "1 day" : `${n} days`);
+
+export function evaluateAlerts(ds: Dataset | null, asOf: string | null, expired: LostAccess[]): Alert[] {
+  const alerts: Alert[] = [];
+  for (const { platform, since, daysLeft } of expired) {
+    const name = PLATFORM_NAMES[platform];
+    alerts.push({
+      kind: "reconnect",
+      key: `${platform}:${since}`,
+      title: `${name} needs reconnecting`,
+      body: `${name} stopped sharing your stats with us. Reconnect it in Settings within ${days(Math.max(1, daysLeft))} to keep your numbers, or we'll delete the data we stored from it.`,
+      url: "/settings",
+    });
+    // a last reminder shortly before the data goes
+    if (daysLeft > 0 && daysLeft <= 2) {
+      alerts.push({
+        kind: "reconnect",
+        key: `${platform}:${since}:reminder`,
+        title: `${days(daysLeft)} left to reconnect ${name}`,
+        body: `We still can't reach ${name}. Reconnect it in Settings within ${days(daysLeft)}, or we'll delete the ${name} data we stored.`,
+        url: "/settings",
+      });
+    }
+  }
   if (!ds || !asOf) return alerts;
   const live = ds.connections.filter((c) => c.status === "connected" && c.daily.length);
 

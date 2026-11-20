@@ -50,6 +50,13 @@
       "when": 1795143371929,
       "tag": "0006_notification_inbox",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795156427496,
+      "tag": "0007_access_lost_at",
+      "breakpoints": true
     }
   ]
 }

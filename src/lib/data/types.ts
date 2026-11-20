@@ -23,6 +23,8 @@ export interface ConnectionView {
   updatedAt?: string | null;
   /** Why the last import attempt failed, if it did. */
   syncError?: string | null;
+  /** For a connection that lost access: when its stored data will be deleted (ISO). */
+  deleteOn?: string | null;
 }
 
 /*

@@ -102,6 +102,11 @@ export function Connections({ initial, result, onDisconnect, onImport }: Props) 
                     {c.mode === "simulated" && " · Simulated locally"}
                   </small>
                   {on && c.syncError && <small className={s.warnText}>Last update didn&apos;t finish: {c.syncError} We&apos;ll keep trying.</small>}
+                  {status === "expired" && c.deleteOn && (
+                    <small className={s.warnText}>
+                      Reconnect by {new Date(c.deleteOn).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} to keep its numbers. After that we delete the data we stored from it.
+                    </small>
+                  )}
                   {failed === c.id && (
                     <small className={s.err} role="alert">
                       Couldn&apos;t disconnect {c.name}. Please try again.

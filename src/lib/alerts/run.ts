@@ -11,6 +11,7 @@ import { isoDate } from "@/lib/dates";
 import { asOfDate } from "@/lib/data/compute";
 import { loadDataset } from "@/lib/data/live";
 import { sendEmail } from "@/lib/email";
+import { deletionDate } from "@/lib/connect/service";
 import { recordNotification } from "@/lib/notifications";
 import { sendPush } from "@/lib/push";
 import { ALERT_DEFAULTS, ALERT_KINDS, evaluateAlerts, type Alert, type AlertKind } from "./evaluate";
@@ -49,7 +50,7 @@ export async function runAlerts(db: Db, now = new Date(), appUrl = process.env.B
         getAlertSettings(u.id, db),
         loadDataset(db, u.id, now),
         db
-          .select({ platform: connection.platform, updatedAt: connection.updatedAt })
+          .select({ platform: connection.platform, accessLostAt: connection.accessLostAt, updatedAt: connection.updatedAt })
           .from(connection)
           .where(and(eq(connection.userId, u.id), eq(connection.status, "expired"))),
       ]);
@@ -57,7 +58,10 @@ export async function runAlerts(db: Db, now = new Date(), appUrl = process.env.B
       const alerts = evaluateAlerts(
         loaded?.dataset ?? null,
         asOf,
-        expiredRows.map((r) => ({ platform: r.platform, since: isoDate(r.updatedAt) })),
+        expiredRows.map((r) => {
+          const lost = r.accessLostAt ?? r.updatedAt;
+          return { platform: r.platform, since: isoDate(lost), daysLeft: Math.ceil((deletionDate(lost).getTime() - now.getTime()) / 86_400_000) };
+        }),
       ).filter((a) => settings[a.kind]);
       for (const a of alerts) {
         // recorded before sending, so a retry never sends the same alert twice

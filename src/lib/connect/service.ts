@@ -3,7 +3,7 @@
  * before they reach the database and decrypted only to call a platform.
  * Every function takes the database so tests can pass an in-memory one.
  */
-import { and, eq, isNotNull, lt } from "drizzle-orm";
+import { and, eq, isNotNull, lt, sql } from "drizzle-orm";
 import type { Db } from "@/db";
 import { connection } from "@/db/schema";
 import { PLATFORM_ORDER, type ConnectionView, type PlatformId } from "@/lib/data/types";
@@ -30,6 +30,7 @@ export async function saveConnection(db: Db, userId: string, platform: PlatformI
     // a reconnect clears the reason the old connection stopped
     lastSyncError: null,
     lastSyncErrorAt: null,
+    accessLostAt: null,
   };
   const [row] = await db
     .insert(connection)
@@ -48,10 +49,18 @@ export async function refreshSiblings(db: Db, userId: string, tokens: TokenSet, 
   for (const s of siblings) {
     await db
       .update(connection)
-      .set({ accessTokenEnc: encrypt(tokens.accessToken), tokenExpiresAt: tokens.expiresAt, scopes: tokens.scopes, status: "connected", lastSyncError: null, lastSyncErrorAt: null })
+      .set({ accessTokenEnc: encrypt(tokens.accessToken), tokenExpiresAt: tokens.expiresAt, scopes: tokens.scopes, status: "connected", lastSyncError: null, lastSyncErrorAt: null, accessLostAt: null })
       .where(and(eq(connection.userId, userId), eq(connection.platform, s.platform), eq(connection.externalId, s.externalId)));
   }
 }
+
+/**
+ * How long a connection may be without access before we delete it and its data.
+ * YouTube's developer policies require deletion within 7 days of access being
+ * revoked; the same rule applies to every platform so it is simple and predictable.
+ */
+export const ACCESS_GRACE_DAYS = 7;
+export const deletionDate = (accessLostAt: Date) => new Date(accessLostAt.getTime() + ACCESS_GRACE_DAYS * 24 * 60 * 60 * 1000);
 
 /** Every platform in display order, with the user's status for each. */
 export async function listConnections(db: Db, userId: string): Promise<ConnectionView[]> {
@@ -67,13 +76,17 @@ export async function listConnections(db: Db, userId: string): Promise<Connectio
       mode: connectMode(id),
       updatedAt: row?.lastSyncedAt?.toISOString() ?? null,
       syncError: row?.lastSyncError ?? null,
+      deleteOn: row?.status === "expired" && row.accessLostAt ? deletionDate(row.accessLostAt).toISOString() : null,
     };
   });
 }
 
-async function markExpired(db: Db, id: string) {
-  await db.update(connection).set({ status: "expired" }).where(eq(connection.id, id));
+async function markExpired(db: Db, id: string, now = new Date()) {
+  await db.update(connection).set(expiredValues(now)).where(eq(connection.id, id));
 }
+
+/** Marks access as lost; the first loss is kept so the 7-day clock never restarts. */
+export const expiredValues = (now: Date) => ({ status: "expired" as const, accessLostAt: sql`coalesce(${connection.accessLostAt}, ${now})` });
 
 /**
  * A working access token for a connection, refreshed first when it is about to

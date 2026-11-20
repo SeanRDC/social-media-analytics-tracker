@@ -67,8 +67,17 @@ describe("evaluateAlerts", () => {
     expect(a?.body).toContain("from 10.0% to 5.0%");
   });
 
-  it("asks to reconnect expired platforms even with nothing imported", () => {
-    expect(evaluateAlerts(null, null, [{ platform: "tiktok", since: "2026-11-15" }])).toEqual([expect.objectContaining({ kind: "reconnect", key: "tiktok:2026-11-15", url: "/settings" })]);
+  it("asks to reconnect expired platforms even with nothing imported, naming the deletion deadline", () => {
+    const a = evaluateAlerts(null, null, [{ platform: "tiktok", since: "2026-11-15", daysLeft: 7 }]);
+    expect(a).toEqual([expect.objectContaining({ kind: "reconnect", key: "tiktok:2026-11-15", url: "/settings" })]);
+    expect(a[0].body).toContain("within 7 days");
+  });
+
+  it("sends one last reminder two days before the data is deleted", () => {
+    const a = evaluateAlerts(null, null, [{ platform: "youtube", since: "2026-11-10", daysLeft: 2 }]);
+    expect(a.map((x) => x.key)).toEqual(["youtube:2026-11-10", "youtube:2026-11-10:reminder"]);
+    expect(a[1].title).toBe("2 days left to reconnect YouTube");
+    expect(evaluateAlerts(null, null, [{ platform: "youtube", since: "2026-11-10", daysLeft: 3 }])).toHaveLength(1);
   });
 });
 

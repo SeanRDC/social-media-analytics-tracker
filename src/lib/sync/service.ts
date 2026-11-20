@@ -6,7 +6,7 @@
 import { and, asc, desc, eq, lt, sql } from "drizzle-orm";
 import type { Db } from "@/db";
 import { audienceStat, connection, dailyStat, post, postStat } from "@/db/schema";
-import { getAccessToken } from "@/lib/connect/service";
+import { expiredValues, getAccessToken } from "@/lib/connect/service";
 import { ProviderError, RateLimited, ReauthRequired } from "@/lib/connect/providers";
 import { SIMULATED_PREFIX } from "@/lib/connect/providers/simulated";
 import { addDays, isoDate } from "@/lib/dates";
@@ -62,7 +62,7 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
     await storeSnapshot(db, row.id, window.end, snapshot);
   } catch (e) {
     if (e instanceof ReauthRequired) {
-      await db.update(connection).set({ status: "expired", lastSyncError: e.message.slice(0, 200), lastSyncErrorAt: now }).where(eq(connection.id, row.id));
+      await db.update(connection).set({ ...expiredValues(now), lastSyncError: e.message.slice(0, 200), lastSyncErrorAt: now }).where(eq(connection.id, row.id));
       logEvent("warn", "sync_reauth", { platform: row.platform, connectionId: row.id, message: e.message.slice(0, 200) });
       return { status: "expired" };
     }
