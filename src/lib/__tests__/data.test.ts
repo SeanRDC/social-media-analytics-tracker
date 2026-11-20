@@ -7,7 +7,6 @@ import {
   getPlatform,
   getPlatforms,
   getPosts,
-  getTopPosts,
 } from "@/lib/data/sample-api";
 import { sortPosts } from "@/lib/data/sort";
 import { RANGES } from "@/lib/data/types";
@@ -71,11 +70,6 @@ describe("lookups", () => {
     const posts = await getPosts({ platform: "youtube" });
     expect(posts.length).toBeGreaterThan(0);
     expect(posts.every((p) => p.platform === "youtube")).toBe(true);
-  });
-
-  it("returns top posts by views", async () => {
-    const top = await getTopPosts(3);
-    expect(top.map((p) => p.views)).toEqual([284000, 96300, 71800]);
   });
 
   it("lists X as not connected", async () => {

@@ -8,6 +8,7 @@ import type { ImportOutcome } from "@/app/actions/sync";
 import { PLATFORM_ORDER, type PlatformId } from "@/lib/data/types";
 import { PLATFORM_NAMES } from "@/lib/platforms";
 import s from "./Onboarding.module.css";
+import { prefersReducedMotion } from "@/lib/motion/reducedMotion";
 
 const MESSAGE: Record<ImportOutcome, string> = {
   imported: "History imported",
@@ -41,7 +42,7 @@ export function SyncProgress({ onImport }: { onImport: (platform: PlatformId) =>
   }, [ids, onImport]);
 
   useEffect(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = prefersReducedMotion();
     const t = window.setInterval(() => setPct((prev) => Object.fromEntries(ids.map((id) => [id, reduce ? 60 : Math.min(90, (prev[id] ?? 0) + (90 - (prev[id] ?? 0)) * 0.06)]))), 200);
     return () => window.clearInterval(t);
   }, [ids]);

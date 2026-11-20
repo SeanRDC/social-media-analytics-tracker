@@ -1,7 +1,7 @@
 /**
  * The data layer the dashboard depends on. Each function answers for the
- * signed-in user from imported numbers, or from sample data until one of their
- * platforms has been imported. Reads the session: call inside Suspense.
+ * signed-in user from their imported numbers. Pages check hasData() first and
+ * show the empty state when it's false. Reads the session: call inside Suspense.
  */
 import "server-only";
 import { cache } from "react";
@@ -11,9 +11,8 @@ import { asOfDate, computeAudience, computeDailyViews, computeOverview, computeP
 import { loadDataset, type DataSource } from "./live";
 import type { ReportData } from "@/lib/reports/build";
 import { reportDataFrom } from "@/lib/reports/data";
-import * as sample from "./sample-api";
 import { sortPosts } from "./sort";
-import type { Audience, DailyViews, Overview, Platform, PlatformId, Post, PostKind, PostSort } from "./types";
+import type { Audience, DailyViews, Overview, Platform, Post, PostQuery } from "./types";
 
 /** Loaded once per request. */
 const imported = cache(async () => {
@@ -22,6 +21,13 @@ const imported = cache(async () => {
   const asOf = loaded && asOfDate(loaded.dataset);
   return loaded && asOf ? { ...loaded, asOf } : null;
 });
+
+/** The imported numbers; only call after hasData() returned true. */
+async function data() {
+  const d = await imported();
+  if (!d) throw new Error("No imported data yet: check hasData() before reading the dashboard's numbers.");
+  return d;
+}
 
 /** Whether any of the person's platforms has imported numbers yet. */
 export async function hasData(): Promise<boolean> {
@@ -35,44 +41,37 @@ export async function getDataSource(): Promise<DataSource> {
 
 /** The date the numbers are current as of (ISO). */
 export async function getAsOf(): Promise<string> {
-  return (await imported())?.asOf ?? sample.getAsOf();
+  return (await data()).asOf;
 }
 
 export async function getOverview(): Promise<Overview> {
-  const d = await imported();
-  return d ? computeOverview(d.dataset, d.asOf) : sample.getOverview();
+  const d = await data();
+  return computeOverview(d.dataset, d.asOf);
 }
 
 export async function getDailyViews(): Promise<DailyViews> {
-  const d = await imported();
-  return d ? computeDailyViews(d.dataset, d.asOf) : sample.getDailyViews();
+  const d = await data();
+  return computeDailyViews(d.dataset, d.asOf);
 }
 
 export async function getPlatforms(): Promise<Platform[]> {
-  const d = await imported();
-  return d ? computePlatforms(d.dataset, d.asOf) : sample.getPlatforms();
+  const d = await data();
+  return computePlatforms(d.dataset, d.asOf);
 }
 
 export async function getPlatform(id: string): Promise<Platform | null> {
   return (await getPlatforms()).find((p) => p.id === id) ?? null;
 }
 
-export interface PostQuery {
-  platform?: PlatformId;
-  kind?: PostKind;
-  sort?: PostSort;
-}
-
 export async function getPosts(q: PostQuery = {}): Promise<Post[]> {
-  const d = await imported();
-  if (!d) return sample.getPosts(q);
+  const d = await data();
   const list = computePosts(d.dataset).filter((p) => (!q.platform || p.platform === q.platform) && (!q.kind || p.kind === q.kind));
   return sortPosts(list, q.sort ?? "views");
 }
 
 export async function getAudience(): Promise<Audience> {
-  const d = await imported();
-  return d ? computeAudience(d.dataset, d.asOf) : sample.getAudience();
+  const d = await data();
+  return computeAudience(d.dataset, d.asOf);
 }
 
 /**

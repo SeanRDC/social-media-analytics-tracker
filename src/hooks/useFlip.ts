@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useRef } from "react";
+import { prefersReducedMotion } from "@/lib/motion/reducedMotion";
 
 /**
  * FLIP reordering: call `capture()` right before the order changes; after the
@@ -24,7 +25,7 @@ export function useFlip<E extends HTMLElement>(orderKey: unknown) {
 
   useLayoutEffect(() => {
     if (before.current.size === 0) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = prefersReducedMotion();
     els.current.forEach((el, k) => {
       const was = before.current.get(k);
       if (was == null || reduce || typeof el.animate !== "function") return;

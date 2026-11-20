@@ -128,6 +128,13 @@ export interface Post {
 
 export type PostSort = "views" | "engagement" | "date";
 
+/** Which posts to list, and in what order. */
+export interface PostQuery {
+  platform?: PlatformId;
+  kind?: PostKind;
+  sort?: PostSort;
+}
+
 export interface Audience {
   /** Platforms whose demographics are included (not every platform shares them). */
   sources: PlatformId[];

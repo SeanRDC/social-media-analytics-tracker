@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import { frameText, parseCountable } from "@/lib/motion/countUp";
+import { prefersReducedMotion } from "@/lib/motion/reducedMotion";
 
 interface Props {
   value: string;
@@ -22,7 +23,7 @@ export function CountUp({ value, delay = 0, duration = 900, className }: Props) 
   useLayoutEffect(() => {
     const node = ref.current?.firstChild;
     const c = parseCountable(value);
-    if (!node || !c || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!node || !c || prefersReducedMotion()) return;
 
     let raf = 0;
     const start = performance.now() + delay;

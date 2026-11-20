@@ -8,6 +8,7 @@ import { formatDate, formatDuration, formatNumber, formatPercent } from "@/lib/f
 import { PLATFORM_NAMES } from "@/lib/platforms";
 import s from "./PostSheet.module.css";
 import { PostThumb } from "@/components/ui/PostThumb";
+import { prefersReducedMotion } from "@/lib/motion/reducedMotion";
 
 const KIND_LABEL: Record<Post["kind"], string> = { video: "Video", short: "Short", reel: "Reel", post: "Post" };
 
@@ -36,7 +37,7 @@ export function PostSheet({ post, onClose }: Props) {
       return;
     }
     if (!post && d.open) {
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const reduce = prefersReducedMotion();
       d.dataset.closing = "true";
       const t = window.setTimeout(() => {
         d.close();
