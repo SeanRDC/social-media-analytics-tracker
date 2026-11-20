@@ -6,6 +6,7 @@ import { getDb, schema } from "@/db";
 import { appleCredentials, googleCredentials, reviewerSignIn } from "@/lib/auth-providers";
 import { APP_NAME } from "@/lib/brand";
 import { sendSignInEmail } from "@/lib/email";
+import { SIGN_IN_LINK_MINUTES } from "@/lib/emails/sign-in";
 import { authLog } from "@/lib/safe-error";
 
 function createAuth() {
@@ -44,7 +45,8 @@ function createAuth() {
     trustedOrigins: appleCredentials ? ["https://appleid.apple.com"] : [],
     plugins: [
       magicLink({
-        expiresIn: 60 * 10,
+        // the email names this time, so both read the same constant
+        expiresIn: SIGN_IN_LINK_MINUTES * 60,
         sendMagicLink: async ({ email, url }) => sendSignInEmail(email, url),
       }),
       // lets server actions set auth cookies; keep last

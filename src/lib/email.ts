@@ -1,4 +1,5 @@
-import { APP_NAME } from "@/lib/brand";
+import { APP_NAME, LEGAL_CONTACT } from "@/lib/brand";
+import { renderSignInEmail } from "@/lib/emails/sign-in";
 
 export interface Email {
   to: string;
@@ -39,14 +40,7 @@ ${email.text.replace(/^/gm, "     ")}
  */
 export async function sendSignInEmail(to: string, url: string): Promise<void> {
   if (!process.env.RESEND_API_KEY && process.env.NODE_ENV !== "production") devMailbox().set(to.toLowerCase(), { url, at: Date.now() });
-  await sendEmail({
-    to,
-    subject: `Your ${APP_NAME} sign-in link`,
-    text: `Sign in to ${APP_NAME}: ${url}
-
-The link works once and expires in 10 minutes. If you didn't ask for it, you can ignore this email.`,
-    html: `<p>Sign in to <strong>${APP_NAME}</strong>:</p><p><a href="${url}">Sign in</a></p><p style="color:#666">The link works once and expires in 10 minutes. If you didn't ask for it, you can ignore this email.</p>`,
-  });
+  await sendEmail({ to, ...renderSignInEmail(url, LEGAL_CONTACT) });
 }
 
 type Mailbox = Map<string, { url: string; at: number }>;
