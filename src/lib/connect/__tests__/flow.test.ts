@@ -6,7 +6,7 @@ import type { Db } from "@/db";
 import * as schema from "@/db/schema";
 import { decrypt, seal } from "@/lib/connect/crypto";
 import { saveConnection } from "@/lib/connect/service";
-import { beginConnect, completeConnect, safeReturnTo } from "@/lib/connect/flow";
+import { beginConnect, CHOOSE_PATH, completeConnect, finishChoice, readChoice, safeReturnTo } from "@/lib/connect/flow";
 
 const BASE = "http://localhost:3000";
 let db: Db;
@@ -181,5 +181,54 @@ describe("unavailable platforms", () => {
   it("sends an unsupported platform back as unavailable without a cookie", () => {
     const r = beginConnect({ platform: "myspace", userId: "u1", returnTo: "/settings", baseUrl: BASE });
     expect(r).toEqual({ location: "/settings?connect=error&platform=myspace&reason=unavailable" });
+  });
+});
+
+describe("choosing one of several Pages", () => {
+  const pages = { data: [{ id: "p1", name: "Northbay Studio", access_token: "pt1" }, { id: "p2", name: "Northbay Rentals", access_token: "pt2" }] };
+  const meta = () => {
+    vi.stubEnv("META_APP_ID", "id");
+    vi.stubEnv("META_APP_SECRET", "secret");
+  };
+  async function toChoice() {
+    const replies = [{ access_token: "short" }, { access_token: "long", expires_in: 5184000 }, pages];
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json(replies.shift())));
+    const s = start("facebook");
+    const q = new URLSearchParams({ code: "c", state: s.url.searchParams.get("state")! });
+    return completeConnect({ platform: "facebook", query: q, cookie: s.cookie, userId: "u1", baseUrl: BASE, db });
+  }
+
+  it("asks which Page to track instead of taking the first", async () => {
+    meta();
+    const r = await toChoice();
+    expect(r.location).toBe(CHOOSE_PATH);
+    expect(readChoice(r.pick, "u1")).toEqual({ platform: "facebook", returnTo: "/settings", options: [{ externalId: "p1", name: "Northbay Studio" }, { externalId: "p2", name: "Northbay Rentals" }] });
+    expect(await db.select().from(schema.connection)).toHaveLength(0);
+  });
+
+  it("connects the chosen Page with its own token", async () => {
+    meta();
+    const { pick } = await toChoice();
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json(pages)));
+    const { location } = await finishChoice({ cookie: pick, userId: "u1", externalId: "p2", db });
+    expect(location).toBe("/settings?connect=ok&platform=facebook");
+    const [c] = await db.select().from(schema.connection);
+    expect(c).toMatchObject({ platform: "facebook", externalId: "p2", accountName: "Northbay Rentals" });
+    expect(decrypt(c.accessTokenEnc!)).toBe("pt2");
+  });
+
+  it("refuses a Page that wasn't offered, or a choice made from someone else's session", async () => {
+    meta();
+    const { pick } = await toChoice();
+    expect((await finishChoice({ cookie: pick, userId: "u1", externalId: "p9", db })).location).toBe("/settings?connect=error&platform=facebook&reason=state");
+    expect((await finishChoice({ cookie: pick, userId: "someone-else", externalId: "p1", db })).location).toContain("reason=state");
+    expect(readChoice(pick, "someone-else")).toBeNull();
+    expect(await db.select().from(schema.connection)).toHaveLength(0);
+  });
+
+  it("treats a missing or tampered choice as expired", async () => {
+    expect(readChoice(undefined, "u1")).toBeNull();
+    expect(readChoice("v1.bad.bad.bad", "u1")).toBeNull();
+    expect((await finishChoice({ cookie: undefined, userId: "u1", externalId: "p1", db })).location).toContain("reason=state");
   });
 });

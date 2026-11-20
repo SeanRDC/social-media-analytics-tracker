@@ -9,12 +9,17 @@ import type { Db } from "@/db";
 import type { PlatformId } from "@/lib/data/types";
 import { seal, unseal } from "./crypto";
 import { pkcePair } from "./providers/oauth";
+import type { AccountOption, AccountResult, TokenSet } from "./providers";
 import { resolveProvider } from "./providers";
 import type { ConnectReason as ConnectErrorReason } from "./result";
 import { refreshSiblings, saveConnection } from "./service";
 
 export const STATE_COOKIE = "connect_state";
 export const STATE_TTL_SECONDS = 10 * 60;
+/** Holds the login while the person picks one of several Pages; encrypted, short-lived. */
+export const PICK_COOKIE = "connect_pick";
+export const PICK_TTL_SECONDS = 10 * 60;
+export const CHOOSE_PATH = "/onboarding/choose";
 
 /** Where the flow may send people back to. Anything else falls back to onboarding. */
 const RETURN_PATHS = new Set(["/onboarding/connect", "/settings"]);
@@ -52,7 +57,7 @@ export function beginConnect(a: { platform: string; userId: string; returnTo: st
   };
 }
 
-export async function completeConnect(a: { platform: string; query: URLSearchParams; cookie: string | undefined; userId: string; baseUrl: string; db: Db }): Promise<{ location: string }> {
+export async function completeConnect(a: { platform: string; query: URLSearchParams; cookie: string | undefined; userId: string; baseUrl: string; db: Db }): Promise<{ location: string; pick?: string }> {
   const saved = a.cookie ? unseal<State>(a.cookie) : null;
   const returnTo = safeReturnTo(saved?.returnTo);
   const fail = (reason: ConnectErrorReason) => ({ location: result(returnTo, a.platform, { ok: false, reason }) });
@@ -70,14 +75,57 @@ export async function completeConnect(a: { platform: string; query: URLSearchPar
   try {
     const tokens = await provider.exchangeCode({ code, redirectUri: callbackUrl(a.baseUrl, a.platform), codeVerifier: saved.verifier });
     const account = await provider.fetchAccount(tokens);
-    if (!account.ok) return fail(account.reason);
-    const stored = account.tokens ?? tokens;
-    await saveConnection(a.db, a.userId, a.platform as PlatformId, stored, { externalId: account.externalId, name: account.name });
-    if (account.siblings?.length) await refreshSiblings(a.db, a.userId, stored, account.siblings);
-    return { location: result(returnTo, a.platform, { ok: true }) };
+    if (account.ok === "choose") {
+      // several Pages: keep the login (encrypted, minutes only) while the person picks one
+      const pick: Pick = { platform: a.platform, userId: a.userId, returnTo, tokens, options: account.options };
+      return { location: CHOOSE_PATH, pick: seal(pick, PICK_TTL_SECONDS) };
+    }
+    return { location: await finish(a.db, a.userId, a.platform as PlatformId, tokens, account, returnTo) };
   } catch (e) {
     // never log tokens: provider errors carry only status and error code
     console.error(`[connect] ${a.platform} failed:`, describeError(e));
+    return fail("failed");
+  }
+}
+
+/** Stores the chosen account and its token (and the token's siblings), then reports back. */
+async function finish(db: Db, userId: string, platform: PlatformId, tokens: TokenSet, account: AccountResult, returnTo: string): Promise<string> {
+  if (account.ok === "choose") throw new Error("finish needs one account");
+  if (!account.ok) return result(returnTo, platform, { ok: false, reason: account.reason });
+  const stored = account.tokens ?? tokens;
+  await saveConnection(db, userId, platform, stored, { externalId: account.externalId, name: account.name });
+  if (account.siblings?.length) await refreshSiblings(db, userId, stored, account.siblings);
+  return result(returnTo, platform, { ok: true });
+}
+
+interface Pick {
+  platform: string;
+  userId: string;
+  returnTo: string;
+  tokens: TokenSet;
+  options: AccountOption[];
+}
+
+/** The Pages waiting to be chosen from, for the signed-in person only. */
+export function readChoice(cookie: string | undefined, userId: string): { platform: PlatformId; options: AccountOption[]; returnTo: string } | null {
+  const pick = cookie ? unseal<Pick>(cookie) : null;
+  if (!pick || pick.userId !== userId || !resolveProvider(pick.platform)) return null;
+  return { platform: pick.platform as PlatformId, options: pick.options, returnTo: pick.returnTo };
+}
+
+/** Connects the Page the person picked from the choose screen. */
+export async function finishChoice(a: { cookie: string | undefined; userId: string; externalId: string; db: Db }): Promise<{ location: string }> {
+  const pick = a.cookie ? unseal<Pick>(a.cookie) : null;
+  const resolved = pick && pick.userId === a.userId ? resolveProvider(pick.platform) : null;
+  if (!pick || !resolved) return { location: result(safeReturnTo(pick?.returnTo), pick?.platform ?? "facebook", { ok: false, reason: "state" }) };
+  const fail = (reason: ConnectErrorReason) => ({ location: result(pick.returnTo, pick.platform, { ok: false, reason }) });
+  if (!pick.options.some((o) => o.externalId === a.externalId)) return fail("state");
+  try {
+    const tokens = { ...pick.tokens, expiresAt: pick.tokens.expiresAt ? new Date(pick.tokens.expiresAt) : null };
+    const account = await resolved.provider.fetchAccount(tokens, a.externalId);
+    return { location: await finish(a.db, a.userId, pick.platform as PlatformId, tokens, account, pick.returnTo) };
+  } catch (e) {
+    console.error(`[connect] ${pick.platform} choice failed:`, describeError(e));
     return fail("failed");
   }
 }

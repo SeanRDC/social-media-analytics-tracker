@@ -6,9 +6,12 @@
  */
 import { LINKEDIN_SCOPES } from "../scopes";
 import { expiresIn, getJson, postForm, str, withQuery } from "./oauth";
-import { ReauthRequired, type Provider, type TokenSet } from "./types";
+import { pickAccount, ReauthRequired, type Provider, type TokenSet } from "./types";
 
 /** YYYYMM; LinkedIn retires versions after about a year, so keep this current. */
+/** At most this many Pages are offered on the choose screen. */
+const MAX_PAGES = 20;
+
 export const linkedinVersion = () => process.env.LINKEDIN_API_VERSION || "202607";
 
 export function linkedinCredentials() {
@@ -49,17 +52,22 @@ export function linkedinProvider(c: { clientId: string; clientSecret: string }):
         await postForm(TOKEN_URL, { grant_type: "authorization_code", code, redirect_uri: redirectUri, client_id: c.clientId, client_secret: c.clientSecret }, "LinkedIn token exchange"),
       );
     },
-    async fetchAccount({ accessToken }) {
+    async fetchAccount({ accessToken }, choice) {
       const acls = await getJson(
         "https://api.linkedin.com/rest/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED",
         "LinkedIn Page lookup",
         rest(accessToken),
       );
-      const urn = (acls.elements as { organization?: string }[] | undefined)?.find((e) => e.organization)?.organization;
-      const id = urn?.split(":").pop();
-      if (!id) return { ok: false, reason: "no-account" };
-      const org = await getJson(`https://api.linkedin.com/rest/organizations/${encodeURIComponent(id)}`, "LinkedIn Page name", rest(accessToken));
-      return { ok: true, externalId: id, name: str(org.localizedName) ?? "LinkedIn Page" };
+      const ids = [...new Set(((acls.elements as { organization?: string }[] | undefined) ?? []).map((e) => e.organization?.split(":").pop()).filter((id): id is string => Boolean(id)))].slice(0, MAX_PAGES);
+      const nameOf = async (id: string) => {
+        const org = await getJson(`https://api.linkedin.com/rest/organizations/${encodeURIComponent(id)}`, "LinkedIn Page name", rest(accessToken));
+        return str(org.localizedName) ?? "LinkedIn Page";
+      };
+      // names are fetched only for what is shown: every option when choosing, else the one being connected
+      const picked = pickAccount(ids, (id) => ({ externalId: id, name: id }), choice);
+      if (picked === "none") return { ok: false, reason: "no-account" };
+      if (Array.isArray(picked)) return { ok: "choose", options: await Promise.all(picked.map(async (o) => ({ externalId: o.externalId, name: await nameOf(o.externalId) }))) };
+      return { ok: true, externalId: picked, name: await nameOf(picked) };
     },
     async refresh({ refreshToken }) {
       if (!refreshToken) throw new ReauthRequired("LinkedIn did not issue a refresh token");

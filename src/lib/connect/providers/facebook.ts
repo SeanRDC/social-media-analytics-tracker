@@ -5,7 +5,7 @@
  */
 import { META_SCOPES } from "../scopes";
 import { expiresIn, getJson, str, withQuery } from "./oauth";
-import type { Provider } from "./types";
+import { pickAccount, type Provider } from "./types";
 
 export const graphVersion = () => process.env.META_GRAPH_VERSION || "v26.0";
 
@@ -57,12 +57,15 @@ export function facebookProvider(c: { clientId: string; clientSecret: string }):
   return {
     platform: "facebook",
     ...metaLogin(c, META_SCOPES, "Facebook"),
-    async fetchAccount(tokens) {
+    async fetchAccount(tokens, choice) {
       const body = await getJson(graph("/me/accounts?fields=id,name,access_token,instagram_business_account{id}&limit=25"), "Facebook Page lookup", {
         Authorization: `Bearer ${tokens.accessToken}`,
       });
-      const page = (body.data as { id: string; name?: string; access_token?: string; instagram_business_account?: { id: string } }[] | undefined)?.find((p) => p.access_token);
-      if (!page?.access_token) return { ok: false, reason: "no-account" };
+      type Page = { id: string; name?: string; access_token?: string; instagram_business_account?: { id: string } };
+      const pages = ((body.data as Page[] | undefined) ?? []).filter((p): p is Page & { access_token: string } => Boolean(p.access_token));
+      const page = pickAccount(pages, (p) => ({ externalId: p.id, name: p.name || "Facebook Page" }), choice);
+      if (page === "none") return { ok: false, reason: "no-account" };
+      if (Array.isArray(page)) return { ok: "choose", options: page };
       return {
         ok: true,
         externalId: page.id,

@@ -35,4 +35,4 @@ export function connectMode(platform: PlatformId): ConnectMode {
 }
 
 export type { ConnectMode };
-export { ProviderError, RateLimited, ReauthRequired, type AccountResult, type Provider, type TokenSet } from "./types";
+export { ProviderError, RateLimited, ReauthRequired, type AccountOption, type AccountResult, type Provider, type TokenSet } from "./types";

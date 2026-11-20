@@ -24,7 +24,27 @@ export type AccountResult =
        */
       siblings?: { platform: PlatformId; externalId: string }[];
     }
-  | { ok: false; reason: "needs-professional" | "no-account" };
+  | { ok: false; reason: "needs-professional" | "no-account" }
+  /** The person manages several (Pages, organizations): ask which one, then call fetchAccount again with it. */
+  | { ok: "choose"; options: AccountOption[] };
+
+/** One account the person could connect, as shown on the "choose a Page" screen. */
+export interface AccountOption {
+  externalId: string;
+  name: string;
+}
+
+/**
+ * One rule for every platform with several accounts per login: the chosen one
+ * when there is a choice, the only one when there is one, otherwise ask.
+ * Returns the item, "none", or the options to choose from.
+ */
+export function pickAccount<T>(items: T[], option: (item: T) => AccountOption, choice?: string): T | "none" | AccountOption[] {
+  if (choice !== undefined) return items.find((i) => option(i).externalId === choice) ?? "none";
+  if (items.length === 0) return "none";
+  if (items.length === 1) return items[0];
+  return items.map(option);
+}
 
 export interface Provider {
   platform: PlatformId;
@@ -36,7 +56,8 @@ export interface Provider {
   refreshWindowSeconds: number;
   authorizeUrl(a: { redirectUri: string; state: string; codeChallenge: string }): string;
   exchangeCode(a: { code: string; redirectUri: string; codeVerifier: string }): Promise<TokenSet>;
-  fetchAccount(tokens: TokenSet): Promise<AccountResult>;
+  /** The account to connect. With several, returns the options; call again with `choice` (an option's externalId). */
+  fetchAccount(tokens: TokenSet, choice?: string): Promise<AccountResult>;
   /** Throws ReauthRequired when the platform refuses (revoked, expired refresh token). */
   refresh?(tokens: { accessToken: string; refreshToken: string | null }): Promise<TokenSet>;
   /** Best effort; failures are ignored by the caller. */

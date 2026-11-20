@@ -5,6 +5,7 @@ import { instagramProvider } from "@/lib/connect/providers/instagram";
 import { linkedinProvider } from "@/lib/connect/providers/linkedin";
 import { tiktokProvider } from "@/lib/connect/providers/tiktok";
 import { pkcePair } from "@/lib/connect/providers/oauth";
+import { pickAccount } from "@/lib/connect/providers/types";
 import { createHash } from "node:crypto";
 import { youtubeProvider } from "@/lib/connect/providers/youtube";
 
@@ -226,5 +227,18 @@ describe("resolveProvider", () => {
   it("never offers unknown platforms, including X, which isn't supported", () => {
     expect(resolveProvider("x")).toBeNull();
     expect(resolveProvider("myspace")).toBeNull();
+  });
+});
+
+describe("pickAccount", () => {
+  const opt = (id: string) => ({ externalId: id, name: `Page ${id}` });
+  it("takes the only account, asks when there are several, and finds the chosen one", () => {
+    expect(pickAccount(["a"], opt)).toBe("a");
+    expect(pickAccount(["a", "b"], opt)).toEqual([opt("a"), opt("b")]);
+    expect(pickAccount(["a", "b"], opt, "b")).toBe("b");
+  });
+  it("reports none when there is nothing, or the choice isn't one of them", () => {
+    expect(pickAccount([], opt)).toBe("none");
+    expect(pickAccount(["a", "b"], opt, "z")).toBe("none");
   });
 });

@@ -8,7 +8,7 @@
 import { META_SCOPES } from "../scopes";
 import { facebookCredentials, graph, metaLogin } from "./facebook";
 import { getJson } from "./oauth";
-import type { Provider } from "./types";
+import { pickAccount, type Provider } from "./types";
 
 /** Same Meta app as Facebook. */
 export const instagramCredentials = facebookCredentials;
@@ -23,14 +23,21 @@ export function instagramProvider(c: { clientId: string; clientSecret: string })
     platform: "instagram",
     // same permissions as Facebook, so one Meta login serves both connections
     ...metaLogin(c, META_SCOPES, "Instagram"),
-    async fetchAccount(tokens) {
+    async fetchAccount(tokens, choice) {
       const body = await getJson(graph("/me/accounts?fields=id,name,access_token,instagram_business_account{id,username},connected_instagram_account{id,username}&limit=25"), "Instagram account lookup", {
         Authorization: `Bearer ${tokens.accessToken}`,
       });
       // only Professional accounts linked to a Page show up here
-      const page = (body.data as PageWithInstagram[] | undefined)?.find((p) => p.access_token && linked(p));
-      const ig = page ? linked(page) : null;
-      if (!page?.access_token || !ig) return { ok: false, reason: "no-account" };
+      const pages = ((body.data as PageWithInstagram[] | undefined) ?? []).filter((p) => p.access_token && linked(p));
+      const option = (p: PageWithInstagram) => {
+        const ig = linked(p)!;
+        return { externalId: ig.id, name: ig.username ? `@${ig.username}` : "Instagram account" };
+      };
+      const page = pickAccount(pages, option, choice);
+      if (page === "none") return { ok: false, reason: "no-account" };
+      if (Array.isArray(page)) return { ok: "choose", options: page };
+      const ig = linked(page);
+      if (!page.access_token || !ig) return { ok: false, reason: "no-account" };
       return {
         ok: true,
         externalId: ig.id,
