@@ -72,6 +72,11 @@ describe("with imported history", () => {
     expect(Math.round((thisWeek / lastWeek - 1) * 100)).toBe(overview.metrics[7].viewsChange);
   });
 
+  it("splits this week's daily views by platform, adding up to the daily total", () => {
+    expect(daily.byPlatform.map((p) => p.platform)).toEqual(["youtube", "tiktok"]);
+    daily.thisWeek.forEach((total, i) => expect(daily.byPlatform.reduce((s, p) => s + p.thisWeek[i]!, 0)).toBe(total));
+  });
+
   it("picks the platform with the most followers as top", () => {
     const top = [...platforms].sort((a, b) => b.followers! - a.followers!)[0];
     expect(overview.topPlatform).toBe(top.id);

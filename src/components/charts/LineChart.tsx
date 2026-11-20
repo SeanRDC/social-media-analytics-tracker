@@ -17,6 +17,8 @@ export interface Series {
   color: string;
   glow?: boolean;
   area?: boolean;
+  /** Line thickness; defaults to 1.6 (2 with glow). */
+  width?: number;
 }
 
 interface Props {
@@ -137,7 +139,7 @@ export function LineChart({ series, xCount, xLabels, yMin, yMax, yTicks, height 
                 <g key={r.from}>
                   {se.area && r.to > r.from && <path d={areaPath(d, x(r.from), x(r.to), H - PAD.b)} fill={`url(#${uid}-a-${se.key})`} className={s.fade} />}
                   {se.glow && <path d={d} pathLength={1} fill="none" stroke={se.color} strokeWidth={5} strokeOpacity={0.4} filter={`url(#${uid}-glow)`} className={s.draw} />}
-                  <path d={d} pathLength={1} fill="none" stroke={se.color} strokeWidth={se.glow ? 2 : 1.6} strokeLinecap="round" className={s.draw} />
+                  <path d={d} pathLength={1} fill="none" stroke={se.color} strokeWidth={se.width ?? (se.glow ? 2 : 1.6)} strokeLinecap="round" className={s.draw} />
                 </g>
               );
             })}

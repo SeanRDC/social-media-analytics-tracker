@@ -95,6 +95,8 @@ export interface DailyViews {
   days: string[];
   thisWeek: (number | null)[];
   lastWeek: (number | null)[];
+  /** This week's views for each connected platform, in platform order; null = not reported that day. */
+  byPlatform: { platform: PlatformId; thisWeek: (number | null)[] }[];
   /** Index of today within the week. */
   todayIndex: number;
 }

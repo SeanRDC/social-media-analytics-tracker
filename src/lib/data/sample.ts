@@ -75,10 +75,27 @@ export const TOTAL_TREND: number[] = Array.from({ length: 31 }, (_, i) =>
 );
 
 /** Mon Nov 9 – Sun Nov 15 vs the week before. This week sums to the 7-day views (1.2M, +8%). */
+const THIS_WEEK = [148_000, 132_000, 171_000, 158_000, 166_000, 214_000, 211_000];
+const views30Total = connected.reduce((s, p) => s + p.views30, 0);
+
+/** Each day's total split by the platforms' 30-day view shares, with a little texture; the last platform takes the remainder so days still add up. */
+function splitByPlatform(): DailyViews["byPlatform"] {
+  const rows = connected.map((p, k) => ({
+    platform: p.id,
+    thisWeek: THIS_WEEK.map((t, i) => Math.round((t * p.views30 * (1 + 0.12 * Math.sin(i * 1.7 + k))) / views30Total)),
+  }));
+  const last = rows[rows.length - 1].thisWeek;
+  THIS_WEEK.forEach((t, i) => {
+    last[i] = t - rows.slice(0, -1).reduce((s, r) => s + r.thisWeek[i], 0);
+  });
+  return rows;
+}
+
 export const DAILY_VIEWS: DailyViews = {
   days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-  thisWeek: [148_000, 132_000, 171_000, 158_000, 166_000, 214_000, 211_000],
+  thisWeek: THIS_WEEK,
   lastWeek: [139_000, 121_000, 158_000, 149_000, 151_000, 188_000, 205_000],
+  byPlatform: splitByPlatform(),
   todayIndex: 6,
 };
 

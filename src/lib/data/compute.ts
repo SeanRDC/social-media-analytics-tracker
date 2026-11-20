@@ -209,13 +209,18 @@ export function computeOverview(ds: Dataset, asOf: string): Overview {
 
 /** The last 7 stored days against the 7 before them. */
 export function computeDailyViews(ds: Dataset, asOf: string): DailyViews {
-  const days = live(ds).map((c) => daysEnding(c, asOf, 14));
+  const conns = live(ds);
+  const days = conns.map((c) => daysEnding(c, asOf, 14));
   const total = (i: number) => sumKnown(days.map((d) => d[i].views));
   const dates = dateRange(addDays(asOf, -6), asOf);
   return {
     days: dates.map(weekdayShort),
     thisWeek: dates.map((_, i) => total(i + 7)),
     lastWeek: dates.map((_, i) => total(i)),
+    byPlatform: PLATFORM_ORDER.flatMap((id) => {
+      const k = conns.findIndex((c) => c.platform === id);
+      return k < 0 ? [] : [{ platform: id, thisWeek: dates.map((_, i) => days[k][i + 7].views) }];
+    }),
     todayIndex: 6,
   };
 }
