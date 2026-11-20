@@ -57,7 +57,7 @@
 }
 .profile .ghost {
   background: #fff;
-  color: var(--tx);
+  color: var(--on-bright);
 }
 
 /* ---------- rows ---------- */
@@ -135,7 +135,7 @@
   transition: transform 0.14s var(--out), background-color 0.2s;
 }
 .ghost {
-  background: #fff;
+  background: var(--raised);
   border: 1px solid var(--cardb);
 }
 .ghost:hover {
@@ -200,31 +200,44 @@
   gap: 8px;
   font-size: 13.5px;
   font-weight: 500;
+  cursor: pointer;
 }
 .swatch {
   width: 140px;
   height: 84px;
   border-radius: 16px;
-  border: 3px solid transparent;
+  border: 3px solid var(--line);
+  transition:
+    border-color 0.2s var(--out),
+    transform 0.14s var(--out);
 }
+.theme:hover .swatch {
+  transform: translateY(-2px);
+}
+.theme:has(input:focus-visible) .swatch {
+  outline: 2px solid var(--acc);
+  outline-offset: 3px;
+}
+/* swatches show each theme as it looks, whichever one is active */
 .swatchLight {
   background:
-    linear-gradient(var(--nav), var(--nav)) 10px 10px / calc(100% - 20px) 14px no-repeat,
-    linear-gradient(var(--acc), var(--acc)) 10px 32px / 40% 40px no-repeat,
-    linear-gradient(var(--lime), var(--lime)) 62% 32px / 34% 40px no-repeat,
-    var(--bg);
+    linear-gradient(#141416, #141416) 10px 10px / calc(100% - 20px) 14px no-repeat,
+    linear-gradient(#3b5bff, #3b5bff) 10px 32px / 40% 40px no-repeat,
+    linear-gradient(#d7f25a, #d7f25a) 62% 32px / 34% 40px no-repeat,
+    #f3f2ee;
 }
 .swatchDark {
   background:
-    linear-gradient(#3a3a40, #3a3a40) 10px 10px / calc(100% - 20px) 14px no-repeat,
-    linear-gradient(#2e2e33, #2e2e33) 10px 32px / 40% 40px no-repeat,
-    #141416;
+    linear-gradient(#1c1c20, #1c1c20) 10px 10px / calc(100% - 20px) 14px no-repeat,
+    linear-gradient(#6f87ff, #6f87ff) 10px 32px / 40% 40px no-repeat,
+    linear-gradient(#24242a, #24242a) 62% 32px / 34% 40px no-repeat,
+    #0e0e10;
 }
-.themeOn .swatch {
+.swatchSystem {
+  background: linear-gradient(135deg, #f3f2ee 0 50%, #0e0e10 50% 100%);
+}
+.theme[data-on="true"] .swatch {
   border-color: var(--acc);
-}
-.themeOff {
-  opacity: 0.5;
 }
 
 @media (max-width: 767px) {

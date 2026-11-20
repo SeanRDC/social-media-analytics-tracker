@@ -23,7 +23,7 @@
   transition: background-color 0.2s var(--out), transform 0.14s var(--out);
 }
 .back:hover {
-  background: #e1e0da;
+  background: var(--track-hover);
 }
 .back:active {
   transform: scale(0.97);
@@ -99,6 +99,7 @@
   padding: 5px 12px;
   border-radius: 999px;
   background: var(--lime);
+  color: var(--on-bright);
   font-size: 13px;
   font-weight: 600;
 }
@@ -132,9 +133,11 @@
 }
 .stats div:nth-child(2) {
   background: var(--lime);
+  color: var(--on-bright);
 }
 .stats div:nth-child(3) {
   background: var(--lilac);
+  color: var(--on-bright);
 }
 .stats div:nth-child(4) {
   background: var(--nav);
@@ -249,8 +252,8 @@
   min-height: 48px;
   padding: 0 20px;
   border-radius: 14px;
-  background: var(--tx);
-  color: #fff;
+  background: var(--ink);
+  color: var(--on-ink);
   font-family: var(--display);
   font-weight: 600;
 }

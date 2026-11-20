@@ -103,8 +103,8 @@
   border-radius: 50%;
   display: inline-grid;
   place-items: center;
-  background: var(--tx);
-  color: #fff;
+  background: var(--ink);
+  color: var(--on-ink);
   opacity: 0;
   transform: translateX(6px);
   transition: opacity 0.2s var(--out), transform 0.2s var(--out);

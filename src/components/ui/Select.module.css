@@ -50,7 +50,7 @@
   background: var(--track);
 }
 .pill:hover:not(:disabled) {
-  background: #e1e0da;
+  background: var(--track-hover);
 }
 
 /* white bordered form field (Reports) */
@@ -61,11 +61,11 @@
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
-  background: #fff;
+  background: var(--raised);
   border: 1px solid var(--cardb);
 }
 .field:hover:not(:disabled) {
-  border-color: rgba(20, 20, 22, 0.22);
+  border-color: var(--border-strong);
 }
 .field[aria-expanded="true"] {
   border-color: var(--acc);

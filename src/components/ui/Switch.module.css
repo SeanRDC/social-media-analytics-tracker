@@ -21,16 +21,17 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--raised);
   box-shadow: 0 2px 6px rgba(20, 20, 22, 0.25);
   transition: transform 0.3s var(--spring), width 0.2s var(--out);
 }
 .sw[aria-checked="true"] .track {
-  background: var(--tx);
+  background: var(--switch-on);
 }
 .sw[aria-checked="true"] .knob {
   transform: translateX(20px);
   background: var(--lime);
+  color: var(--on-bright);
 }
 /* knob stretches while pressed, like iOS */
 .sw:active .knob {

@@ -9,8 +9,8 @@
   font-family: var(--display);
   font-size: 14px;
   font-weight: 600;
-  background: var(--tx);
-  color: #fff;
+  background: var(--ink);
+  color: var(--on-ink);
   text-decoration: none;
   transition: transform 0.14s var(--out), background-color 0.25s var(--out), color 0.25s var(--out);
 }
@@ -29,7 +29,7 @@
   cursor: not-allowed;
 }
 .done {
-  background: #fff;
+  background: var(--raised);
   color: var(--tx);
 }
 

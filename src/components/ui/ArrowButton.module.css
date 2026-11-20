@@ -27,7 +27,7 @@
   display: grid;
   place-items: center;
   background: var(--lime);
-  color: var(--tx);
+  color: var(--on-bright);
   transition: transform 0.35s var(--spring);
 }
 .btn:hover .arr,
@@ -41,7 +41,7 @@
   color: var(--tx);
 }
 .soft .arr {
-  background: #fff;
+  background: var(--raised);
 }
 
 .round {
@@ -50,8 +50,8 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--tx);
-  color: #fff;
+  background: var(--ink);
+  color: var(--on-ink);
   flex: none;
   transition: transform 0.14s var(--out), background-color 0.2s var(--out);
 }

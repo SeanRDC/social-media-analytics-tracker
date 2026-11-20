@@ -13,6 +13,7 @@ import { deleteAccount } from "@/app/actions/account";
 import { setAlert, subscribePush, unsubscribePush } from "@/app/actions/alerts";
 import { DeleteAccount } from "@/components/settings/DeleteAccount";
 import { PushToggle } from "@/components/settings/PushToggle";
+import { ThemePicker } from "@/components/settings/ThemePicker";
 import { getAlertSettings } from "@/lib/alerts/run";
 import { vapidPublicKey } from "@/lib/push";
 import { parseConnectResult } from "@/lib/connect/result";
@@ -59,16 +60,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
         <h2 id="look-h" className={s.h2}>
           Appearance
         </h2>
-        <div className={s.themes} role="radiogroup" aria-label="Theme">
-          <span className={`${s.theme} ${s.themeOn}`} role="radio" aria-checked="true">
-            <span className={`${s.swatch} ${s.swatchLight}`} />
-            Light
-          </span>
-          <span className={`${s.theme} ${s.themeOff}`} role="radio" aria-checked="false" aria-disabled="true">
-            <span className={`${s.swatch} ${s.swatchDark}`} />
-            Dark · coming later
-          </span>
-        </div>
+        <ThemePicker />
         <p className={s.info}>
           <Icon name="sparkle" size={15} />
           <span>Motion follows your device: turn on Reduce Motion in your phone or computer settings and the app goes still.</span>

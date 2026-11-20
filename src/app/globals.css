@@ -72,6 +72,21 @@
   --p-instagram: #d2457a;
   --p-x: #a86f00;
 
+  /* theme-aware fills: ink buttons flip to light in dark mode; bright tiles always take dark text */
+  --tx2: #3a3a40;
+  --ink: #141416;
+  --on-ink: #ffffff;
+  --ink-fixed: #141416;
+  --on-bright: #141416;
+  --raised: #ffffff;
+  --switch-on: var(--tx);
+  --track-hover: #e1e0da;
+  --border-strong: rgba(20, 20, 22, 0.22);
+  --texture: rgba(20, 20, 22, 0.035);
+  --heat-base: #eef1ff;
+  --sk-a: #ebeae5;
+  --sk-b: #f6f5f1;
+
   /* type */
   --display: var(--font-display), var(--font-geist-sans), "Segoe UI", system-ui, sans-serif;
 
@@ -87,6 +102,78 @@
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --tx: #f2f2ef;
+  --tx2: #c9c9cf;
+  --mu: #9b9ba4;
+  --acc: #6f87ff;
+  --acc-ink: #93a5ff;
+  --acc2: rgba(242, 242, 239, 0.55);
+  --acc-soft: rgba(111, 135, 255, 0.16);
+  --live: #3ccf8a;
+  --up: #3ccf8a;
+  --down: #ff6b70;
+  --warn: #f2b134;
+  --warn-soft: rgba(242, 177, 52, 0.16);
+
+  --bg: #0e0e10;
+  --win: #18181b;
+  --card: #18181b;
+  --cardb: rgba(255, 255, 255, 0.07);
+  --line: rgba(255, 255, 255, 0.08);
+  --shell: #1c1c20;
+  --kpi: #1f1f23;
+  --menu: #1e1e22;
+  --chip: #27272c;
+  --tile: #1f1f23;
+  --rowh: #24242a;
+  --pill: #27272c;
+  --track: #27272c;
+  --seg-on: #34343b;
+  --solid: #18181b;
+  --scrim: rgba(0, 0, 0, 0.6);
+
+  /* the navbar stays dark, lifted a step above the page */
+  --nav: #1c1c20;
+  --nav-inset: #111113;
+  --nav-hover: #2a2a30;
+  --nav-active: #35353c;
+
+  --btn-bg: #f2f2ef;
+  --btn-tx: #141416;
+  --tipbg: #f2f2ef;
+  --tiptx: #141416;
+
+  --grid: rgba(255, 255, 255, 0.07);
+  --lab: rgba(255, 255, 255, 0.45);
+  --ring: #18181b;
+  --series-muted: rgba(255, 255, 255, 0.3);
+
+  --sh: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+  --sh-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 22px 44px -18px rgba(0, 0, 0, 0.7);
+
+  /* platform colours brightened to read on dark cards */
+  --p-youtube: #ff6b70;
+  --p-facebook: #5a9cf2;
+  --p-tiktok: #2fc493;
+  --p-linkedin: #a194f7;
+  --p-instagram: #ee72a2;
+  --p-x: #e2a83f;
+
+  --ink: #f2f2ef;
+  --on-ink: #141416;
+  --raised: #24242a;
+  --switch-on: var(--acc);
+  --track-hover: #32323a;
+  --border-strong: rgba(255, 255, 255, 0.22);
+  --texture: rgba(255, 255, 255, 0.03);
+  --heat-base: #1c2036;
+  --sk-a: #1c1c20;
+  --sk-b: #26262c;
 }
 
 *,

@@ -16,7 +16,7 @@
   transition: transform 0.14s var(--out), border-color 0.2s;
 }
 .btn:hover {
-  background: #e1e0da;
+  background: var(--track-hover);
 }
 .btn:active {
   transform: scale(0.96);

@@ -7,8 +7,8 @@
   padding: calc(20px + var(--safe-t)) max(16px, var(--safe-r)) calc(28px + var(--safe-b)) max(16px, var(--safe-l));
   /* faint grid behind the card, like the landing page */
   background:
-    linear-gradient(rgba(20, 20, 22, 0.04) 1px, transparent 1px) 0 0 / 64px 64px,
-    linear-gradient(90deg, rgba(20, 20, 22, 0.04) 1px, transparent 1px) 0 0 / 64px 64px,
+    linear-gradient(var(--texture) 1px, transparent 1px) 0 0 / 64px 64px,
+    linear-gradient(90deg, var(--texture) 1px, transparent 1px) 0 0 / 64px 64px,
     var(--bg);
 }
 /* brand as a small dark pill, echoing the navbar */
@@ -32,7 +32,7 @@
   height: 32px;
   border-radius: 50%;
   background: var(--lime);
-  color: var(--nav);
+  color: var(--on-bright);
   display: grid;
   place-items: center;
 }
@@ -50,7 +50,7 @@
   background: var(--lime);
   font-size: 12px;
   font-weight: 600;
-  color: var(--tx);
+  color: var(--on-bright);
 }
 .h1 {
   font-size: clamp(30px, 5vw, 38px);
@@ -92,7 +92,7 @@
   background: var(--track);
 }
 .secondary:hover {
-  background: #e1e0da;
+  background: var(--track-hover);
 }
 .primary:active:not(:disabled),
 .secondary:active {
@@ -133,7 +133,7 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .field input::placeholder {
-  color: rgba(20, 20, 22, 0.35);
+  color: var(--lab);
 }
 .field input:focus {
   outline: none;
@@ -317,7 +317,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 2px solid rgba(20, 20, 22, 0.15);
+  border: 2px solid var(--border-strong);
   border-top-color: var(--acc);
   animation: spin 0.7s linear infinite;
 }
@@ -396,14 +396,14 @@
   border: 1px solid var(--cardb);
   animation: rise 0.25s var(--out);
   scrollbar-width: thin;
-  scrollbar-color: rgba(20, 20, 22, 0.25) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
 .docPanel::-webkit-scrollbar {
   width: 8px;
 }
 .docPanel::-webkit-scrollbar-thumb {
   border-radius: 8px;
-  background: rgba(20, 20, 22, 0.22);
+  background: var(--border-strong);
 }
 .docPanel:focus-visible {
   outline: 2px solid var(--acc);

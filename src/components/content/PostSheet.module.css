@@ -62,13 +62,14 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: #fff;
+  background: var(--raised);
   color: var(--tx);
   box-shadow: 0 6px 14px -8px rgba(20, 20, 22, 0.5);
   transition: transform 0.14s var(--out), background-color 0.2s;
 }
 .close:hover {
   background: var(--lime);
+  color: var(--on-bright);
 }
 .close:active {
   transform: scale(0.92);
@@ -90,7 +91,7 @@
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--raised);
 }
 
 .meta {
@@ -129,6 +130,7 @@
 }
 .stats div:nth-child(2) {
   background: var(--lime);
+  color: var(--on-bright);
 }
 .stats div:nth-child(2) dt {
   color: var(--tx);
@@ -157,6 +159,7 @@
   font-size: 14px;
   line-height: 1.5;
   background: var(--lilac);
+  color: var(--on-bright);
 }
 .insight svg {
   flex: none;

@@ -25,7 +25,7 @@
   padding: 8px 10px 8px 8px;
   border-radius: 999px;
   font-size: 13px;
-  color: var(--tx);
+  color: var(--on-bright);
   background: var(--lime);
   animation: fade 0.5s var(--out) both;
 }
@@ -35,7 +35,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--tx);
+  background: var(--ink-fixed);
   color: var(--lime);
   flex: none;
 }
@@ -43,8 +43,8 @@
   margin-left: auto;
   padding: 5px 12px;
   border-radius: 999px;
-  background: var(--tx);
-  color: #fff;
+  background: var(--ink);
+  color: var(--on-ink);
   font-weight: 600;
   font-size: 12.5px;
 }
@@ -84,7 +84,7 @@
 .skHead {
   display: block;
   border-radius: var(--r-card);
-  background: linear-gradient(100deg, #ebeae5 30%, #f6f5f1 50%, #ebeae5 70%) 0 0 / 200% 100%;
+  background: linear-gradient(100deg, var(--sk-a) 30%, var(--sk-b) 50%, var(--sk-a) 70%) 0 0 / 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
 @keyframes shimmer {

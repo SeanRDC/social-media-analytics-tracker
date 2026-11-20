@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Urbanist } from "next/font/google";
 import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
+import { THEME_BG, THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 const geist = Geist({
@@ -32,13 +33,17 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f3f2ee",
-  colorScheme: "light",
+  themeColor: THEME_BG.light,
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geist.variable} ${urbanist.variable}`}>
+    // the theme script sets data-theme before React hydrates, so the attribute is allowed to differ
+    <html lang="en" data-theme="light" className={`${geist.variable} ${urbanist.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>{children}</body>
     </html>
   );

@@ -40,8 +40,8 @@
   padding: 30px;
   gap: 18px;
   background-image:
-    linear-gradient(rgba(20, 20, 22, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 20, 22, 0.035) 1px, transparent 1px);
+    linear-gradient(var(--texture) 1px, transparent 1px),
+    linear-gradient(90deg, var(--texture) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 .summaryText {
@@ -58,10 +58,12 @@
   border-radius: 0.4em;
   font-weight: 600;
   background: var(--lime);
+  color: var(--on-bright);
 }
 .summaryText b + b,
 .summaryText b:nth-of-type(2) {
   background: var(--lilac);
+  color: var(--on-bright);
 }
 
 /* bars */
@@ -110,6 +112,7 @@
 /* the largest share is cobalt; the rest are lilac */
 .track i[data-top="false"] {
   background: var(--lilac);
+  color: var(--on-bright);
 }
 @keyframes growX {
   from {
@@ -126,6 +129,7 @@
   padding: 7px 14px;
   border-radius: 999px;
   background: var(--lime);
+  color: var(--on-bright);
 }
 .best b {
   font-weight: 600;
@@ -151,7 +155,7 @@
   height: 40px;
   border-radius: 12px;
   /* one hue: pale cobalt to full cobalt */
-  background: color-mix(in srgb, var(--acc) calc(8% + var(--v) * 92%), #eef1ff);
+  background: color-mix(in srgb, var(--acc) calc(8% + var(--v) * 92%), var(--heat-base));
   transition: transform 0.18s var(--out), box-shadow 0.18s var(--out);
   animation: fade 0.5s var(--out) both;
   animation-delay: calc(200ms + var(--i, 0) * 30ms);

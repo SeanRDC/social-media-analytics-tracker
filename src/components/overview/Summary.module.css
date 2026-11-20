@@ -10,8 +10,8 @@
     linear-gradient(var(--card) 0 0) padding-box,
     var(--card);
   background-image:
-    linear-gradient(rgba(20, 20, 22, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 20, 22, 0.035) 1px, transparent 1px);
+    linear-gradient(var(--texture) 1px, transparent 1px),
+    linear-gradient(90deg, var(--texture) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
@@ -128,15 +128,15 @@
 }
 .lime {
   background: var(--lime);
-  color: var(--tx);
+  color: var(--on-bright);
 }
 .lime .tileIcon {
-  background: var(--tx);
+  background: var(--ink-fixed);
   color: var(--lime);
 }
 .lilac {
   background: var(--lilac);
-  color: var(--tx);
+  color: var(--on-bright);
 }
 .lilac .tileIcon {
   background: rgba(255, 255, 255, 0.55);

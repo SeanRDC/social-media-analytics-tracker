@@ -23,12 +23,15 @@
 }
 .preset:nth-of-type(4n + 2) {
   background: var(--lime);
+  color: var(--on-bright);
 }
 .preset:nth-of-type(4n + 3) {
   background: var(--lilac);
+  color: var(--on-bright);
 }
 .preset:nth-of-type(4n + 4) {
   background: var(--mint);
+  color: var(--on-bright);
 }
 .icon {
   width: 48px;
@@ -36,7 +39,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: #fff;
+  background: var(--raised);
   color: var(--tx);
   margin-bottom: 10px;
   transition: transform 0.35s var(--spring);
@@ -136,7 +139,7 @@
   padding: 4px;
   border-radius: 50%;
   background: var(--lime);
-  color: var(--tx);
+  color: var(--on-bright);
 }
 .footnote {
   grid-column: 1 / -1;
