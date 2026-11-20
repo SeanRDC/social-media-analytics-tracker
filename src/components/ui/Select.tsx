@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "@/components/icons/Icon";
 import { useAnchoredMenu } from "@/hooks/useAnchoredMenu";
+import { useDismiss } from "@/hooks/useDismiss";
 import s from "./Select.module.css";
 
 interface Option<T> {
@@ -78,20 +79,8 @@ export function Select<T extends string | number>({
         ?.scrollIntoView?.({ block: "nearest" });
   }, [open, active]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      const t = e.target as Node;
-      if (!wrap.current?.contains(t) && !list.current?.contains(t))
-        setOpen(false);
-    };
-    document.addEventListener("pointerdown", onDown);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      // a hidden page keeps its components mounted; never leave the list open behind it
-      setOpen(false);
-    };
-  }, [open]);
+  // Escape is one of the list's own keys below
+  useDismiss(open, [wrap, list], () => setOpen(false), { escape: false });
 
   const onButtonKey = (e: KeyboardEvent) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {

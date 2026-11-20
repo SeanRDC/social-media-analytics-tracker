@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icon, type IconName } from "@/components/icons/Icon";
+import { useDismiss } from "@/hooks/useDismiss";
 import type { Notification, NotificationKind } from "@/lib/notifications";
 import s from "./NotificationBell.module.css";
 
@@ -79,25 +80,10 @@ export function NotificationBell({ initialUnread, load, onRead, onReadAll }: Pro
     void refresh();
   };
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      const t = e.target as Node;
-      if (!button.current?.contains(t) && !panel.current?.contains(t)) setOpenOn(null);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpenOn(null);
-        button.current?.focus();
-      }
-    };
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  useDismiss(open, [button, panel], (reason) => {
+    setOpenOn(null);
+    if (reason === "escape") button.current?.focus();
+  });
 
   // pinned under the bell, right edges aligned, kept inside the screen
   useLayoutEffect(() => {

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "@/components/icons/Icon";
 import { useAnchoredMenu } from "@/hooks/useAnchoredMenu";
+import { useDismiss } from "@/hooks/useDismiss";
 import s from "./SortMenu.module.css";
 
 interface Props<T extends string> {
@@ -28,28 +29,10 @@ export function SortMenu<T extends string>({
   useAnchoredMenu(button, menu, open, "end");
   const current = options.find((o) => o.value === value)?.label ?? "";
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      const t = e.target as Node;
-      if (!wrap.current?.contains(t) && !menu.current?.contains(t))
-        setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        button.current?.focus();
-      }
-    };
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("keydown", onKey);
-      // navigating away keeps this page mounted but hidden; never leave the menu open behind it
-      setOpen(false);
-    };
-  }, [open]);
+  useDismiss(open, [wrap, menu], (reason) => {
+    setOpen(false);
+    if (reason === "escape") button.current?.focus();
+  });
 
   return (
     <div ref={wrap} className={s.wrap}>
