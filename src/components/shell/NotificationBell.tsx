@@ -6,6 +6,7 @@ import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icon, type IconName } from "@/components/icons/Icon";
 import { useDismiss } from "@/hooks/useDismiss";
+import { formatMonthDay } from "@/lib/format";
 import type { Notification, NotificationKind } from "@/lib/notifications";
 import s from "./NotificationBell.module.css";
 
@@ -17,8 +18,6 @@ const KIND_ICON: Record<NotificationKind, IconName> = {
   report: "mail",
 };
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
 /** "Just now", "5m ago", "3h ago", "Yesterday", "Nov 11". */
 export function timeAgo(iso: string, now = Date.now()): string {
   const mins = Math.floor((now - new Date(iso).getTime()) / 60_000);
@@ -28,7 +27,7 @@ export function timeAgo(iso: string, now = Date.now()): string {
   if (hours < 24) return `${hours}h ago`;
   if (hours < 48) return "Yesterday";
   const d = new Date(iso);
-  return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  return formatMonthDay(d.getMonth(), d.getDate());
 }
 
 interface Props {

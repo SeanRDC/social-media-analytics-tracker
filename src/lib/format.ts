@@ -29,10 +29,13 @@ export function formatDuration(seconds: number | null): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+/** "Nov 11" from a month (0 = January) and a day of the month. */
+export const formatMonthDay = (month: number, day: number): string => `${MONTHS[month]} ${day}`;
+
 /** "2026-11-11" → "Nov 11" (parsed as a calendar date, no time zone shift). */
 export function formatDate(iso: string): string {
   const [, m, d] = iso.split("-").map(Number);
-  return `${MONTHS[m - 1]} ${d}`;
+  return formatMonthDay(m - 1, d);
 }
 
 export function formatNumber(n: number): string {

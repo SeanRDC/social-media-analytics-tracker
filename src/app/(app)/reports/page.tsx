@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
-import { Icon } from "@/components/icons/Icon";
+import { Icon, type IconName } from "@/components/icons/Icon";
 import { saveSchedule } from "@/app/actions/reports";
 import { ScheduleCard } from "@/components/reports/ScheduleCard";
 import s from "@/components/reports/Reports.module.css";
 import { ExportButton } from "@/components/ui/ExportButton";
 import { getSchedule } from "@/lib/reports/schedule";
 import { hasData } from "@/lib/data/api";
-import { PRESETS } from "@/lib/reports/build";
+import { PRESETS, type PresetId } from "@/lib/reports/build";
 import { requireUser } from "@/lib/dal";
+
+const PRESET_ICON: Record<PresetId, IconName> = { monthly: "chart", weekly: "calendar", content: "play", client: "users" };
 
 export const metadata: Metadata = { title: "Reports" };
 
@@ -20,7 +22,7 @@ export default async function ReportsPage() {
       {PRESETS.map((p, i) => (
         <section key={p.id} className={`${s.card} ${s.preset} card lift reveal`} style={{ "--i": i + 1 } as CSSProperties} aria-labelledby={`rp-${i}`}>
           <span className={s.icon} aria-hidden="true">
-            <Icon name={p.icon} size={18} />
+            <Icon name={PRESET_ICON[p.id]} size={18} />
           </span>
           <h2 id={`rp-${i}`} className={s.h2}>
             {p.title}

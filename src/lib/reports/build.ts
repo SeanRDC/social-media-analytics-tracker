@@ -2,7 +2,6 @@
  * One description of each report, used for the CSV download, the print-ready
  * PDF view and the weekly email. Pure: it only arranges data it is given.
  */
-import type { IconName } from "@/components/icons/Icon";
 import { addDays } from "@/lib/dates";
 import type { Audience, DailyViews, Metrics, Overview, Platform, Post, Range } from "@/lib/data/types";
 import { postsInRange, sortPosts } from "@/lib/data/sort";
@@ -10,11 +9,11 @@ import { PLATFORM_NAMES } from "@/lib/platforms";
 
 export type PresetId = "monthly" | "weekly" | "content" | "client";
 
-export const PRESETS: { id: PresetId; title: string; desc: string; icon: IconName; includes: string[] }[] = [
-  { id: "monthly", title: "Monthly performance", desc: "Followers, views and engagement for every platform over the last 30 days.", icon: "chart", includes: ["Overview", "Platforms", "Top posts"] },
-  { id: "weekly", title: "Weekly snapshot", desc: "One page with the week's growth and your best post. Good for Monday mornings.", icon: "calendar", includes: ["Growth", "Best post"] },
-  { id: "content", title: "Content deep-dive", desc: "Every post ranked by views and engagement, with watch time and shares.", icon: "play", includes: ["All posts", "Watch time", "Shares"] },
-  { id: "client", title: "Client summary", desc: "A clean summary of results and audience, ready to send to a client.", icon: "users", includes: ["Highlights", "Audience", "Top posts"] },
+export const PRESETS: { id: PresetId; title: string; desc: string; includes: string[] }[] = [
+  { id: "monthly", title: "Monthly performance", desc: "Followers, views and engagement for every platform over the last 30 days.", includes: ["Overview", "Platforms", "Top posts"] },
+  { id: "weekly", title: "Weekly snapshot", desc: "One page with the week's growth and your best post. Good for Monday mornings.", includes: ["Growth", "Best post"] },
+  { id: "content", title: "Content deep-dive", desc: "Every post ranked by views and engagement, with watch time and shares.", includes: ["All posts", "Watch time", "Shares"] },
+  { id: "client", title: "Client summary", desc: "A clean summary of results and audience, ready to send to a client.", includes: ["Highlights", "Audience", "Top posts"] },
 ];
 
 export const isPreset = (id: string): id is PresetId => PRESETS.some((p) => p.id === id);
