@@ -37,14 +37,22 @@ export function PostSheet({ post, onClose }: Props) {
       return;
     }
     if (!post && d.open) {
-      const reduce = prefersReducedMotion();
-      d.dataset.closing = "true";
-      const t = window.setTimeout(() => {
+      const s = sheet.current;
+      let stale = false;
+      const finish = () => {
+        if (stale) return;
         d.close();
         delete d.dataset.closing;
-        if (sheet.current) sheet.current.style.transform = "";
-      }, reduce ? 0 : 180);
-      return () => window.clearTimeout(t);
+        if (s) s.style.transform = "";
+      };
+      d.dataset.closing = "true";
+      // close once the sheet's slide-out (set in the CSS) has played, however long it is
+      const playing = prefersReducedMotion() || !s?.getAnimations ? [] : s.getAnimations();
+      if (playing.length) Promise.all(playing.map((a) => a.finished)).then(finish, finish);
+      else finish();
+      return () => {
+        stale = true;
+      };
     }
   }, [post]);
 

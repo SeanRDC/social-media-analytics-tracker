@@ -10,9 +10,14 @@ export function PrintButton() {
   useEffect(() => {
     if (opened.current) return;
     opened.current = true;
-    // let fonts and layout settle first
-    const t = window.setTimeout(() => window.print(), 400);
-    return () => window.clearTimeout(t);
+    let left = false;
+    // print once the web fonts have loaded, so the PDF uses them
+    void document.fonts.ready.then(() => {
+      if (!left) window.print();
+    });
+    return () => {
+      left = true;
+    };
   }, []);
   return (
     <button type="button" className={s.print} onClick={() => window.print()}>
