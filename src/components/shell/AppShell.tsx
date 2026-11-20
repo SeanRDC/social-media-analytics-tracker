@@ -12,60 +12,47 @@ import { TopNav, TopNavSkeleton } from "./TopNav";
 import s from "./AppShell.module.css";
 
 /**
- * The tab bar and a navbar placeholder paint instantly as the static shell.
- * Everything that depends on who is signed in streams in behind Suspense.
+ * The tab bar, page title and a navbar placeholder paint instantly as the
+ * static shell. The navbar (who is signed in) and the page stream in side by
+ * side: the page is never nested under the session check, so moving between
+ * pages isn't held up by it. Each page checks the session itself through the
+ * Data Access Layer, and the proxy turns away visitors without a session cookie.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <RangeProvider>
-      <Suspense fallback={<ShellLoading />}>
-        <SignedIn>{children}</SignedIn>
+      <Suspense fallback={<TopNavSkeleton />}>
+        <SignedInNav />
       </Suspense>
+      <main className={s.main}>
+        <Header />
+        <Suspense fallback={null}>
+          <SimulatedNotice />
+        </Suspense>
+        {children}
+      </main>
       <TabBar />
     </RangeProvider>
   );
 }
 
-async function SignedIn({ children }: { children: ReactNode }) {
-  const [user, source] = await Promise.all([requireUser(), getDataSource()]);
+async function SignedInNav() {
+  const user = await requireUser();
   const unread = await unreadCount(getDb(), user.id).catch(() => 0);
+  return <TopNav accountName={user.name} image={user.image} unread={unread} />;
+}
+
+async function SimulatedNotice() {
+  if ((await getDataSource()) !== "simulated") return null;
   return (
-    <>
-      <TopNav accountName={user.name} image={user.image} unread={unread} />
-      <main className={s.main}>
-        <Header />
-        {source === "simulated" && (
-          <p className={s.notice}>
-            <span className={s.noticeIcon}>
-              <Icon name="sparkle" size={14} />
-            </span>
-            <span>{SIMULATED_NOTICE}</span>
-            <Link href="/settings">Connected accounts</Link>
-          </p>
-        )}
-        {children}
-      </main>
-    </>
+    <p className={s.notice}>
+      <span className={s.noticeIcon}>
+        <Icon name="sparkle" size={14} />
+      </span>
+      <span>{SIMULATED_NOTICE}</span>
+      <Link href="/settings">Connected accounts</Link>
+    </p>
   );
 }
 
 const SIMULATED_NOTICE = "Some accounts are simulated locally, so their numbers are generated. Add platform credentials to import real ones.";
-
-function ShellLoading() {
-  return (
-    <>
-      <TopNavSkeleton />
-      <main className={s.main}>
-        <div className={s.loading} role="status" aria-label="Loading your dashboard">
-          <span className={s.skHead} />
-          <div className={s.skGrid}>
-            <span className={s.sk} />
-            <span className={s.sk} />
-            <span className={s.sk} />
-          </div>
-          <span className={`${s.sk} ${s.skWide}`} />
-        </div>
-      </main>
-    </>
-  );
-}
