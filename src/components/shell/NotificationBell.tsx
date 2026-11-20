@@ -84,7 +84,6 @@ export function NotificationBell({ initialUnread, load, onRead, onReadAll }: Pro
     if (reason === "escape") button.current?.focus();
   });
 
-  // pinned under the bell, right edges aligned, kept inside the screen
   useLayoutEffect(() => {
     if (!open) return;
     const place = () => {

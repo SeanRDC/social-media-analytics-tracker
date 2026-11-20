@@ -63,7 +63,6 @@ export function simulatedSnapshot(platform: PlatformId, window: SyncWindow): Pla
     return Math.round(p.views * weekend * (1 + 0.2 * Math.sin(d * 0.9)) * (0.75 + 0.5 * noise(platform, d + 7919)));
   };
 
-  // followers at the day before the window, then forward
   const first = daysBetween(EPOCH, window.start);
   let followers = p.base;
   for (let d = 0; d < first; d++) followers += gainOn(d);

@@ -71,7 +71,6 @@ export function Select<T extends string | number>({
     if (open) list.current?.focus();
   }, [open]);
 
-  // keep the active option visible while moving through a long list
   useEffect(() => {
     if (open)
       list.current

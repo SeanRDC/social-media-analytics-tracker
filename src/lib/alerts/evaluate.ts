@@ -67,7 +67,6 @@ export function evaluateAlerts(ds: Dataset | null, asOf: string | null, expired:
   if (!ds || !asOf) return alerts;
   const live = ds.connections.filter((c) => c.status === "connected" && c.daily.length);
 
-  // a new post taking off: recent posts against the median of the months before
   for (const c of live) {
     const posts = ds.posts.filter((p) => p.platform === c.platform);
     const recent = posts.filter((p) => isoDate(p.publishedAt) >= addDays(asOf, -2));

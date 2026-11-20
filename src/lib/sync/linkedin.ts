@@ -77,7 +77,6 @@ async function fetchPosts(
   const list = ((body.elements as Post[] | undefined) ?? []).filter((p) => p.id);
   if (!list.length) return [];
 
-  // lifetime statistics per post, in one request
   const shares = list.filter((p) => p.id.startsWith("urn:li:share:")).map((p) => enc(p.id));
   const ugc = list.filter((p) => p.id.startsWith("urn:li:ugcPost:")).map((p) => enc(p.id));
   const params = [shares.length ? `shares=List(${shares.join(",")})` : "", ugc.length ? `ugcPosts=List(${ugc.join(",")})` : ""].filter(Boolean).join("&");
