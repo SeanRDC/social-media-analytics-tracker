@@ -1,7 +1,7 @@
 /**
  * Facebook Pages through Facebook Login. The user token is swapped for a
  * long-lived one, then for the Page token (which does not expire), so only the
- * Page token is stored. v1 connects the first Page the person manages.
+ * Page token is stored. Someone who manages several Pages chooses one.
  */
 import { META_SCOPES } from "../scopes";
 import { expiresIn, getJson, str, withQuery } from "./oauth";

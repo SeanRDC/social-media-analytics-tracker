@@ -16,7 +16,7 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 
 - **Versions:** Graph API `v26.0` (released 2026-07-29), override with `META_GRAPH_VERSION`. LinkedIn `LinkedIn-Version: 202607`, override with `LINKEDIN_API_VERSION`; retired versions return 426.
 - **Facebook + Instagram share one Meta login (2026-11-19):** each new Facebook Login for the app replaces its access to the Page, so the Page token stored for the other connection fails with `190/492` ("must be an administrator, editor, or moderator of the page"). Both providers therefore request the same scopes (`META_SCOPES`), and after either connects, the other connection for the same Page/Instagram account gets the fresh Page token (`refreshSiblings`).
-- **Multiple Pages:** v1 connects the first Facebook Page or LinkedIn organization the person manages. A picker can come later.
+- **Multiple Pages:** someone who manages several Facebook Pages, Instagram accounts or LinkedIn Pages picks one on `/onboarding/choose` after the platform login (`src/lib/connect/flow.ts`). The login is held in an encrypted cookie for 10 minutes meanwhile.
 - Sources: [Graph API v26.0](https://developers.facebook.com/docs/graph-api/changelog/version26.0), [LinkedIn versioning](https://learn.microsoft.com/en-us/linkedin/marketing/versioning), [Business Login for Instagram](https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-instagram-login/business-login), [LinkedIn organization access control](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/organizations/organization-access-control-by-role)
 
 ## YouTube (phase 3)
@@ -38,7 +38,7 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 
 ## Instagram (phase 4)
 
-**As built (2026-11-16):** `src/lib/sync/instagram.ts`. `/{ig-id}?fields=username,followers_count`, `/{ig-id}/media` (100 most recent, with `insights.metric(views,shares)`; retried without insights if refused), `follower_demographics` with `metric_type=total_value` and `breakdown=age|country|gender` (optional). Instagram reports totals, so daily rows are derived from the change between syncs and history starts on the day of connection. **Verify with an approved account:** the `views`/`shares` media insight names and the demographics response shape.
+**As built (2026-11-16):** `src/lib/sync/instagram.ts`. `/{ig-id}?fields=username,followers_count`, `/{ig-id}/media` (up to 500 most recent on the first import, 200 on each daily sync, with `insights.metric(views,shares)`; retried without insights if refused), `follower_demographics` with `metric_type=total_value` and `breakdown=age|country|gender` (optional). Instagram reports totals, so daily rows are derived from the change between syncs and history starts on the day of connection. **Verify with an approved account:** the `views`/`shares` media insight names and the demographics response shape.
 
 - **API (changed 2026-11-19):** Instagram API with **Facebook Login** (`graph.facebook.com`), through the same Meta app as Facebook. Meta no longer offers Instagram Login to new apps: every new app gets Facebook Login for Business, and the Instagram use case only shows "Unified login" and "Facebook login". The Instagram account must be Professional and linked to a Facebook Page; it is found with `/me/accounts?fields=instagram_business_account{id,username}` and read by its id with the Page token. Unified Login (business portfolio + `config_id`, system-user tokens) is the possible future path.
 - **Permissions:** `instagram_basic`, `instagram_manage_insights`, `pages_show_list`, `pages_read_engagement`, `business_management` (without it, Pages in a business portfolio return no `instagram_business_account`; `connected_instagram_account` is checked too). Advanced access (App Review) is needed for users outside the app's roles.
@@ -55,7 +55,7 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 
 ## TikTok (phase 5)
 
-**As built (2026-11-16):** `src/lib/sync/tiktok.ts`. `GET /v2/user/info/?fields=open_id,follower_count,likes_count,video_count` and `POST /v2/video/list/` (20 per page, 100 videos) with `view_count, like_count, comment_count, share_count`. Daily rows are derived from the change between syncs. **Verify:** the stats fields require `user.info.stats` / `video.list`; a 2026-11-16 search did not confirm the count fields on the v2 reference pages.
+**As built (2026-11-16):** `src/lib/sync/tiktok.ts`. `GET /v2/user/info/?fields=open_id,follower_count,likes_count,video_count` and `POST /v2/video/list/` (20 per page, up to 500 videos on the first import, 200 on each daily sync) with `view_count, like_count, comment_count, share_count`. Daily rows are derived from the change between syncs. **Verify:** the stats fields require `user.info.stats` / `video.list`; a 2026-11-16 search did not confirm the count fields on the v2 reference pages.
 
 - **API:** Login Kit + Display API.
 - **Scopes:** `user.info.basic`, `user.info.profile`, `user.info.stats` (follower, following, likes and video counts), `video.list` (recent videos).

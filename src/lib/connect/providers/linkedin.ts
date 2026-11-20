@@ -2,7 +2,7 @@
  * LinkedIn Pages through the Community Management API (organization pages only).
  * Access tokens last 60 days. Refresh tokens are only issued to approved
  * partners; without one the connection turns "expired" and asks to reconnect.
- * v1 connects the first Page the person administers.
+ * Someone who administers several Pages chooses one (up to 20 are offered).
  */
 import { LINKEDIN_SCOPES } from "../scopes";
 import { expiresIn, getJson, postForm, str, withQuery } from "./oauth";

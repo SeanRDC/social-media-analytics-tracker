@@ -43,6 +43,5 @@ Everything the code can do is built (phases 0–7). This is what stands between 
 
 ## Known gaps
 
-- A strict Content-Security-Policy (scripts with nonces) is not set yet; only framing and form targets are restricted.
+- The Content-Security-Policy allows inline scripts (no nonces, which would make every page render per request); everything else is restricted to our own origin, with images from any HTTPS host for platform thumbnails.
 - The PDF export uses the browser's print dialog rather than a generated file.
-- Facebook and LinkedIn connect the first Page the person manages; there is no Page picker yet.
