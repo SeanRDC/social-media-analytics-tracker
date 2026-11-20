@@ -1,4 +1,11 @@
 import { APP_NAME, LEGAL_CONTACT } from "@/lib/brand";
+import { LINKEDIN_SCOPES, META_SCOPES, scopeName, TIKTOK_SCOPES, YOUTUBE_SCOPES } from "@/lib/connect/scopes";
+
+/** "a, b and c": the permissions exactly as the login code requests them. */
+const names = (scopes: string[]) => {
+  const n = scopes.map(scopeName);
+  return n.length > 1 ? `${n.slice(0, -1).join(", ")} and ${n[n.length - 1]}` : n[0];
+};
 
 const ext = { target: "_blank", rel: "noreferrer" } as const;
 
@@ -47,13 +54,13 @@ export function PrivacyText() {
       <h2>Permissions we ask platforms for</h2>
       <p>We only ask for permissions to read the statistics above:</p>
       <ul>
-        <li>Google / YouTube: youtube.readonly and yt-analytics.readonly.</li>
+        <li>Google / YouTube: {names(YOUTUBE_SCOPES)}.</li>
         <li>
-          Facebook and Instagram (one Meta login serves both): pages_show_list, pages_read_engagement, pages_read_user_content, read_insights, instagram_basic,
-          instagram_manage_insights, and business_management, which we use only to find the Instagram account linked to a Page owned by a business portfolio.
+          Facebook and Instagram (one Meta login serves both): {names(META_SCOPES)}. We use business_management only to find the Instagram account linked to a Page
+          owned by a business portfolio.
         </li>
-        <li>TikTok: user.info.basic, user.info.profile, user.info.stats and video.list.</li>
-        <li>LinkedIn: r_organization_social and rw_organization_admin, which we use only to find the Pages you administer and read their statistics.</li>
+        <li>TikTok: {names(TIKTOK_SCOPES)}.</li>
+        <li>LinkedIn: {names(LINKEDIN_SCOPES)}, which we use only to find the Pages you administer and read their statistics.</li>
       </ul>
 
       <h2>What we never do</h2>

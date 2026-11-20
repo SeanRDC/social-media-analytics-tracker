@@ -4,10 +4,9 @@
  * partners; without one the connection turns "expired" and asks to reconnect.
  * v1 connects the first Page the person administers.
  */
+import { LINKEDIN_SCOPES } from "../scopes";
 import { expiresIn, getJson, postForm, str, withQuery } from "./oauth";
 import { ReauthRequired, type Provider, type TokenSet } from "./types";
-
-export const LINKEDIN_SCOPES = ["r_organization_social", "rw_organization_admin"];
 
 /** YYYYMM; LinkedIn retires versions after about a year, so keep this current. */
 export const linkedinVersion = () => process.env.LINKEDIN_API_VERSION || "202607";

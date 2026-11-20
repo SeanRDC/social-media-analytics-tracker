@@ -3,19 +3,9 @@
  * long-lived one, then for the Page token (which does not expire), so only the
  * Page token is stored. v1 connects the first Page the person manages.
  */
+import { META_SCOPES } from "../scopes";
 import { expiresIn, getJson, str, withQuery } from "./oauth";
 import type { Provider } from "./types";
-
-// pages_read_user_content is needed to list the Page's posts (/published_posts)
-export const FACEBOOK_SCOPES = ["pages_show_list", "pages_read_engagement", "pages_read_user_content", "read_insights"];
-// business_management: Pages and Instagram accounts in a business portfolio only show their link with it
-const INSTAGRAM_ONLY = ["instagram_basic", "instagram_manage_insights", "business_management"];
-/**
- * Facebook and Instagram ask for the same permissions: each new Meta login
- * replaces the app's access to the Page (the old Page token then fails with
- * 190/492), so either login has to produce a token that serves both.
- */
-export const META_SCOPES = [...FACEBOOK_SCOPES, ...INSTAGRAM_ONLY];
 
 export const graphVersion = () => process.env.META_GRAPH_VERSION || "v26.0";
 

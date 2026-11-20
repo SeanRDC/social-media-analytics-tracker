@@ -2,10 +2,9 @@
  * YouTube through Google OAuth. Uses the same OAuth client as Google sign-in;
  * add /api/connect/youtube/callback to its redirect URIs.
  */
+import { YOUTUBE_SCOPES } from "../scopes";
 import { expiresIn, getJson, postForm, str, withQuery } from "./oauth";
 import { ReauthRequired, type Provider, type TokenSet } from "./types";
-
-export const YOUTUBE_SCOPES = ["https://www.googleapis.com/auth/youtube.readonly", "https://www.googleapis.com/auth/yt-analytics.readonly"];
 
 export function youtubeCredentials() {
   const clientId = process.env.GOOGLE_CLIENT_ID;

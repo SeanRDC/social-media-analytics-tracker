@@ -3,10 +3,9 @@
  * about a year. People can decline individual scopes, so the granted list is
  * stored as returned.
  */
+import { TIKTOK_SCOPES } from "../scopes";
 import { expiresIn, getJson, postForm, str, withQuery } from "./oauth";
 import { ReauthRequired, type Provider, type TokenSet } from "./types";
-
-export const TIKTOK_SCOPES = ["user.info.basic", "user.info.profile", "user.info.stats", "video.list"];
 
 export function tiktokCredentials() {
   const clientId = process.env.TIKTOK_CLIENT_KEY;

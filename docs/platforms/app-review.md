@@ -125,5 +125,5 @@ In the form, explain each permission in one sentence using the table above.
 
 - Don't add permissions without a new review. An unreviewed permission shows users an "unverified app" warning (Google) or fails (Meta, TikTok).
 - Changing the app name, logo, homepage or privacy URL at Google triggers re-verification.
-- Keep the privacy policy's permission list in sync with `src/lib/connect/providers/*` whenever scopes change.
+- The privacy policy lists permissions straight from `src/lib/connect/scopes.ts`, so changing a scope there updates the policy too (a test checks it).
 - Meta runs an annual Data Use Checkup. Answer it from "Data handling answers" above.
