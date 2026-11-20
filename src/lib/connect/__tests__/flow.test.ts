@@ -178,8 +178,8 @@ describe("live providers", () => {
 });
 
 describe("unavailable platforms", () => {
-  it("sends X back as unavailable without a cookie", () => {
-    const r = beginConnect({ platform: "x", userId: "u1", returnTo: "/settings", baseUrl: BASE });
-    expect(r).toEqual({ location: "/settings?connect=error&platform=x&reason=unavailable" });
+  it("sends an unsupported platform back as unavailable without a cookie", () => {
+    const r = beginConnect({ platform: "myspace", userId: "u1", returnTo: "/settings", baseUrl: BASE });
+    expect(r).toEqual({ location: "/settings?connect=error&platform=myspace&reason=unavailable" });
   });
 });

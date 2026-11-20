@@ -9,7 +9,7 @@ import { youtubeCredentials, youtubeProvider } from "./youtube";
 
 type Creds = { clientId: string; clientSecret: string };
 
-/** Platforms that can be connected. X is out of scope (paid API). */
+/** Platforms that can be connected. */
 const REGISTRY: Partial<Record<PlatformId, { credentials: () => Creds | null; create: (c: Creds) => Provider }>> = {
   youtube: { credentials: youtubeCredentials, create: youtubeProvider },
   facebook: { credentials: facebookCredentials, create: facebookProvider },

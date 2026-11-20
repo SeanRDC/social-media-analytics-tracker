@@ -6,7 +6,6 @@ export const PLATFORM_NAMES: Record<PlatformId, string> = {
   tiktok: "TikTok",
   linkedin: "LinkedIn",
   instagram: "Instagram",
-  x: "X",
 };
 
 export const platformColor = (id: PlatformId) => `var(--p-${id})`;

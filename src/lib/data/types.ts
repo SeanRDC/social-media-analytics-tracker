@@ -1,10 +1,10 @@
 export type Range = 7 | 30 | 90;
 export const RANGES: readonly Range[] = [7, 30, 90];
 
-export type PlatformId = "youtube" | "facebook" | "tiktok" | "linkedin" | "instagram" | "x";
+export type PlatformId = "youtube" | "facebook" | "tiktok" | "linkedin" | "instagram";
 
 /** Fixed order: the colour palette is validated for neighbours in this order. */
-export const PLATFORM_ORDER: readonly PlatformId[] = ["youtube", "facebook", "tiktok", "linkedin", "instagram", "x"];
+export const PLATFORM_ORDER: readonly PlatformId[] = ["youtube", "facebook", "tiktok", "linkedin", "instagram"];
 
 export type ConnectionStatus = "connected" | "needs-professional" | "not-connected" | "expired";
 

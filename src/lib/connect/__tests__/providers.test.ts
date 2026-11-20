@@ -223,7 +223,7 @@ describe("resolveProvider", () => {
     expect(connectMode("tiktok")).toBe("unavailable");
   });
 
-  it("never offers X or unknown platforms", () => {
+  it("never offers unknown platforms, including X, which isn't supported", () => {
     expect(resolveProvider("x")).toBeNull();
     expect(resolveProvider("myspace")).toBeNull();
   });

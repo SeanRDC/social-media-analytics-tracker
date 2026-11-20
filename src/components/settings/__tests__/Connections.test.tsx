@@ -11,7 +11,7 @@ const LIST: ConnectionView[] = [
   { id: "youtube", name: "YouTube", account: "Northbay Studio", status: "connected", mode: "live" },
   { id: "tiktok", name: "TikTok", account: "@northbay", status: "expired", mode: "live" },
   { id: "linkedin", name: "LinkedIn", account: "", status: "not-connected", mode: "live" },
-  { id: "x", name: "X", account: "", status: "not-connected", mode: "unavailable" },
+  { id: "facebook", name: "Facebook", account: "", status: "not-connected", mode: "unavailable" },
 ];
 
 const setup = (onDisconnect = vi.fn(async () => {})) => {
@@ -59,9 +59,9 @@ describe("Connections", () => {
   it("links unconnected platforms to the connect flow and marks unavailable ones", () => {
     setup();
     expect(within(screen.getByRole("listitem", { name: "LinkedIn" })).getByRole("link", { name: "Connect" })).toBeInTheDocument();
-    const x = screen.getByRole("listitem", { name: "X" });
-    expect(within(x).getByText("Coming later")).toBeInTheDocument();
-    expect(within(x).queryByRole("link")).toBeNull();
+    const unavailable = screen.getByRole("listitem", { name: "Facebook" });
+    expect(within(unavailable).getByText("Coming later")).toBeInTheDocument();
+    expect(within(unavailable).queryByRole("link")).toBeNull();
   });
 
   it("shows the result of a connection attempt", () => {

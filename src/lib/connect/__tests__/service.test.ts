@@ -76,10 +76,13 @@ describe("listConnections", () => {
   it("lists every platform in order with the user's status", async () => {
     await saveConnection(db, "u1", "tiktok", tokens(), { externalId: "o1", name: "@northbay" });
     const list = await listConnections(db, "u1");
-    expect(list.map((c) => c.id)).toEqual(["youtube", "facebook", "tiktok", "linkedin", "instagram", "x"]);
+    expect(list.map((c) => c.id)).toEqual(["youtube", "facebook", "tiktok", "linkedin", "instagram"]);
     expect(list.find((c) => c.id === "tiktok")).toMatchObject({ status: "connected", account: "@northbay", name: "TikTok" });
     expect(list.find((c) => c.id === "youtube")).toMatchObject({ status: "not-connected", account: "", mode: "live" });
-    expect(list.find((c) => c.id === "x")?.mode).toBe("unavailable");
+    // without credentials a platform is simulated locally, and unavailable in production
+    expect(list.find((c) => c.id === "linkedin")?.mode).toBe("simulated");
+    vi.stubEnv("NODE_ENV", "production");
+    expect((await listConnections(db, "u1")).find((c) => c.id === "linkedin")?.mode).toBe("unavailable");
   });
 });
 

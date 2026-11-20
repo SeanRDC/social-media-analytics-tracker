@@ -8,13 +8,13 @@ vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(q
 describe("SyncProgress", () => {
   it("imports each platform once and reports how it went", async () => {
     query = "p=youtube,tiktok";
-    const onImport = vi.fn(async (id: string) => (id === "youtube" ? ("imported" as const) : ("not-yet" as const)));
+    const onImport = vi.fn(async (id: string) => (id === "youtube" ? ("imported" as const) : ("busy" as const)));
     render(<SyncProgress onImport={onImport} />);
     expect(screen.getByText("Importing…")).toBeInTheDocument();
     expect(await screen.findByRole("link", { name: /Open dashboard/ })).toHaveAttribute("href", "/overview");
     expect(onImport.mock.calls.map((c) => c[0])).toEqual(["youtube", "tiktok"]);
     expect(within(screen.getByRole("listitem", { name: "YouTube" })).getByText("History imported")).toBeInTheDocument();
-    expect(within(screen.getByRole("listitem", { name: "TikTok" })).getByText(/coming update/)).toBeInTheDocument();
+    expect(within(screen.getByRole("listitem", { name: "TikTok" })).getByText(/busy right now/)).toBeInTheDocument();
   });
 
   it("treats a crashed import as failed instead of hanging", async () => {

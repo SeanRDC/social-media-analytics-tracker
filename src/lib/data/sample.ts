@@ -36,7 +36,6 @@ const PLATFORM_SEEDS: PlatformSeed[] = [
   { id: "tiktok", name: "TikTok", account: "@northbay.studio", status: "connected", followers: 46_900, followerGrowth: { 7: 650, 30: 2_600, 90: 6_500 }, engagement: 8.9, views30: 2_600_000, posts30: 14, followerNoun: "followers" },
   { id: "linkedin", name: "LinkedIn", account: "Northbay Studio", status: "connected", followers: 9_400, followerGrowth: { 7: 100, 30: 300, 90: 700 }, engagement: 3.0, views30: 76_000, posts30: 4, followerNoun: "followers" },
   { id: "instagram", name: "Instagram", account: "@northbay.studio", status: "connected", followers: 58_200, followerGrowth: { 7: 600, 30: 2_300, 90: 5_600 }, engagement: 6.4, views30: 1_250_000, posts30: 12, followerNoun: "followers" },
-  { id: "x", name: "X", account: "", status: "not-connected", followers: 0, followerGrowth: { 7: 0, 30: 0, 90: 0 }, engagement: 0, views30: 0, posts30: 0, followerNoun: "followers" },
 ];
 
 export const PLATFORMS: Platform[] = PLATFORM_SEEDS.map((p, i) => ({

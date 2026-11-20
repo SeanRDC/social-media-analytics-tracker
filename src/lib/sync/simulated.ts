@@ -26,7 +26,6 @@ const PROFILES: Record<PlatformId, Profile> = {
   tiktok: { base: 41_000, gain: 85, views: 85_000, rate: 0.089, cadence: 2, kinds: ["video"], postViews: 60_000, watch: 20, demographics: false },
   linkedin: { base: 8_900, gain: 10, views: 2_500, rate: 0.03, cadence: 7, kinds: ["post"], postViews: 6_000, watch: null, demographics: true },
   instagram: { base: 53_000, gain: 75, views: 40_000, rate: 0.064, cadence: 2, kinds: ["reel", "post"], postViews: 45_000, watch: 25, demographics: true },
-  x: { base: 5_000, gain: 5, views: 3_000, rate: 0.02, cadence: 2, kinds: ["post"], postViews: 2_000, watch: null, demographics: false },
 };
 
 const TITLES = [

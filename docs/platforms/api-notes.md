@@ -72,9 +72,9 @@ Each platform's OAuth details live in `src/lib/connect/providers/`. Callback URL
 - **Follower statistics:** `organizationalEntityFollowerStatistics` returns lifetime follower demographics or time-bound follower stats. Community reports show 403s even with `rw_organization_admin`, so confirm the endpoint is enabled for the approved product tier.
 - Sources: [follower statistics](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/organizations/follower-statistics), [app review](https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review), [overview](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/community-management-overview)
 
-## X
+## X (removed)
 
-Out of scope (paid read access).
+Not supported: its API charges for read access. Removed from the app entirely on 2026-11-21.
 
 ## App sign-in library
 

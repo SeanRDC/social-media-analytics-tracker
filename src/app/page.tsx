@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 const FEATURES: { icon: IconName; title: string; body: string; tone: "cobalt" | "lime" | "lilac" }[] = [
-  { icon: "grid", title: "Every platform together", body: "Followers, views and engagement from YouTube, TikTok, Instagram, Facebook, LinkedIn and X, side by side and in the same units.", tone: "cobalt" },
+  { icon: "grid", title: "Every platform together", body: "Followers, views and engagement from YouTube, TikTok, Instagram, Facebook and LinkedIn, side by side and in the same units.", tone: "cobalt" },
   { icon: "sparkle", title: "See what's working", body: "Daily views against last week, your best posts and when your posts do best, explained in plain words instead of raw numbers.", tone: "lime" },
   { icon: "download", title: "Reports in a click", body: "Monthly, weekly and client-ready summaries as PDF or CSV, or emailed to you every Monday before the week starts.", tone: "lilac" },
 ];

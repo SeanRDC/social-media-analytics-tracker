@@ -73,11 +73,6 @@ describe("syncConnection", () => {
     expect(await count()).toEqual(before);
   });
 
-  it("skips platforms without a fetcher", async () => {
-    const id = await saveConnection(db, "u1", "x", tokens, { externalId: "x-id", name: "@me" });
-    expect(await syncConnection(db, id, NOW)).toEqual({ status: "unsupported" });
-  });
-
   it("marks the connection expired when YouTube rejects the token", async () => {
     vi.stubEnv("GOOGLE_CLIENT_ID", "id");
     vi.stubEnv("GOOGLE_CLIENT_SECRET", "secret");

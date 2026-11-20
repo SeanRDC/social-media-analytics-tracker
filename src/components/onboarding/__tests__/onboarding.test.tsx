@@ -7,7 +7,7 @@ const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: vi.fn() }) }));
 
 const view = (over: Partial<ConnectionView> & Pick<ConnectionView, "id" | "name">): ConnectionView => ({ account: "", status: "not-connected", mode: "live", ...over });
-const PLATFORMS = [view({ id: "youtube", name: "YouTube" }), view({ id: "instagram", name: "Instagram" }), view({ id: "x", name: "X", mode: "unavailable" })];
+const PLATFORMS = [view({ id: "youtube", name: "YouTube" }), view({ id: "instagram", name: "Instagram" }), view({ id: "linkedin", name: "LinkedIn", mode: "unavailable" })];
 
 describe("ConnectFlow", () => {
   beforeEach(() => push.mockClear());
@@ -64,8 +64,8 @@ describe("ConnectFlow", () => {
   it("marks unavailable platforms as coming later and simulated ones as simulated", () => {
     const list = [view({ id: "youtube", name: "YouTube", mode: "simulated" }), PLATFORMS[2]];
     render(<ConnectFlow platforms={list} result={null} />);
-    expect(within(screen.getByRole("listitem", { name: "X" })).getByText("Coming later")).toBeInTheDocument();
-    expect(within(screen.getByRole("listitem", { name: "X" })).queryByRole("link")).toBeNull();
+    expect(within(screen.getByRole("listitem", { name: "LinkedIn" })).getByText("Coming later")).toBeInTheDocument();
+    expect(within(screen.getByRole("listitem", { name: "LinkedIn" })).queryByRole("link")).toBeNull();
     expect(within(screen.getByRole("listitem", { name: "YouTube" })).getByText(/Simulated/)).toBeInTheDocument();
   });
 });

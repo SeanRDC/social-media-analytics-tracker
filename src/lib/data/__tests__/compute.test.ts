@@ -85,8 +85,8 @@ describe("with imported history", () => {
   });
 
   it("lists platforms that are not connected with no numbers rather than zeros", () => {
-    const x = platforms.find((p) => p.id === "x")!;
-    expect(x).toMatchObject({ status: "not-connected", followers: null, views30: null, engagement: null, followerGrowth: { 7: null, 30: null, 90: null }, trend: [] });
+    const notConnected = platforms.find((p) => p.id === "facebook")!;
+    expect(notConnected).toMatchObject({ status: "not-connected", followers: null, views30: null, engagement: null, followerGrowth: { 7: null, 30: null, 90: null }, trend: [] });
     expect(platforms.find((p) => p.id === "youtube")?.followerNoun).toBe("subscribers");
   });
 

@@ -1,7 +1,7 @@
 /**
  * Imports platform numbers into the database. Writes are upserts keyed by
  * connection + date (and post + date), so syncing the same days twice changes
- * nothing. Platforms without a fetcher (X) are skipped.
+ * nothing.
  */
 import { and, asc, desc, eq, lt, sql } from "drizzle-orm";
 import type { Db } from "@/db";
@@ -22,7 +22,8 @@ import { fetchYouTube } from "./youtube";
 
 type Fetcher = (accessToken: string, window: SyncWindow, ctx: FetchContext) => Promise<PlatformSnapshot>;
 
-const FETCHERS: Partial<Record<PlatformId, Fetcher>> = {
+/** Every platform has a fetcher: adding a platform without one doesn't compile. */
+const FETCHERS: Record<PlatformId, Fetcher> = {
   youtube: fetchYouTube,
   facebook: fetchFacebook,
   instagram: fetchInstagram,
@@ -35,7 +36,7 @@ export const FIRST_IMPORT_DAYS = 180;
 /** Later syncs re-read a few days, because platforms finalise recent numbers late. */
 const OVERLAP_DAYS = 3;
 
-export type SyncResult = { status: "synced"; days: number; posts: number } | { status: "skipped" | "unsupported" | "expired" | "deferred" };
+export type SyncResult = { status: "synced"; days: number; posts: number } | { status: "skipped" | "expired" | "deferred" };
 
 /** A short, safe reason for Settings: our own error messages carry no tokens; anything else is generic. */
 const reasonOf = (e: unknown) => (e instanceof ProviderError ? e.message : "Unexpected error while importing").slice(0, 200);
@@ -54,11 +55,10 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
 
   const fetcher = FETCHERS[row.platform];
   const simulated = row.externalId.startsWith(SIMULATED_PREFIX);
-  if (!simulated && !fetcher) return { status: "unsupported" };
 
   let snapshot: PlatformSnapshot;
   try {
-    snapshot = simulated ? simulatedSnapshot(row.platform, window) : await fetcher!(await getAccessToken(db, row.id), window, { externalId: row.externalId });
+    snapshot = simulated ? simulatedSnapshot(row.platform, window) : await fetcher(await getAccessToken(db, row.id), window, { externalId: row.externalId });
     await storeSnapshot(db, row.id, window.end, snapshot);
   } catch (e) {
     if (e instanceof ReauthRequired) {

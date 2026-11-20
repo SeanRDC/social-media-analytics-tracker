@@ -13,7 +13,6 @@ const HINT: Record<PlatformId, string> = {
   tiktok: "Followers, views and video stats",
   linkedin: "Company page followers and posts",
   instagram: "Professional account linked to a Facebook Page",
-  x: "Posts and followers",
 };
 
 const RETURN_TO = "/onboarding/connect";
