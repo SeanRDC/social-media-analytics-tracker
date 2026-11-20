@@ -179,6 +179,14 @@ describe("edge cases", () => {
     expect(t[3]).toEqual({ day: "Thu", slots: [0, 0, 1, 0] });
     expect(t[0].slots[0]).toBe(0.5);
   });
+
+  it("groups best times by the person's own clock, weekday included", () => {
+    const post = (iso: string, views: number) => ({ publishedAt: new Date(iso), views }) as PostData;
+    // Wednesday 22:00 UTC is Thursday 6 a.m. in Manila (UTC+8)
+    const posts = [post("2026-11-11T22:00:00Z", 500)];
+    expect(bestTimes(posts, "UTC")[2]).toEqual({ day: "Wed", slots: [0, 0, 0, 1] });
+    expect(bestTimes(posts, "Asia/Manila")[3]).toEqual({ day: "Thu", slots: [1, 0, 0, 0] });
+  });
 });
 
 describe("period-over-period change", () => {

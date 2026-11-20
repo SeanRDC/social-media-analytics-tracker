@@ -33,6 +33,27 @@ export async function getSchedule(userId: string, db: Db = getDb()): Promise<Sch
   return row ? { enabled: row.enabled, dayOfWeek: row.dayOfWeek, hour: row.hour, timezone: row.timezone } : DEFAULT_SCHEDULE;
 }
 
+/**
+ * The person's time zone, kept with the weekly email schedule (the one place
+ * the app stores it). Null when they have never had one saved.
+ */
+export async function getSavedTimeZone(userId: string, db: Db = getDb()): Promise<string | null> {
+  const [row] = await db.select({ timezone: reportSchedule.timezone }).from(reportSchedule).where(eq(reportSchedule.userId, userId));
+  return row?.timezone ?? null;
+}
+
+/**
+ * Saves the device's time zone for someone who has none yet, without turning
+ * the weekly email on. A zone they already have (chosen with the schedule, or
+ * saved earlier) is kept, so travelling doesn't move their charts.
+ */
+export async function rememberTimeZone(db: Db, userId: string, timezone: string) {
+  await db
+    .insert(reportSchedule)
+    .values({ userId, enabled: false, timezone: validZone(timezone) })
+    .onConflictDoNothing({ target: reportSchedule.userId });
+}
+
 const validZone = (tz: string) => {
   try {
     new Intl.DateTimeFormat("en-US", { timeZone: tz });

@@ -144,6 +144,7 @@ export const AUDIENCE: Audience = {
     { name: "Other", share: 23 },
   ],
   slotLabels: ["9 a.m.", "1 p.m.", "6 p.m.", "10 p.m."],
+  timeZone: "UTC",
   bestTimes: [
     { day: "Mon", slots: [0.2, 0.35, 0.6, 0.4] },
     { day: "Tue", slots: [0.25, 0.4, 0.7, 0.45] },

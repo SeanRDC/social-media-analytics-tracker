@@ -142,4 +142,6 @@ export interface Audience {
   countries: { name: string; share: number }[];
   slotLabels: string[];
   bestTimes: { day: string; slots: number[] }[];
+  /** The IANA time zone the best times are grouped in, e.g. "Asia/Manila". */
+  timeZone: string;
 }

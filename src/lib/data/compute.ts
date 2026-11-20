@@ -267,7 +267,7 @@ const regionName = (() => {
   };
 })();
 
-export function computeAudience(ds: Dataset, asOf: string): Audience {
+export function computeAudience(ds: Dataset, asOf: string, timeZone = "UTC"): Audience {
   const conns = live(ds);
   const followers = new Map(conns.map((c) => [c.platform, latestFollowers(c, asOf) || 1]));
   const rows = ds.audience.filter((a) => followers.has(a.platform));
@@ -296,19 +296,31 @@ export function computeAudience(ds: Dataset, asOf: string): Audience {
     ages: ageLabels.map((label, i) => ({ label, share: ageShares[i] })),
     countries,
     slotLabels: SLOT_LABELS,
-    bestTimes: bestTimes(ds.posts.filter((p) => followers.has(p.platform))),
+    bestTimes: bestTimes(ds.posts.filter((p) => followers.has(p.platform)), timeZone),
+    timeZone,
   };
 }
 
 /** Morning 5–11, midday 11–16, evening 16–20, night 20–5 (UTC). */
 const slotOf = (hour: number) => (hour >= 5 && hour < 11 ? 0 : hour >= 11 && hour < 16 ? 1 : hour >= 16 && hour < 20 ? 2 : 3);
 
-/** Average views by weekday and time slot, scaled so the best cell is 1. */
-export function bestTimes(posts: PostData[]): Audience["bestTimes"] {
+/** A moment's weekday (0 = Monday) and hour in a time zone. */
+function localDayHour(timeZone: string) {
+  const fmt = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short", hour: "numeric", hourCycle: "h23" });
+  return (d: Date) => {
+    const parts = fmt.formatToParts(d);
+    const weekday = parts.find((p) => p.type === "weekday")!.value;
+    return { day: WEEK.indexOf(weekday), hour: Number(parts.find((p) => p.type === "hour")!.value) };
+  };
+}
+
+/** Average views by weekday and time slot in the person's time zone, scaled so the best cell is 1. */
+export function bestTimes(posts: PostData[], timeZone = "UTC"): Audience["bestTimes"] {
   const cells = WEEK.map(() => SLOT_LABELS.map(() => ({ views: 0, n: 0 })));
+  const local = localDayHour(timeZone);
   for (const p of posts) {
-    const day = (p.publishedAt.getUTCDay() + 6) % 7;
-    const cell = cells[day][slotOf(p.publishedAt.getUTCHours())];
+    const { day, hour } = local(p.publishedAt);
+    const cell = cells[day][slotOf(hour)];
     cell.views += p.views;
     cell.n++;
   }

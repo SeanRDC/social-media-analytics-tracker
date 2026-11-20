@@ -11,6 +11,7 @@ import { asOfDate, computeAudience, computeDailyViews, computeOverview, computeP
 import { loadDataset, type DataSource } from "./live";
 import type { ReportData } from "@/lib/reports/build";
 import { reportDataFrom } from "@/lib/reports/data";
+import { getSavedTimeZone } from "@/lib/reports/schedule";
 import { sortPosts } from "./sort";
 import type { Audience, DailyViews, Overview, Platform, Post, PostQuery } from "./types";
 
@@ -69,10 +70,14 @@ export async function getPosts(q: PostQuery = {}): Promise<Post[]> {
   return sortPosts(list, q.sort ?? "views");
 }
 
+/** Audience breakdowns, with best times in the person's saved time zone (UTC until one is saved). */
 export async function getAudience(): Promise<Audience> {
-  const d = await data();
-  return computeAudience(d.dataset, d.asOf);
+  const [d, zone] = await Promise.all([data(), getTimeZone()]);
+  return computeAudience(d.dataset, d.asOf, zone ?? "UTC");
 }
+
+/** The person's saved time zone, or null before one is saved. */
+export const getTimeZone = cache(async () => getSavedTimeZone((await requireUser()).id));
 
 /**
  * Everything a report needs, for the signed-in user, or null before any import

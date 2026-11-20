@@ -9,10 +9,24 @@ const FULL_DAY: Record<string, string> = { Mon: "Monday", Tue: "Tuesday", Wed: "
 interface Props {
   slotLabels: string[];
   days: { day: string; slots: number[] }[];
+  /** IANA time zone the times are in, e.g. "Asia/Manila". */
+  timeZone: string;
+}
+
+/** "Asia/Manila" → "Manila time (GMT+8)"; "UTC" stays "UTC". */
+export function zoneLabel(timeZone: string, at = new Date()): string {
+  if (timeZone === "UTC") return "UTC";
+  const city = timeZone.slice(timeZone.lastIndexOf("/") + 1).replace(/_/g, " ");
+  try {
+    const offset = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "shortOffset" }).formatToParts(at).find((p) => p.type === "timeZoneName")?.value;
+    return offset ? `${city} time (${offset})` : `${city} time`;
+  } catch {
+    return `${city} time`;
+  }
 }
 
 /** Heatmap of when the audience is most active. One hue, light to strong. */
-export function BestTimes({ slotLabels, days }: Props) {
+export function BestTimes({ slotLabels, days, timeZone }: Props) {
   const [focus, setFocus] = useState<{ d: number; t: number } | null>(null);
   let best = { d: 0, t: 0, v: -1 };
   days.forEach((row, d) => row.slots.forEach((v, t) => v > best.v && (best = { d, t, v })));
@@ -64,6 +78,7 @@ export function BestTimes({ slotLabels, days }: Props) {
       <p className={s.readout} role="status">
         {readout}
       </p>
+      <p className={s.zone}>Times in {zoneLabel(timeZone)}</p>
     </section>
   );
 }

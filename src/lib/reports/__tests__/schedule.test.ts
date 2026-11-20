@@ -7,7 +7,7 @@ import type { Db } from "@/db";
 import * as schema from "@/db/schema";
 import { saveConnection } from "@/lib/connect/service";
 import { renderReportEmail } from "@/lib/reports/email";
-import { getSchedule, isDue, lastOccurrence, saveScheduleFor, sendWeeklyReports } from "@/lib/reports/schedule";
+import { getSavedTimeZone, getSchedule, isDue, lastOccurrence, rememberTimeZone, saveScheduleFor, sendWeeklyReports } from "@/lib/reports/schedule";
 import { syncConnection } from "@/lib/sync/service";
 
 const MON_9_MANILA = { dayOfWeek: 1, hour: 9, timezone: "Asia/Manila" };
@@ -58,6 +58,21 @@ describe("weekly email", () => {
 
   it("is off by default", async () => {
     expect(await getSchedule("u1", db)).toMatchObject({ enabled: false });
+  });
+
+  it("remembers a device's time zone once, without turning the email on or overriding a chosen zone", async () => {
+    expect(await getSavedTimeZone("u1", db)).toBeNull();
+    await rememberTimeZone(db, "u1", "Asia/Manila");
+    expect(await getSavedTimeZone("u1", db)).toBe("Asia/Manila");
+    expect(await getSchedule("u1", db)).toMatchObject({ enabled: false, timezone: "Asia/Manila" });
+    // travelling: a later device zone doesn't move it
+    await rememberTimeZone(db, "u1", "Europe/London");
+    expect(await getSavedTimeZone("u1", db)).toBe("Asia/Manila");
+  });
+
+  it("stores UTC for a time zone the browser made up", async () => {
+    await rememberTimeZone(db, "u1", "Not/AZone");
+    expect(await getSavedTimeZone("u1", db)).toBe("UTC");
   });
 
   it("sends once per week, and only to people with imported numbers", async () => {
