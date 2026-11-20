@@ -17,7 +17,8 @@ Everything the code can do is built (phases 0–7). This is what stands between 
 
 ## 3. Platforms
 
-- [ ] Each platform app is approved for the scopes in `docs/platforms/api-notes.md` (Google verification, Meta App Review, TikTok, LinkedIn Community Management).
+- [ ] Each platform app is approved for the scopes in `docs/platforms/api-notes.md` (Google verification, Meta App Review, TikTok, LinkedIn Community Management). Follow `docs/platforms/app-review.md`: reviewer account, permission table, demo video scripts.
+- [ ] After every review is approved, remove `REVIEWER_EMAIL` from Vercel so password sign-in is off.
 - [ ] With a real account on each platform: connect, import, and compare a few numbers with the platform's own dashboard. Check the "Verify" notes per platform in `api-notes.md` (field and metric names that could not be confirmed without access).
 - [ ] Check quotas in each developer console (YouTube Data API: 10,000 units a day by default). Accounts that hit a quota are skipped and retried the next run; Settings tells the person.
 
@@ -30,8 +31,10 @@ Everything the code can do is built (phases 0–7). This is what stands between 
 
 - [ ] Privacy policy, terms and data deletion pages reviewed for your jurisdiction (they are drafts) and `LEGAL_CONTACT_EMAIL` set.
 - [ ] Try Settings → Delete account with a test account: you are signed out, the platform shows our app removed, and signing in again starts fresh.
-- [ ] Rate limits are on in production: sign-in links (5 per 10 minutes per IP), connecting (20/hour), imports (6/hour per platform), exports (60/hour) and push sign-ups (20/hour) per person.
-- [ ] Response headers on the live site include `X-Frame-Options: DENY`, `Strict-Transport-Security` and `X-Content-Type-Options: nosniff` (check with your browser's network tab or securityheaders.com).
+- [ ] Rate limits are on in production: sign-in links and reviewer password attempts (5 per 10 minutes per IP each), connecting (20/hour), imports (6/hour per platform), exports (60/hour) and push sign-ups (20/hour) per person.
+- [ ] Response headers on the live site include `Content-Security-Policy`, `X-Frame-Options: DENY`, `Strict-Transport-Security` and `X-Content-Type-Options: nosniff` (check with your browser's network tab or securityheaders.com).
+- [ ] Keep dependencies patched: run `npm audit` monthly and watch the Next.js, React and Better Auth security advisories. Dev-only advisories (vitest, drizzle-kit) don't ship to the site but should be cleared when a non-breaking upgrade exists.
+- [ ] New connections that lose access are deleted after 7 days by the nightly job (`purgeLostAccess`). Check `job_finished` logs show `retention` with `failed: 0`.
 
 ## 6. Scale (when it matters)
 
