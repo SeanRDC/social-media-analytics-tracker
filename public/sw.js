@@ -1,6 +1,6 @@
 // Service worker: shows alert notifications and opens the app when one is tapped.
 self.addEventListener("push", (event) => {
-  let data = { title: "Social Tracker", body: "", url: "/overview" };
+  let data = { title: "Ispector", body: "", url: "/overview" };
   try {
     data = { ...data, ...event.data.json() };
   } catch {
@@ -9,8 +9,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: "/icon.svg",
-      badge: "/icon.svg",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
       data: { url: data.url },
     }),
   );

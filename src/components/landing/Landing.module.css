@@ -85,6 +85,12 @@
   outline: 2px solid var(--lime);
   outline-offset: 2px;
 }
+.navEnd {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .navCta {
   justify-self: end;
   display: inline-flex;

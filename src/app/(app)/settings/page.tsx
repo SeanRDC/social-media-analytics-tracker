@@ -15,6 +15,7 @@ import { setAlert, subscribePush, unsubscribePush } from "@/app/actions/alerts";
 import { DeleteAccount } from "@/components/settings/DeleteAccount";
 import { PushToggle } from "@/components/settings/PushToggle";
 import { ThemePicker } from "@/components/settings/ThemePicker";
+import { InstallApp } from "@/components/pwa/InstallApp";
 import { getAlertSettings } from "@/lib/alerts/run";
 import { vapidPublicKey } from "@/lib/push";
 import { parseConnectResult } from "@/lib/connect/result";
@@ -62,6 +63,13 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
           Appearance
         </h2>
         <ThemePicker />
+        <div className={s.installRow}>
+          <span className={s.pfText}>
+            <b>Install Ispector</b>
+            <small>Add it to your phone&apos;s Home Screen or your computer&apos;s dock and open it like an app.</small>
+          </span>
+          <InstallApp />
+        </div>
         <p className={s.info}>
           <Icon name="sparkle" size={15} />
           <span>Motion follows your device: turn on Reduce Motion in your phone or computer settings and the app goes still.</span>

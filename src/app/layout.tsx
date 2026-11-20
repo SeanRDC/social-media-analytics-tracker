@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Urbanist } from "next/font/google";
 import { APP_NAME, APP_TAGLINE, SITE_URL } from "@/lib/brand";
+import { ServiceWorker } from "@/components/pwa/ServiceWorker";
 import { THEME_BG, THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
@@ -48,7 +49,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <ServiceWorker />
+      </body>
     </html>
   );
 }

@@ -1,0 +1,77 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s var(--out),
+    transform 0.14s var(--out);
+}
+.button[data-tone="light"] {
+  background: var(--track);
+  color: var(--tx);
+}
+.button[data-tone="light"]:hover {
+  background: var(--track-hover);
+}
+.button[data-tone="dark"] {
+  background: var(--nav-inset);
+  color: var(--nav-tx);
+}
+.button[data-tone="dark"]:hover {
+  background: var(--nav-hover);
+}
+.button:active {
+  transform: scale(0.97);
+}
+.button:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+.tip {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 50;
+  width: min(280px, calc(100vw - 32px));
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--menu);
+  color: var(--tx);
+  border: 1px solid var(--cardb);
+  box-shadow: 0 20px 40px -16px rgba(20, 20, 22, 0.35);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.tip ol {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tip svg {
+  vertical-align: -2px;
+}
+
+/* narrow phones: the icon alone, so it fits beside "Start free" */
+@media (max-width: 420px) {
+  .label {
+    display: none;
+  }
+  .button {
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+}

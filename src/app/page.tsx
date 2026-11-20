@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { InstallApp } from "@/components/pwa/InstallApp";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Icon, type IconName } from "@/components/icons/Icon";
@@ -44,9 +45,12 @@ export default async function Landing() {
             <a href="#preview">Preview</a>
             <Link href="/sign-in">Sign in</Link>
           </nav>
-          <Link href="/sign-in" className={s.navCta}>
-            Start free
-          </Link>
+          <div className={s.navEnd}>
+            <InstallApp tone="dark" />
+            <Link href="/sign-in" className={s.navCta}>
+              Start free
+            </Link>
+          </div>
         </div>
       </header>
 

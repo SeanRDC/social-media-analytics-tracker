@@ -248,6 +248,17 @@
   color: var(--acc);
   margin-top: 2px;
 }
+/* hidden by itself when the browser can't install (the button renders nothing) */
+.installRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.installRow:not(:has(button)) {
+  display: none;
+}
 .themes {
   display: flex;
   gap: 12px;
