@@ -1,9 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { authClient } from "@/lib/auth-client";
+import { safeNext, signedInPath, waitForSignIn } from "@/lib/auth-tabs";
 import type { SocialProvider } from "@/lib/auth-providers";
 import s from "./Onboarding.module.css";
 
@@ -11,16 +12,6 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LABEL: Record<SocialProvider, string> = { google: "Google", apple: "Apple" };
 const ICON = { google: "globe", apple: "user" } as const;
 
-/**
- * Only same-site paths are allowed as a post-sign-in destination. Browsers read
- * "/\evil.com" like "//evil.com", so backslashes and control characters are refused too.
- */
-export function safeNext(raw: string | null): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/overview";
-  const unsafe = (c: string) => c === "\\" || c.charCodeAt(0) < 0x20 || c.charCodeAt(0) === 0x7f;
-  if ([...raw].some(unsafe)) return "/overview";
-  return raw;
-}
 
 export function SignInForm({ providers, reviewer = false }: { providers: SocialProvider[]; reviewer?: boolean }) {
   const search = useSearchParams();
@@ -40,7 +31,8 @@ export function SignInForm({ providers, reviewer = false }: { providers: SocialP
     }
     setError("");
     setSending(true);
-    const { error: err } = await authClient.signIn.magicLink({ email: address, callbackURL: next, newUserCallbackURL: "/welcome" });
+    // the link opens a new tab; it lands on /signed-in, which hands over to this tab
+    const { error: err } = await authClient.signIn.magicLink({ email: address, callbackURL: signedInPath(next), newUserCallbackURL: signedInPath("/welcome") });
     setSending(false);
     if (err) {
       setError(err.message ?? "We couldn't send the link. Try again in a moment.");
@@ -59,6 +51,15 @@ export function SignInForm({ providers, reviewer = false }: { providers: SocialP
     void authClient.signIn.social({ provider, callbackURL: next, newUserCallbackURL: "/welcome" });
   };
 
+  // while "check your email" shows, carry on here as soon as the link is opened elsewhere
+  useEffect(() => {
+    if (!sentTo) return;
+    return waitForSignIn(
+      () => window.location.assign(next),
+      async () => Boolean((await authClient.getSession()).data),
+    );
+  }, [sentTo, next]);
+
   if (sentTo) {
     return (
       <div className={s.form} aria-live="polite">
@@ -69,7 +70,11 @@ export function SignInForm({ providers, reviewer = false }: { providers: SocialP
           Check your email
         </h2>
         <p className={s.sub}>
-          We sent a sign-in link to <b style={{ color: "var(--tx)" }}>{sentTo}</b>. It works once and expires in 10 minutes.
+          We sent a sign-in link to <b style={{ color: "var(--tx)" }}>{sentTo}</b>. It works once and expires in 10 minutes. Can&apos;t find it? Check your spam or junk folder.
+        </p>
+        <p className={s.waiting}>
+          <span className={s.waitingDot} aria-hidden="true" />
+          Open the link and this page signs you in by itself.
         </p>
         {devLink && (
           <a href={devLink} className={s.primary}>

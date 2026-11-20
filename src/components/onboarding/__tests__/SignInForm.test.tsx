@@ -1,12 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { safeNext, SignInForm } from "@/components/onboarding/SignInForm";
+import { SignInForm } from "@/components/onboarding/SignInForm";
+import { safeNext } from "@/lib/auth-tabs";
 
 const magicLink = vi.fn();
 const social = vi.fn();
 const emailSignIn = vi.fn();
 vi.mock("@/lib/auth-client", () => ({
-  authClient: { signIn: { magicLink: (...a: unknown[]) => magicLink(...a), social: (...a: unknown[]) => social(...a), email: (...a: unknown[]) => emailSignIn(...a) } },
+  authClient: { signIn: { magicLink: (...a: unknown[]) => magicLink(...a), social: (...a: unknown[]) => social(...a), email: (...a: unknown[]) => emailSignIn(...a) }, getSession: async () => ({ data: null }) },
 }));
 let search = new URLSearchParams();
 vi.mock("next/navigation", () => ({ useSearchParams: () => search, useRouter: () => ({ push: vi.fn() }) }));
@@ -76,7 +77,8 @@ describe("SignInForm", () => {
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "hello@northbay.studio" } });
     fireEvent.click(screen.getByRole("button", { name: "Email me a sign-in link" }));
     await waitFor(() => expect(screen.getByRole("heading", { name: "Check your email" })).toBeInTheDocument());
-    expect(magicLink).toHaveBeenCalledWith({ email: "hello@northbay.studio", callbackURL: "/platforms", newUserCallbackURL: "/welcome" });
+    expect(magicLink).toHaveBeenCalledWith({ email: "hello@northbay.studio", callbackURL: "/signed-in?next=%2Fplatforms", newUserCallbackURL: "/signed-in?next=%2Fwelcome" });
+    expect(screen.getByText(/Check your spam or junk folder/)).toBeInTheDocument();
     expect(screen.getByText("hello@northbay.studio")).toBeInTheDocument();
   });
 
@@ -103,6 +105,6 @@ describe("SignInForm", () => {
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "hello@northbay.studio" } });
     fireEvent.click(screen.getByRole("button", { name: "Email me a sign-in link" }));
     await waitFor(() => expect(magicLink).toHaveBeenCalled());
-    expect(magicLink.mock.calls[0][0].callbackURL).toBe("/overview");
+    expect(magicLink.mock.calls[0][0].callbackURL).toBe("/signed-in?next=%2Foverview");
   });
 });

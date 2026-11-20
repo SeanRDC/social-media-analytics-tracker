@@ -172,6 +172,29 @@
   text-align: center;
 }
 
+/* "check your email": this tab carries on once the link is opened elsewhere */
+.waiting {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--mu);
+}
+.waitingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--acc);
+  animation: pulse 1.6s var(--out) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .waitingDot {
+    animation: none;
+  }
+}
+
 /* reviewer sign-in: tucked away under the main options. <details> can't be a
    flex container in every browser, so the fields sit in their own column. */
 .reviewer {
