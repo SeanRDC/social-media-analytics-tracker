@@ -10,6 +10,7 @@ import { PLATFORM_ORDER, type ConnectionView, type PlatformId } from "@/lib/data
 import { PLATFORM_NAMES } from "@/lib/platforms";
 import { decrypt, encrypt } from "./crypto";
 import { connectMode, ReauthRequired, resolveProvider, type TokenSet } from "./providers";
+import { DAY_MS } from "@/lib/dates";
 
 type ConnectionRow = typeof connection.$inferSelect;
 
@@ -60,7 +61,7 @@ export async function refreshSiblings(db: Db, userId: string, tokens: TokenSet, 
  * revoked; the same rule applies to every platform so it is simple and predictable.
  */
 export const ACCESS_GRACE_DAYS = 7;
-export const deletionDate = (accessLostAt: Date) => new Date(accessLostAt.getTime() + ACCESS_GRACE_DAYS * 24 * 60 * 60 * 1000);
+export const deletionDate = (accessLostAt: Date) => new Date(accessLostAt.getTime() + ACCESS_GRACE_DAYS * DAY_MS);
 
 /** Every platform in display order, with the user's status for each. */
 export async function listConnections(db: Db, userId: string): Promise<ConnectionView[]> {
@@ -149,7 +150,7 @@ async function revokeQuietly(row: ConnectionRow) {
 }
 
 /** Longest refresh window of any provider (Instagram's 10 days). */
-const LOOKAHEAD_MS = 10 * 24 * 60 * 60 * 1000;
+const LOOKAHEAD_MS = 10 * DAY_MS;
 
 /** Daily job: refresh tokens that expire soon; mark the ones that cannot be refreshed as expired. */
 export async function refreshExpiring(db: Db, now = new Date()) {

@@ -1,4 +1,5 @@
 import type { PostSort } from "./types";
+import { DAY_MS } from "@/lib/dates";
 
 type Sortable = { views: number; engagement: number; publishedAt: string };
 
@@ -17,12 +18,11 @@ export const SORT_LABELS: Record<PostSort, string> = {
   date: "Newest",
 };
 
-const DAY = 86_400_000;
 
 /** Posts published in the last `days` days up to and including `asOf` (ISO dates). */
 export function postsInRange<T extends { publishedAt: string }>(posts: readonly T[], days: number, asOf: string): T[] {
   const end = Date.parse(asOf);
-  const start = end - (days - 1) * DAY;
+  const start = end - (days - 1) * DAY_MS;
   return posts.filter((p) => {
     const t = Date.parse(p.publishedAt);
     return t >= start && t <= end;

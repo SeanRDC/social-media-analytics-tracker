@@ -10,14 +10,14 @@ import { and, eq, lte } from "drizzle-orm";
 import type { Db } from "@/db";
 import { connection, user } from "@/db/schema";
 import { APP_NAME } from "@/lib/brand";
-import { isoDate } from "@/lib/dates";
+import { DAY_MS, isoDate } from "@/lib/dates";
 import { notify } from "@/lib/notifications";
 import { PLATFORM_NAMES } from "@/lib/platforms";
 import { describeError } from "@/lib/safe-error";
 import { ACCESS_GRACE_DAYS } from "./service";
 
 export async function purgeLostAccess(db: Db, now = new Date(), appUrl = process.env.BETTER_AUTH_URL ?? "") {
-  const cutoff = new Date(now.getTime() - ACCESS_GRACE_DAYS * 24 * 60 * 60 * 1000);
+  const cutoff = new Date(now.getTime() - ACCESS_GRACE_DAYS * DAY_MS);
   const rows = await db
     .select({ id: connection.id, userId: connection.userId, platform: connection.platform, accessLostAt: connection.accessLostAt, email: user.email })
     .from(connection)

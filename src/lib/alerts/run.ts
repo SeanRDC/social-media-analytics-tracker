@@ -7,7 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb, type Db } from "@/db";
 import { alertSetting, connection, user } from "@/db/schema";
 import { APP_NAME } from "@/lib/brand";
-import { isoDate } from "@/lib/dates";
+import { DAY_MS, isoDate } from "@/lib/dates";
 import { asOfDate } from "@/lib/data/compute";
 import { loadDataset } from "@/lib/data/live";
 import { deletionDate } from "@/lib/connect/service";
@@ -45,7 +45,7 @@ export async function runAlerts(db: Db, now = new Date(), appUrl = process.env.B
         asOf,
         expiredRows.map((r) => {
           const lost = r.accessLostAt ?? r.updatedAt;
-          return { platform: r.platform, since: isoDate(lost), daysLeft: Math.ceil((deletionDate(lost).getTime() - now.getTime()) / 86_400_000) };
+          return { platform: r.platform, since: isoDate(lost), daysLeft: Math.ceil((deletionDate(lost).getTime() - now.getTime()) / DAY_MS) };
         }),
       ).filter((a) => settings[a.kind]);
       for (const a of alerts) {
