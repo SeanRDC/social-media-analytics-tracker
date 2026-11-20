@@ -172,6 +172,39 @@
   text-align: center;
 }
 
+/* reviewer sign-in: tucked away under the main options */
+.reviewer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--cardb);
+}
+.reviewer summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--mu);
+  text-align: center;
+  list-style: none;
+}
+.reviewer summary::-webkit-details-marker {
+  display: none;
+}
+.reviewer[open] summary {
+  color: var(--tx);
+  margin-bottom: 4px;
+}
+.reviewer summary:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+.reviewer > :not(summary) + :not(summary) {
+  margin-top: 0;
+}
+
 /* ---------- connect / sync ---------- */
 .flow {
   display: flex;

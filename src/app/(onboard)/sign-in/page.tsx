@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SignInForm } from "@/components/onboarding/SignInForm";
 import s from "@/components/onboarding/Onboarding.module.css";
-import { enabledProviders } from "@/lib/auth-providers";
+import { enabledProviders, reviewerSignIn } from "@/lib/auth-providers";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -17,7 +17,7 @@ export default function SignInPage({ searchParams }: PageProps<"/sign-in">) {
       </Suspense>
       {/* reads ?next= from the URL, which is only known per request */}
       <Suspense>
-        <SignInForm providers={enabledProviders} />
+        <SignInForm providers={enabledProviders} reviewer={reviewerSignIn} />
       </Suspense>
     </main>
   );

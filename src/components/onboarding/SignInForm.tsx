@@ -22,7 +22,7 @@ export function safeNext(raw: string | null): string {
   return raw;
 }
 
-export function SignInForm({ providers }: { providers: SocialProvider[] }) {
+export function SignInForm({ providers, reviewer = false }: { providers: SocialProvider[]; reviewer?: boolean }) {
   const search = useSearchParams();
   const next = safeNext(search.get("next"));
   const [email, setEmail] = useState("");
@@ -126,6 +126,63 @@ export function SignInForm({ providers }: { providers: SocialProvider[] }) {
         </>
       )}
       <p className={s.fine}>No password needed. New here? The link creates your account.</p>
+      {reviewer && <ReviewerSignIn next={next} />}
     </form>
+  );
+}
+
+/**
+ * Password sign-in for platform app reviewers (Meta, TikTok, LinkedIn, Google),
+ * who can't receive our sign-in emails. Collapsed so everyone else ignores it.
+ * Its own <form> can't nest inside the email form, so fields submit by button.
+ */
+function ReviewerSignIn({ next }: { next: string }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const signIn = async () => {
+    setError("");
+    setBusy(true);
+    const { error: err } = await authClient.signIn.email({ email: email.trim(), password, callbackURL: next });
+    setBusy(false);
+    if (err) setError(err.status === 429 ? "Too many attempts. Try again in 10 minutes." : "That email and password don't match a reviewer account.");
+  };
+
+  return (
+    <details className={s.reviewer}>
+      <summary>App reviewer sign-in</summary>
+      <p className={s.fine}>For platform app reviewers using the test account we provided.</p>
+      <label className={s.field}>
+        <span>Reviewer email</span>
+        <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+      </label>
+      <label className={s.field}>
+        <span>Password</span>
+        <input
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void signIn();
+            }
+          }}
+          aria-invalid={!!error}
+          aria-describedby={error ? "reviewer-error" : undefined}
+        />
+      </label>
+      {error && (
+        <p id="reviewer-error" className={s.error} role="alert">
+          <Icon name="alert" size={14} /> {error}
+        </p>
+      )}
+      <button type="button" className={s.secondary} disabled={busy || !email || !password} aria-busy={busy} onClick={() => void signIn()}>
+        {busy ? "Signing in…" : "Sign in as reviewer"}
+      </button>
+    </details>
   );
 }

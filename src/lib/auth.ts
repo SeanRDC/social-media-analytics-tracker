@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { magicLink } from "better-auth/plugins/magic-link";
 import { getDb, schema } from "@/db";
-import { appleCredentials, googleCredentials } from "@/lib/auth-providers";
+import { appleCredentials, googleCredentials, reviewerSignIn } from "@/lib/auth-providers";
 import { APP_NAME } from "@/lib/brand";
 import { sendSignInEmail } from "@/lib/email";
 import { authLog } from "@/lib/safe-error";
@@ -19,6 +19,8 @@ function createAuth() {
       provider: "pg",
       schema: { user: schema.user, session: schema.session, account: schema.account, verification: schema.verification, rateLimit: schema.rateLimit },
     }),
+    // the platform reviewers' account only; nobody can sign up with a password
+    emailAndPassword: { enabled: reviewerSignIn, disableSignUp: true, minPasswordLength: 16 },
     socialProviders: {
       ...(googleCredentials ? { google: googleCredentials } : {}),
       ...(appleCredentials ? { apple: appleCredentials } : {}),
@@ -35,6 +37,8 @@ function createAuth() {
       customRules: {
         // each sign-in link costs an email: 5 per 10 minutes per IP address
         "/sign-in/magic-link": { window: 600, max: 5 },
+        // password guessing: 5 tries per 10 minutes per IP address
+        "/sign-in/email": { window: 600, max: 5 },
       },
     },
     trustedOrigins: appleCredentials ? ["https://appleid.apple.com"] : [],

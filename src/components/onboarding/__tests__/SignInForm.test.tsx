@@ -4,8 +4,9 @@ import { safeNext, SignInForm } from "@/components/onboarding/SignInForm";
 
 const magicLink = vi.fn();
 const social = vi.fn();
+const emailSignIn = vi.fn();
 vi.mock("@/lib/auth-client", () => ({
-  authClient: { signIn: { magicLink: (...a: unknown[]) => magicLink(...a), social: (...a: unknown[]) => social(...a) } },
+  authClient: { signIn: { magicLink: (...a: unknown[]) => magicLink(...a), social: (...a: unknown[]) => social(...a), email: (...a: unknown[]) => emailSignIn(...a) } },
 }));
 let search = new URLSearchParams();
 vi.mock("next/navigation", () => ({ useSearchParams: () => search, useRouter: () => ({ push: vi.fn() }) }));
@@ -20,6 +21,37 @@ describe("safeNext", () => {
     for (const bad of [null, "", "https://evil.com", "//evil.com", `/${bs}evil.com`, `/${bs}/evil.com`, `/${tab}evil`, `/a${nl}b`, `/a${del}b`, "evil.com"]) {
       expect(safeNext(bad)).toBe("/overview");
     }
+  });
+});
+
+describe("reviewer sign-in", () => {
+  beforeEach(() => {
+    emailSignIn.mockReset();
+    search = new URLSearchParams();
+  });
+
+  it("is hidden unless reviewer sign-in is on", () => {
+    render(<SignInForm providers={[]} />);
+    expect(screen.queryByText("App reviewer sign-in")).not.toBeInTheDocument();
+  });
+
+  it("signs a reviewer in with email and password", async () => {
+    emailSignIn.mockResolvedValue({ data: {}, error: null });
+    render(<SignInForm providers={[]} reviewer />);
+    fireEvent.click(screen.getByText("App reviewer sign-in"));
+    fireEvent.change(screen.getByLabelText("Reviewer email"), { target: { value: "review@ispector.site" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "a-long-test-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in as reviewer" }));
+    await waitFor(() => expect(emailSignIn).toHaveBeenCalledWith({ email: "review@ispector.site", password: "a-long-test-password", callbackURL: "/overview" }));
+  });
+
+  it("says when the details are wrong", async () => {
+    emailSignIn.mockResolvedValue({ data: null, error: { status: 401, message: "Invalid email or password" } });
+    render(<SignInForm providers={[]} reviewer />);
+    fireEvent.change(screen.getByLabelText("Reviewer email"), { target: { value: "review@ispector.site" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong-password-123" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in as reviewer" }));
+    expect(await screen.findByText(/don't match a reviewer account/)).toBeInTheDocument();
   });
 });
 
