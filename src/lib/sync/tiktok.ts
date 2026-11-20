@@ -7,13 +7,12 @@
  */
 import { getJson, postJson } from "@/lib/connect/providers/oauth";
 import { titleFrom } from "./daily";
-import type { PlatformSnapshot, PostRow } from "./types";
+import type { FetchContext, PlatformSnapshot, PostRow, SyncWindow } from "./types";
 
 const API = "https://open.tiktokapis.com/v2";
 const VIDEO_FIELDS = "id,title,video_description,create_time,cover_image_url,share_url,duration,view_count,like_count,comment_count,share_count";
 /** 20 per page is the API's maximum. */
 const PAGE = 20;
-const MAX_VIDEOS = 100;
 
 type Video = {
   id: string;
@@ -28,7 +27,7 @@ type Video = {
   share_count?: number;
 };
 
-export async function fetchTikTok(accessToken: string): Promise<PlatformSnapshot> {
+export async function fetchTikTok(accessToken: string, _window: SyncWindow, ctx: FetchContext): Promise<PlatformSnapshot> {
   const auth = { Authorization: `Bearer ${accessToken}` };
   const info = await getJson(`${API}/user/info/?fields=open_id,follower_count,likes_count,video_count`, "TikTok user info", auth);
   const user = (info.data as { user?: { follower_count?: number } } | undefined)?.user;
@@ -40,11 +39,11 @@ export async function fetchTikTok(accessToken: string): Promise<PlatformSnapshot
     const page = await postJson(`${API}/video/list/?fields=${VIDEO_FIELDS}`, { max_count: PAGE, ...(cursor ? { cursor } : {}) }, "TikTok video list", auth);
     const data = page.data as { videos?: Video[]; cursor?: number; has_more?: boolean } | undefined;
     videos.push(...(data?.videos ?? []));
-    if (!data?.has_more || !data.cursor || videos.length >= MAX_VIDEOS) break;
+    if (!data?.has_more || !data.cursor || videos.length >= ctx.maxPosts) break;
     cursor = data.cursor;
   }
 
-  const posts: PostRow[] = videos.slice(0, MAX_VIDEOS).map((v) => ({
+  const posts: PostRow[] = videos.slice(0, ctx.maxPosts).map((v) => ({
     externalId: v.id,
     title: titleFrom(v.title || v.video_description, "TikTok video"),
     kind: "video",

@@ -54,6 +54,8 @@ export interface PlatformSnapshot {
 export interface FetchContext {
   /** The platform's id for the account (Page id, organization id, …). */
   externalId: string;
+  /** How many of the most recent posts to read: more on the first import, so older posts are included too. */
+  maxPosts: number;
 }
 
 export interface SyncWindow {

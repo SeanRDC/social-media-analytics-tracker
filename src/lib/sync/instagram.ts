@@ -19,7 +19,6 @@ import { ageLabel, sharesOf, titleFrom } from "./daily";
 import { addDays, dateRange, isoDate } from "@/lib/dates";
 import type { AudienceRow, DailyRow, FetchContext, PlatformSnapshot, PostRow, SyncWindow } from "./types";
 
-const MAX_POSTS = 100;
 /** Meta keeps account metrics for about 90 days. */
 const MAX_DAYS = 90;
 /** Day requests in flight at once. */
@@ -49,7 +48,7 @@ export async function fetchInstagram(accessToken: string, window: SyncWindow, ct
   const me = await get(`/${encodeURIComponent(userId)}`, { fields: "username,followers_count,media_count" });
   const followers = Number(me.followers_count ?? 0) || 0;
 
-  const posts = await fetchMedia(get, userId);
+  const posts = await fetchMedia(get, userId, ctx.maxPosts);
   const daily = await fetchDaily(get, userId, window, followers, posts);
   const audience = await fetchDemographics(get, userId);
   // no daily insights at all (e.g. the permission was declined): fall back to totals
@@ -57,7 +56,7 @@ export async function fetchInstagram(accessToken: string, window: SyncWindow, ct
   return { followers, daily, posts, audience };
 }
 
-async function fetchMedia(get: (path: string, params: Record<string, string>) => Promise<Record<string, unknown>>, userId: string): Promise<PostRow[]> {
+async function fetchMedia(get: (path: string, params: Record<string, string>) => Promise<Record<string, unknown>>, userId: string, max: number): Promise<PostRow[]> {
   const base = "id,caption,media_type,media_product_type,timestamp,permalink,thumbnail_url,media_url,like_count,comments_count";
   const list = async (fields: string) => {
     const out: Media[] = [];
@@ -67,8 +66,8 @@ async function fetchMedia(get: (path: string, params: Record<string, string>) =>
       out.push(...((body.data as Media[] | undefined) ?? []));
       const paging = body.paging as { cursors?: { after?: string }; next?: string } | undefined;
       after = paging?.next ? paging.cursors?.after : undefined;
-    } while (after && out.length < MAX_POSTS);
-    return out.slice(0, MAX_POSTS);
+    } while (after && out.length < max);
+    return out.slice(0, max);
   };
   let raw: Media[];
   try {

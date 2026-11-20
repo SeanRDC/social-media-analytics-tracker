@@ -68,7 +68,7 @@ const channelRoutes = {
 describe("fetchYouTube", () => {
   it("builds daily rows, posts and audience from both APIs", async () => {
     api(channelRoutes);
-    const snap = await fetchYouTube("token", W);
+    const snap = await fetchYouTube("token", W, { externalId: "UC1", maxPosts: 200 });
     expect(snap.followers).toBe(1000);
     // followers rebuilt backwards: 1000 on the last day, minus each later day's net gain
     expect(snap.daily.map((d) => d.followers)).toEqual([980, 995, 1000]);
@@ -92,12 +92,12 @@ describe("fetchYouTube", () => {
 
   it("asks to reconnect when Google rejects the token", async () => {
     api({ "/channels": () => ({ status: 401, body: { error: { code: 401 } } }) });
-    await expect(fetchYouTube("token", W)).rejects.toBeInstanceOf(ReauthRequired);
+    await expect(fetchYouTube("token", W, { externalId: "UC1", maxPosts: 200 })).rejects.toBeInstanceOf(ReauthRequired);
   });
 
   it("handles a channel without uploads", async () => {
     api({ ...channelRoutes, "/channels": () => ({ body: { items: [{ statistics: { subscriberCount: "3" }, contentDetails: { relatedPlaylists: {} } }] } }) });
-    const snap = await fetchYouTube("token", W);
+    const snap = await fetchYouTube("token", W, { externalId: "UC1", maxPosts: 200 });
     expect(snap.posts).toEqual([]);
     expect(snap.daily).toHaveLength(3);
   });

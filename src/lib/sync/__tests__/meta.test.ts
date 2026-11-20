@@ -54,7 +54,7 @@ describe("fetchFacebook", () => {
       [/metric=page_media_view/, () => ({ body: { data: [{ name: "page_media_view", values: [day("2026-11-14", 100), day("2026-11-15", 120), day("2026-11-16", 80)] }] } })],
       // page_post_engagements unavailable: the rest still arrives
     ]);
-    const s = await fetchFacebook("page-token", W, { externalId: "p1" });
+    const s = await fetchFacebook("page-token", W, { externalId: "p1", maxPosts: 200 });
     expect(s.derive).toBeUndefined();
     expect(s.daily.map((d) => [d.date, d.followers, d.followersGained, d.views])).toEqual([
       ["2026-11-13", 496, 5, 100],
@@ -72,13 +72,13 @@ describe("fetchFacebook", () => {
       [/\/p1\?/, () => ({ body: { followers_count: 500 } })],
       [/published_posts/, () => ({ body: { data: [] } })],
     ]);
-    const s = await fetchFacebook("t", W, { externalId: "p1" });
+    const s = await fetchFacebook("t", W, { externalId: "p1", maxPosts: 200 });
     expect(s).toMatchObject({ followers: 500, daily: [], derive: true });
   });
 
   it("asks to reconnect on an invalid Page token", async () => {
     api([[/\/p1\?/, () => ({ status: 400, body: { error: { code: 190, message: "Invalid OAuth access token" } } })]]);
-    await expect(fetchFacebook("t", W, { externalId: "p1" })).rejects.toBeInstanceOf(ReauthRequired);
+    await expect(fetchFacebook("t", W, { externalId: "p1", maxPosts: 200 })).rejects.toBeInstanceOf(ReauthRequired);
   });
 });
 
@@ -131,7 +131,7 @@ describe("fetchInstagram", () => {
 
   it("stores each day exactly as Meta reports it and leaves unreported days empty", async () => {
     api([dayInsights, ...routes]);
-    const s = await fetchInstagram("t", W, { externalId: "178" });
+    const s = await fetchInstagram("t", W, { externalId: "178", maxPosts: 200 });
     expect(s.derive).toBeFalsy();
     expect(s.daily).toEqual([
       { date: "2026-11-13", followers: null, followersGained: null, views: 410, engagements: 22, posts: 0, watchMinutes: null },
@@ -142,7 +142,7 @@ describe("fetchInstagram", () => {
 
   it("falls back to day-over-day totals when Meta shares no daily insights", async () => {
     const calls = api(routes);
-    const s = await fetchInstagram("t", W, { externalId: "178" });
+    const s = await fetchInstagram("t", W, { externalId: "178", maxPosts: 200 });
     expect(s).toMatchObject({ followers: 1200, daily: [], derive: true });
     expect(s.posts[0]).toMatchObject({ title: "Golden hour on the pier", kind: "reel", views: 4000, likes: 80, comments: 6, shares: 9, thumbnailUrl: "https://cdn/m1.jpg" });
     expect(s.audience).toEqual(

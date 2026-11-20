@@ -35,6 +35,9 @@ const FETCHERS: Record<PlatformId, Fetcher> = {
 export const FIRST_IMPORT_DAYS = 180;
 /** Later syncs re-read a few days, because platforms finalise recent numbers late. */
 const OVERLAP_DAYS = 3;
+/** Posts read on the first import (a fuller back catalogue) and on each daily sync (recent posts and their latest numbers). */
+export const POSTS_FIRST_IMPORT = 500;
+export const POSTS_PER_SYNC = 200;
 
 export type SyncResult = { status: "synced"; days: number; posts: number } | { status: "skipped" | "expired" | "deferred" };
 
@@ -58,7 +61,7 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
 
   let snapshot: PlatformSnapshot;
   try {
-    snapshot = simulated ? simulatedSnapshot(row.platform, window) : await fetcher(await getAccessToken(db, row.id), window, { externalId: row.externalId });
+    snapshot = simulated ? simulatedSnapshot(row.platform, window) : await fetcher(await getAccessToken(db, row.id), window, { externalId: row.externalId, maxPosts: row.lastSyncedAt ? POSTS_PER_SYNC : POSTS_FIRST_IMPORT });
     await storeSnapshot(db, row.id, window.end, snapshot);
   } catch (e) {
     if (e instanceof ReauthRequired) {

@@ -13,7 +13,6 @@ import { addDays, dateRange, isoDate } from "@/lib/dates";
 import { buildDaily, titleFrom, type DayActivity } from "./daily";
 import type { FetchContext, PlatformSnapshot, PostRow, SyncWindow } from "./types";
 
-const MAX_POSTS = 100;
 const METRICS = ["page_daily_follows_unique", "page_daily_unfollows_unique", "page_media_view", "page_post_engagements"] as const;
 
 type Insight = { name: string; values?: { value: number | Record<string, number>; end_time: string }[] };
@@ -28,7 +27,7 @@ export async function fetchFacebook(accessToken: string, window: SyncWindow, ctx
   const info = await graph(`/${page}`, { fields: "followers_count,fan_count" });
   const followers = num(info.followers_count ?? info.fan_count);
 
-  const posts = await fetchPosts(graph, page);
+  const posts = await fetchPosts(graph, page, ctx.maxPosts);
 
   // daily insights, one metric at a time, in 90-day chunks
   const byDay = new Map<string, DayActivity>();
@@ -85,7 +84,7 @@ type Post = {
   insights?: { data?: Insight[] };
 };
 
-async function fetchPosts(graph: (path: string, params?: Record<string, string>) => Promise<Record<string, unknown>>, page: string): Promise<PostRow[]> {
+async function fetchPosts(graph: (path: string, params?: Record<string, string>) => Promise<Record<string, unknown>>, page: string, max: number): Promise<PostRow[]> {
   const base = "id,message,created_time,permalink_url,full_picture,status_type,shares,reactions.summary(total_count).limit(0),comments.summary(total_count).limit(0)";
   const list = async (fields: string) => {
     const out: Post[] = [];
@@ -95,8 +94,8 @@ async function fetchPosts(graph: (path: string, params?: Record<string, string>)
       out.push(...((body.data as Post[] | undefined) ?? []));
       const paging = body.paging as { cursors?: { after?: string }; next?: string } | undefined;
       after = paging?.next ? paging.cursors?.after : undefined;
-    } while (after && out.length < MAX_POSTS);
-    return out.slice(0, MAX_POSTS);
+    } while (after && out.length < max);
+    return out.slice(0, max);
   };
   let raw: Post[];
   try {

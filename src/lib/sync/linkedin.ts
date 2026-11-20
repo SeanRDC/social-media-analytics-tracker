@@ -15,7 +15,8 @@ import { buildDaily, titleFrom, type DayActivity } from "./daily";
 import type { FetchContext, PlatformSnapshot, PostRow, SyncWindow } from "./types";
 
 const API = "https://api.linkedin.com/rest";
-const MAX_POSTS = 50;
+/** LinkedIn returns at most 100 posts per request. */
+const LINKEDIN_MAX_POSTS = 100;
 
 type ShareStats = { impressionCount?: number; likeCount?: number; commentCount?: number; shareCount?: number };
 
@@ -62,7 +63,7 @@ export async function fetchLinkedIn(accessToken: string, window: SyncWindow, ctx
     d.engagements += (s.likeCount ?? 0) + (s.commentCount ?? 0) + (s.shareCount ?? 0);
   }
 
-  const posts = await fetchPosts(get, optional, org);
+  const posts = await fetchPosts(get, optional, org, Math.min(ctx.maxPosts, LINKEDIN_MAX_POSTS));
   if (!gains && !shares) return { followers, daily: [], posts, audience: null, derive: true };
   return { followers, daily: buildDaily([...byDay.values()], followers, posts), posts, audience: null };
 }
@@ -71,8 +72,9 @@ async function fetchPosts(
   get: (q: string, what: string) => Promise<Record<string, unknown>>,
   optional: (q: string, what: string) => Promise<Record<string, unknown> | null>,
   org: string,
+  max: number,
 ): Promise<PostRow[]> {
-  const body = await get(`/posts?author=${enc(org)}&q=author&count=${MAX_POSTS}&sortBy=LAST_MODIFIED`, "posts");
+  const body = await get(`/posts?author=${enc(org)}&q=author&count=${max}&sortBy=LAST_MODIFIED`, "posts");
   type Post = { id: string; commentary?: string; publishedAt?: number; createdAt?: number };
   const list = ((body.elements as Post[] | undefined) ?? []).filter((p) => p.id);
   if (!list.length) return [];

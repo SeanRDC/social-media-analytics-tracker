@@ -7,12 +7,13 @@
 import { isoDate } from "@/lib/dates";
 import { ProviderError, RateLimited } from "@/lib/connect/providers";
 import { getJson, withQuery } from "@/lib/connect/providers/oauth";
-import type { AudienceRow, DailyRow, PlatformSnapshot, PostRow, SyncWindow } from "./types";
+import type { AudienceRow, DailyRow, FetchContext, PlatformSnapshot, PostRow, SyncWindow } from "./types";
 
 const DATA = "https://www.googleapis.com/youtube/v3";
 const ANALYTICS = "https://youtubeanalytics.googleapis.com/v2/reports";
 /** How many recent uploads to keep in the library. */
-const MAX_VIDEOS = 200;
+/** YouTube Analytics returns at most 200 rows per video report. */
+const ANALYTICS_MAX_ROWS = 200;
 /** Shorts can be up to 3 minutes; the API has no Shorts flag. */
 const SHORT_MAX_SECONDS = 180;
 
@@ -38,7 +39,7 @@ const AGE_LABELS: Record<string, string> = {
 
 const num = (v: unknown) => (typeof v === "number" ? v : Number(v ?? 0) || 0);
 
-export async function fetchYouTube(accessToken: string, window: SyncWindow): Promise<PlatformSnapshot> {
+export async function fetchYouTube(accessToken: string, window: SyncWindow, ctx: FetchContext): Promise<PlatformSnapshot> {
   const auth = { Authorization: `Bearer ${accessToken}` };
   const data = (path: string, params: Record<string, string>) => getJson(withQuery(`${DATA}${path}`, params), `YouTube ${path}`, auth);
   const report = async (params: Record<string, string>): Promise<Row[]> => {
@@ -64,13 +65,13 @@ export async function fetchYouTube(accessToken: string, window: SyncWindow): Pro
   const uploads = channel.contentDetails?.relatedPlaylists?.uploads;
 
   // 2. recent uploads with lifetime stats
-  const posts = uploads ? await fetchVideos(data, uploads) : [];
+  const posts = uploads ? await fetchVideos(data, uploads, ctx.maxPosts) : [];
 
   // 3. analytics
   const range = { startDate: window.start, endDate: window.end };
   const [days, byVideo, ages, countries] = await Promise.all([
     report({ ...range, metrics: "views,estimatedMinutesWatched,subscribersGained,subscribersLost,likes,comments,shares", dimensions: "day", sort: "day" }),
-    optional({ startDate: "2005-04-23", endDate: window.end, metrics: "views,averageViewDuration,shares", dimensions: "video", sort: "-views", maxResults: String(MAX_VIDEOS) }),
+    optional({ startDate: "2005-04-23", endDate: window.end, metrics: "views,averageViewDuration,shares", dimensions: "video", sort: "-views", maxResults: String(Math.min(ctx.maxPosts, ANALYTICS_MAX_ROWS)) }),
     optional({ ...range, metrics: "viewerPercentage", dimensions: "ageGroup,gender" }),
     optional({ ...range, metrics: "views", dimensions: "country", sort: "-views", maxResults: "25" }),
   ]);
@@ -87,17 +88,17 @@ export async function fetchYouTube(accessToken: string, window: SyncWindow): Pro
   return { followers, daily: dailyRows(days, followers, posts), posts, audience: audienceRows(ages, countries, totalViews) };
 }
 
-async function fetchVideos(data: (path: string, params: Record<string, string>) => Promise<Record<string, unknown>>, playlistId: string): Promise<PostRow[]> {
+async function fetchVideos(data: (path: string, params: Record<string, string>) => Promise<Record<string, unknown>>, playlistId: string, max: number): Promise<PostRow[]> {
   const ids: string[] = [];
   let pageToken: string | undefined;
   do {
     const page = await data("/playlistItems", { part: "contentDetails", playlistId, maxResults: "50", ...(pageToken ? { pageToken } : {}) });
     for (const it of (page.items as { contentDetails?: { videoId?: string } }[] | undefined) ?? []) if (it.contentDetails?.videoId) ids.push(it.contentDetails.videoId);
     pageToken = page.nextPageToken as string | undefined;
-  } while (pageToken && ids.length < MAX_VIDEOS);
+  } while (pageToken && ids.length < max);
 
   const posts: PostRow[] = [];
-  for (let i = 0; i < Math.min(ids.length, MAX_VIDEOS); i += 50) {
+  for (let i = 0; i < Math.min(ids.length, max); i += 50) {
     const res = await data("/videos", { part: "snippet,statistics,contentDetails", id: ids.slice(i, i + 50).join(",") });
     type Video = {
       id: string;
