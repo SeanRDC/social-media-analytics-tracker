@@ -212,7 +212,10 @@ export const reportSchedule = pgTable("report_schedule", {
   lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
 });
 
-/** Alerts already sent, one per user, kind and key (a post id, a milestone, a week). */
+/**
+ * Alerts already sent, one per user, kind and key (a post id, a milestone, a week).
+ * Also the in-app notification inbox: what was said, where it leads, and when it was read.
+ */
 export const alertEvent = pgTable(
   "alert_event",
   {
@@ -220,11 +223,16 @@ export const alertEvent = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    kind: text("kind").$type<"spike" | "milestone" | "drop" | "reconnect">().notNull(),
+    kind: text("kind").$type<"spike" | "milestone" | "drop" | "reconnect" | "report">().notNull(),
     key: text("key").notNull(),
+    /** Empty on alerts sent before the inbox existed; those stay out of it. */
+    title: text("title").notNull().default(""),
+    body: text("body").notNull().default(""),
+    url: text("url").notNull().default(""),
+    readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
-  (t) => [unique("alert_event_uq").on(t.userId, t.kind, t.key)],
+  (t) => [unique("alert_event_uq").on(t.userId, t.kind, t.key), index("alert_event_user_created_idx").on(t.userId, t.createdAt)],
 );
 
 /** Web push subscriptions, one per browser or device. */

@@ -7,7 +7,9 @@ import { Icon } from "@/components/icons/Icon";
 import { Avatar } from "@/components/ui/Avatar";
 import { useSlidingIndicator } from "@/hooks/useSlidingIndicator";
 import { APP_NAME } from "@/lib/brand";
+import { getNotifications, readAllNotifications, readNotification } from "@/app/actions/notifications";
 import { MAIN_NAV, isActive } from "./nav";
+import { NotificationBell } from "./NotificationBell";
 import s from "./TopNav.module.css";
 
 /**
@@ -15,7 +17,7 @@ import s from "./TopNav.module.css";
  * shortcuts and the account button on the right. On phones only the brand and
  * avatar stay; the bottom tab bar carries the sections.
  */
-export function TopNav({ accountName, image = null }: { accountName: string; image?: string | null }) {
+export function TopNav({ accountName, image = null, unread = 0 }: { accountName: string; image?: string | null; unread?: number }) {
   const pathname = usePathname();
   const active = MAIN_NAV.find((n) => isActive(pathname, n.href))?.href ?? null;
   const { container, indicator } = useSlidingIndicator(active);
@@ -72,11 +74,7 @@ export function TopNav({ accountName, image = null }: { accountName: string; ima
         </nav>
 
         <div className={s.end}>
-          <Link href="/settings#alerts" className={s.ib}>
-            <Icon name="bell" size={18} />
-            <span className={s.badge} aria-hidden="true" />
-            <span className="sr-only">Alerts, 2 new</span>
-          </Link>
+          <NotificationBell initialUnread={unread} load={getNotifications} onRead={readNotification} onReadAll={readAllNotifications} />
           <Link href="/settings" className={s.ib} data-active={settingsOn} aria-current={settingsOn ? "page" : undefined}>
             <Icon name="gear" size={18} />
             <span className="sr-only">Settings</span>

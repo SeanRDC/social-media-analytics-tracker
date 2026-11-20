@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { TopNav } from "../TopNav";
 
 let pathname = "/platforms/youtube";
-vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
+vi.mock("next/navigation", () => ({ usePathname: () => pathname, useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("@/app/actions/notifications", () => ({ getNotifications: vi.fn(), readNotification: vi.fn(), readAllNotifications: vi.fn() }));
 
 describe("TopNav", () => {
   it("marks the section of the current page as current", () => {
@@ -31,10 +32,10 @@ describe("TopNav", () => {
     expect(screen.getByRole("link", { name: "Account: Northbay Studio" })).toHaveAttribute("aria-label", "Account: Northbay Studio");
   });
 
-  it("offers alerts and settings shortcuts", () => {
+  it("offers a notifications button and a settings shortcut", () => {
     pathname = "/settings";
-    render(<TopNav accountName="Northbay Studio" />);
-    expect(screen.getByRole("link", { name: /Alerts/ })).toHaveAttribute("href", "/settings#alerts");
+    render(<TopNav accountName="Northbay Studio" unread={3} />);
+    expect(screen.getByRole("button", { name: "Notifications, 3 unread" })).toHaveAttribute("aria-haspopup", "dialog");
     expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("aria-current", "page");
   });
 });

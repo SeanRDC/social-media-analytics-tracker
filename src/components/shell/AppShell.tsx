@@ -2,7 +2,9 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { getDataSource } from "@/lib/data/api";
+import { getDb } from "@/db";
 import { requireUser } from "@/lib/dal";
+import { unreadCount } from "@/lib/notifications";
 import { Header } from "./Header";
 import { RangeProvider } from "./RangeProvider";
 import { TabBar } from "./TabBar";
@@ -26,9 +28,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 async function SignedIn({ children }: { children: ReactNode }) {
   const [user, source] = await Promise.all([requireUser(), getDataSource()]);
+  const unread = await unreadCount(getDb(), user.id).catch(() => 0);
   return (
     <>
-      <TopNav accountName={user.name} image={user.image} />
+      <TopNav accountName={user.name} image={user.image} unread={unread} />
       <main className={s.main}>
         <Header />
         {source === "simulated" && (

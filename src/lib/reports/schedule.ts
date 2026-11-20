@@ -11,6 +11,8 @@ import { reportSchedule, user } from "@/db/schema";
 import { asOfDate } from "@/lib/data/compute";
 import { loadDataset } from "@/lib/data/live";
 import { sendEmail } from "@/lib/email";
+import { formatDate } from "@/lib/format";
+import { recordNotification } from "@/lib/notifications";
 import { buildReport } from "./build";
 import { reportDataFrom } from "./data";
 import { renderReportEmail } from "./email";
@@ -96,6 +98,13 @@ export async function sendWeeklyReports(db: Db, now = new Date(), appUrl = proce
       const report = buildReport("weekly", reportDataFrom(loaded.dataset, asOf));
       await sendEmail({ to: email, ...renderReportEmail(report, appUrl) });
       await db.update(reportSchedule).set({ lastSentAt: now }).where(eq(reportSchedule.userId, s.userId));
+      await recordNotification(db, s.userId, {
+        kind: "report",
+        key: `week-to:${asOf}`,
+        title: "Your weekly report is ready",
+        body: `We emailed your report for the week to ${formatDate(asOf)}. You can also download it as a PDF or CSV.`,
+        url: "/reports",
+      });
       result.sent++;
     } catch (e) {
       result.failed++;

@@ -7,6 +7,7 @@ import * as schema from "@/db/schema";
 import { evaluateAlerts } from "@/lib/alerts/evaluate";
 import { getAlertSettings, runAlerts, setAlertSetting } from "@/lib/alerts/run";
 import type { ConnectionData, Dataset, PostData } from "@/lib/data/compute";
+import { listNotifications, markAllRead, markRead, recordNotification, unreadCount } from "@/lib/notifications";
 import { savePushSubscription, sendPush } from "@/lib/push";
 
 const sendNotification = vi.fn();
@@ -95,6 +96,28 @@ describe("runAlerts", () => {
     expect(await runAlerts(db)).toEqual({ sent: 1, failed: 0 });
     expect(log.mock.calls.flat().join("\n")).toContain("TikTok needs reconnecting");
     expect(await runAlerts(db)).toEqual({ sent: 0, failed: 0 });
+  });
+
+  it("keeps each sent alert in the in-app inbox until it is read", async () => {
+    await runAlerts(db);
+    const [n] = await listNotifications(db, "u1");
+    expect(n).toMatchObject({ kind: "reconnect", title: "TikTok needs reconnecting", url: "/settings", read: false });
+    expect(await unreadCount(db, "u1")).toBe(1);
+    await markRead(db, "u2", n.id);
+    expect(await unreadCount(db, "u1")).toBe(1);
+    await markRead(db, "u1", n.id);
+    expect(await unreadCount(db, "u1")).toBe(0);
+    expect((await listNotifications(db, "u1"))[0].read).toBe(true);
+  });
+
+  it("leaves alerts recorded before the inbox existed out of it", async () => {
+    await db.insert(schema.alertEvent).values({ userId: "u1", kind: "milestone", key: "old" });
+    expect(await listNotifications(db, "u1")).toEqual([]);
+    await recordNotification(db, "u1", { kind: "report", key: "w1", title: "Your weekly report is ready", body: "b", url: "/reports" });
+    await recordNotification(db, "u1", { kind: "report", key: "w2", title: "Your weekly report is ready", body: "b", url: "/reports" });
+    expect(await unreadCount(db, "u1")).toBe(2);
+    await markAllRead(db, "u1");
+    expect(await unreadCount(db, "u1")).toBe(0);
   });
 
   it("respects alerts that are switched off", async () => {

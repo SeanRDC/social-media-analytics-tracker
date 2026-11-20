@@ -5,12 +5,13 @@
 import { describeError } from "@/lib/safe-error";
 import { and, eq } from "drizzle-orm";
 import { getDb, type Db } from "@/db";
-import { alertEvent, alertSetting, connection, user } from "@/db/schema";
+import { alertSetting, connection, user } from "@/db/schema";
 import { APP_NAME } from "@/lib/brand";
 import { isoDate } from "@/lib/dates";
 import { asOfDate } from "@/lib/data/compute";
 import { loadDataset } from "@/lib/data/live";
 import { sendEmail } from "@/lib/email";
+import { recordNotification } from "@/lib/notifications";
 import { sendPush } from "@/lib/push";
 import { ALERT_DEFAULTS, ALERT_KINDS, evaluateAlerts, type Alert, type AlertKind } from "./evaluate";
 
@@ -60,8 +61,8 @@ export async function runAlerts(db: Db, now = new Date(), appUrl = process.env.B
       ).filter((a) => settings[a.kind]);
       for (const a of alerts) {
         // recorded before sending, so a retry never sends the same alert twice
-        const inserted = await db.insert(alertEvent).values({ userId: u.id, kind: a.kind, key: a.key }).onConflictDoNothing().returning({ id: alertEvent.id });
-        if (!inserted.length) continue;
+        // also lands in the in-app inbox under the bell
+        if (!(await recordNotification(db, u.id, { kind: a.kind, key: a.key, title: a.title, body: a.body, url: a.url }))) continue;
         await deliver(db, u.id, u.email, a, appUrl);
         result.sent++;
       }
