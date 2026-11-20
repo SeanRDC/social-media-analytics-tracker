@@ -69,15 +69,68 @@
   cursor: pointer;
 }
 
-.remove {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--nav-mu);
-  text-decoration: underline;
-  text-underline-offset: 2px;
+/* the photo and its corner badge */
+.photo {
+  position: relative;
 }
-.remove:hover {
-  color: #fff;
+.badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--lime);
+  color: #141416;
+  box-shadow: 0 0 0 3px var(--nav);
+  cursor: pointer;
+  transition: transform 0.15s var(--out);
+}
+.badge:hover {
+  transform: scale(1.08);
+}
+.badge:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 3px;
+}
+/* portalled to <body> and placed by useAnchoredMenu */
+.menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 180px;
+  padding: 5px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  background: var(--menu);
+  color: var(--tx);
+  border: 1px solid var(--cardb);
+  box-shadow: 0 20px 40px -16px rgba(20, 20, 22, 0.35);
+  animation: menuIn 0.16s var(--out);
+}
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.item {
+  padding: 9px 11px;
+  border-radius: 9px;
+  text-align: left;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.item:hover,
+.item:focus-visible {
+  background: var(--rowh);
+}
+.danger {
+  color: var(--down);
 }
 .error {
   max-width: 180px;

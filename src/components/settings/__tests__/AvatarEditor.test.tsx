@@ -32,9 +32,12 @@ describe("AvatarEditor", () => {
   it("offers removal only when there is a photo", async () => {
     const onRemove = vi.fn(async () => undefined);
     const { rerender } = render(<AvatarEditor name="Sam" src={null} onUpload={vi.fn()} onRemove={onRemove} resize={resize} />);
-    expect(screen.queryByRole("button", { name: "Remove photo" })).toBeNull();
+    // no photo yet: the badge just adds one, there is nothing to remove
+    expect(screen.getByRole("button", { name: "Add a photo" })).not.toHaveAttribute("aria-haspopup");
     rerender(<AvatarEditor name="Sam" src="/api/avatar?v=1" onUpload={vi.fn()} onRemove={onRemove} resize={resize} />);
-    await userEvent.click(screen.getByRole("button", { name: "Remove photo" }));
+    await userEvent.click(screen.getByRole("button", { name: "Photo options" }));
+    expect(screen.getByRole("menuitem", { name: "Upload new photo" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("menuitem", { name: "Remove photo" }));
     expect(onRemove).toHaveBeenCalled();
     expect(screen.getByRole("img", { name: "Sam" })).toHaveAttribute("src", "/api/avatar?v=1");
   });
