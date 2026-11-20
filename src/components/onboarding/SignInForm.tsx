@@ -11,9 +11,15 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LABEL: Record<SocialProvider, string> = { google: "Google", apple: "Apple" };
 const ICON = { google: "globe", apple: "user" } as const;
 
-/** Only same-site paths are allowed as a post-sign-in destination. */
-function safeNext(raw: string | null): string {
-  return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/overview";
+/**
+ * Only same-site paths are allowed as a post-sign-in destination. Browsers read
+ * "/\evil.com" like "//evil.com", so backslashes and control characters are refused too.
+ */
+export function safeNext(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/overview";
+  const unsafe = (c: string) => c === "\\" || c.charCodeAt(0) < 0x20 || c.charCodeAt(0) === 0x7f;
+  if ([...raw].some(unsafe)) return "/overview";
+  return raw;
 }
 
 export function SignInForm({ providers }: { providers: SocialProvider[] }) {

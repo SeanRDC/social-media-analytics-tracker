@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SignInForm } from "@/components/onboarding/SignInForm";
+import { safeNext, SignInForm } from "@/components/onboarding/SignInForm";
 
 const magicLink = vi.fn();
 const social = vi.fn();
@@ -9,6 +9,19 @@ vi.mock("@/lib/auth-client", () => ({
 }));
 let search = new URLSearchParams();
 vi.mock("next/navigation", () => ({ useSearchParams: () => search, useRouter: () => ({ push: vi.fn() }) }));
+
+describe("safeNext", () => {
+  it("keeps same-site paths and refuses anything that could leave the site", () => {
+    expect(safeNext("/platforms?x=1")).toBe("/platforms?x=1");
+    const bs = String.fromCharCode(92);
+    const tab = String.fromCharCode(9);
+    const nl = String.fromCharCode(10);
+    const del = String.fromCharCode(127);
+    for (const bad of [null, "", "https://evil.com", "//evil.com", `/${bs}evil.com`, `/${bs}/evil.com`, `/${tab}evil`, `/a${nl}b`, `/a${del}b`, "evil.com"]) {
+      expect(safeNext(bad)).toBe("/overview");
+    }
+  });
+});
 
 describe("SignInForm", () => {
   beforeEach(() => {
