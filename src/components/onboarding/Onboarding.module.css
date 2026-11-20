@@ -172,13 +172,11 @@
   text-align: center;
 }
 
-/* reviewer sign-in: tucked away under the main options */
+/* reviewer sign-in: tucked away under the main options. <details> can't be a
+   flex container in every browser, so the fields sit in their own column. */
 .reviewer {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
   margin-top: 4px;
-  padding-top: 12px;
+  padding-top: 14px;
   border-top: 1px solid var(--cardb);
 }
 .reviewer summary {
@@ -194,15 +192,20 @@
 }
 .reviewer[open] summary {
   color: var(--tx);
-  margin-bottom: 4px;
 }
 .reviewer summary:focus-visible {
   outline: 2px solid var(--acc);
   outline-offset: 3px;
   border-radius: 6px;
 }
-.reviewer > :not(summary) + :not(summary) {
-  margin-top: 0;
+.reviewerBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+.reviewerBody .secondary {
+  margin-top: 2px;
 }
 
 /* ---------- connect / sync ---------- */

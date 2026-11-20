@@ -153,36 +153,38 @@ function ReviewerSignIn({ next }: { next: string }) {
   return (
     <details className={s.reviewer}>
       <summary>App reviewer sign-in</summary>
-      <p className={s.fine}>For platform app reviewers using the test account we provided.</p>
-      <label className={s.field}>
-        <span>Reviewer email</span>
-        <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
-      </label>
-      <label className={s.field}>
-        <span>Password</span>
-        <input
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              void signIn();
-            }
-          }}
-          aria-invalid={!!error}
-          aria-describedby={error ? "reviewer-error" : undefined}
-        />
-      </label>
-      {error && (
-        <p id="reviewer-error" className={s.error} role="alert">
-          <Icon name="alert" size={14} /> {error}
-        </p>
-      )}
-      <button type="button" className={s.secondary} disabled={busy || !email || !password} aria-busy={busy} onClick={() => void signIn()}>
-        {busy ? "Signing in…" : "Sign in as reviewer"}
-      </button>
+      <div className={s.reviewerBody}>
+        <p className={s.fine}>For platform app reviewers using the test account we provided.</p>
+        <label className={s.field}>
+          <span>Reviewer email</span>
+          <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </label>
+        <label className={s.field}>
+          <span>Password</span>
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void signIn();
+              }
+            }}
+            aria-invalid={!!error}
+            aria-describedby={error ? "reviewer-error" : undefined}
+          />
+        </label>
+        {error && (
+          <p id="reviewer-error" className={s.error} role="alert">
+            <Icon name="alert" size={14} /> {error}
+          </p>
+        )}
+        <button type="button" className={s.secondary} disabled={busy || !email || !password} aria-busy={busy} onClick={() => void signIn()}>
+          {busy ? "Signing in…" : "Sign in as reviewer"}
+        </button>
+      </div>
     </details>
   );
 }
