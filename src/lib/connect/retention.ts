@@ -11,8 +11,7 @@ import type { Db } from "@/db";
 import { connection, user } from "@/db/schema";
 import { APP_NAME } from "@/lib/brand";
 import { isoDate } from "@/lib/dates";
-import { sendEmail } from "@/lib/email";
-import { recordNotification } from "@/lib/notifications";
+import { notify } from "@/lib/notifications";
 import { PLATFORM_NAMES } from "@/lib/platforms";
 import { describeError } from "@/lib/safe-error";
 import { ACCESS_GRACE_DAYS } from "./service";
@@ -32,16 +31,20 @@ export async function purgeLostAccess(db: Db, now = new Date(), appUrl = process
       await db.delete(connection).where(eq(connection.id, r.id));
       result.deleted++;
       const name = PLATFORM_NAMES[r.platform];
-      const title = `We deleted your ${name} data`;
-      const body = `${name} stopped sharing your statistics with us ${ACCESS_GRACE_DAYS} days ago and wasn't reconnected, so we deleted everything we stored from it. Connect it again any time to start a fresh history.`;
-      await recordNotification(db, r.userId, { kind: "reconnect", key: `${r.platform}:${r.accessLostAt ? isoDate(r.accessLostAt) : "unknown"}:deleted`, title, body, url: "/settings" });
-      const link = `${appUrl.replace(/\/$/, "")}/settings`;
-      await sendEmail({
-        to: r.email,
-        subject: title,
-        text: `${body}\n\n${link}\n\n${APP_NAME}`,
-        html: `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#16181c;max-width:560px;margin:0 auto;padding:24px"><h1 style="font-size:20px">${title}</h1><p>${body}</p><p><a href="${link}">Open ${APP_NAME} settings</a></p></div>`,
-      }).catch((e) => console.error(`[retention] email to ${r.userId} failed:`, describeError(e)));
+      await notify(
+        db,
+        { id: r.userId, email: r.email },
+        {
+          kind: "reconnect",
+          key: `${r.platform}:${r.accessLostAt ? isoDate(r.accessLostAt) : "unknown"}:deleted`,
+          title: `We deleted your ${name} data`,
+          body: `${name} stopped sharing your statistics with us ${ACCESS_GRACE_DAYS} days ago and wasn't reconnected, so we deleted everything we stored from it. Connect it again any time to start a fresh history.`,
+          url: "/settings",
+          actionLabel: "Open settings",
+          footer: `We tell you whenever we delete data we stored for you in ${APP_NAME}.`,
+        },
+        appUrl,
+      );
     } catch (e) {
       result.failed++;
       console.error(`[retention] ${r.id} failed:`, describeError(e));

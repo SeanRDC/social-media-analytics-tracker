@@ -7,7 +7,7 @@ import * as schema from "@/db/schema";
 import { evaluateAlerts } from "@/lib/alerts/evaluate";
 import { getAlertSettings, runAlerts, setAlertSetting } from "@/lib/alerts/run";
 import type { ConnectionData, Dataset, PostData } from "@/lib/data/compute";
-import { listNotifications, markAllRead, markRead, recordNotification, unreadCount } from "@/lib/notifications";
+import { listNotifications, markAllRead, markRead, notify, recordNotification, unreadCount } from "@/lib/notifications";
 import { savePushSubscription, sendPush } from "@/lib/push";
 
 const sendNotification = vi.fn();
@@ -127,6 +127,19 @@ describe("runAlerts", () => {
     expect(await unreadCount(db, "u1")).toBe(2);
     await markAllRead(db, "u1");
     expect(await unreadCount(db, "u1")).toBe(0);
+  });
+
+  it("notifies once per key: inbox, email and push, never twice", async () => {
+    vi.stubEnv("NEXT_PUBLIC_VAPID_PUBLIC_KEY", "pub");
+    vi.stubEnv("VAPID_PRIVATE_KEY", "priv");
+    await savePushSubscription(db, "u1", { endpoint: "https://push.example/a", keys: { p256dh: "k", auth: "a" } });
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
+    const n = { kind: "milestone" as const, key: "youtube:20000", title: "20K on YouTube", body: "You passed 20K.", url: "/platforms/youtube", footer: "Why" };
+    expect(await notify(db, { id: "u1", email: "a@example.com" }, n, "https://ispector.site")).toBe(true);
+    expect(await notify(db, { id: "u1", email: "a@example.com" }, n, "https://ispector.site")).toBe(false);
+    expect(sendNotification).toHaveBeenCalledTimes(1);
+    expect(log.mock.calls.flat().join(" ")).toContain("https://ispector.site/platforms/youtube");
+    expect(await listNotifications(db, "u1")).toEqual([expect.objectContaining({ title: "20K on YouTube" })]);
   });
 
   it("respects alerts that are switched off", async () => {
