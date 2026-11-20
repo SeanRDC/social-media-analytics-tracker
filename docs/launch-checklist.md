@@ -29,7 +29,7 @@ Everything the code can do is built (phases 0–7). This is what stands between 
 
 ## 5. Security and privacy
 
-- [ ] Privacy policy, terms and data deletion pages reviewed for your jurisdiction (they are drafts) and `LEGAL_CONTACT_EMAIL` set.
+- [x] Privacy policy, terms and data deletion pages reviewed by the owner (2026-11-21) and `LEGAL_CONTACT_EMAIL` set.
 - [ ] Try Settings → Delete account with a test account: you are signed out, the platform shows our app removed, and signing in again starts fresh.
 - [ ] Rate limits are on in production: sign-in links and reviewer password attempts (5 per 10 minutes per IP each), connecting (20/hour), imports (6/hour per platform), exports (60/hour) and push sign-ups (20/hour) per person.
 - [ ] Response headers on the live site include `Content-Security-Policy`, `X-Frame-Options: DENY`, `Strict-Transport-Security` and `X-Content-Type-Options: nosniff` (check with your browser's network tab or securityheaders.com).

@@ -10,7 +10,6 @@ export default function TermsPage() {
     <article className={`${s.doc} card reveal`}>
       <h1>Terms of service</h1>
       <p className={s.meta}>Last updated {LEGAL_UPDATED}</p>
-      <p className={s.draft}>Draft for review. Have this checked for your jurisdiction before launch.</p>
 
       <TermsText />
     </article>
