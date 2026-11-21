@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef } from "react";
 import { displacementMapUrl, mapSize, type LensShape } from "@/lib/liquidGlass";
+import { PageMirror } from "@/lib/pageMirror";
 import { isIos } from "@/lib/platform";
 
 // content sampled around the bar (px); the curved rim as a share of the bar's height (the bar
@@ -11,24 +12,22 @@ const MARGIN = 26;
 const RIM = 0.44;
 const SHIFT = 0.75;
 const SOFTEN = 1.4;
-// wait for the page to stop changing (a new tab streams in over several commits) before copying it again
-const RECOPY_AFTER_MS = 450;
 
 /**
  * Real refraction for a Liquid Glass bar on iPhone and iPad.
  *
  * Safari cannot run SVG filters on what lies behind an element
  * (backdrop-filter: url()), so the bar carries its own live copy of the page:
- * an inert clone of the page column, kept aligned pixel for pixel with the
- * real one as it scrolls or is pulled, and re-copied when the page changes.
+ * an inert copy of the page column (PageMirror), kept aligned pixel for pixel
+ * with the real one as it scrolls or is pulled, and updated change by change
+ * in the same frame as the page itself, so a new tab shows in the glass at once.
  * That copy is bent through an SVG displacement map drawn from the bar's exact
  * shape (src/lib/liquidGlass.ts): flat in the middle, curving at the rim, where
  * content from just beyond the bar is pulled in.
  *
  * Kept cheap so tab switches stay smooth: the bend renders on its own layer,
- * so nothing else repainting in the bar re-runs it; the copy is refreshed only
- * once the page has settled and the browser is idle; and parts of the copy far
- * from the bar skip rendering (content-visibility).
+ * so nothing else repainting in the bar re-runs it, and page changes are
+ * mirrored node by node instead of copying the whole page again.
  *
  * Render it as the first child of a `.liquid-glass` element. It switches itself
  * on (data-refract on the bar) only on iOS, when the page column exists and
@@ -76,26 +75,13 @@ export function LiquidRefraction() {
       return moved;
     };
 
-    const copy = () => {
-      const c = source.cloneNode(true) as HTMLElement;
-      c.removeAttribute("data-pull-refresh");
-      c.removeAttribute("data-anim");
-      c.style.transform = "";
-      c.removeAttribute("id");
-      c.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
-      c.setAttribute("inert", "");
-      // sections well away from the bar skip layout and paint, holding their real size
-      const real = [...source.children].flatMap((n) => [n, ...n.children]) as HTMLElement[];
-      const copies = [...c.children].flatMap((n) => [n, ...n.children]) as HTMLElement[];
-      copies.forEach((n, i) => {
-        const h = real[i]?.offsetHeight;
-        if (!h) return;
-        n.style.contentVisibility = "auto";
-        n.style.containIntrinsicSize = `auto ${h}px`;
-      });
-      mr.replaceChildren(c);
-      align();
-    };
+    const page = new PageMirror(source);
+    const c = page.root;
+    // the copy is placed by align(), not by the pull-to-refresh offset on the real column
+    c.removeAttribute("data-pull-refresh");
+    c.removeAttribute("data-anim");
+    c.style.transform = "";
+    mr.replaceChildren(c);
 
     const shape = () => {
       const s: LensShape = {
@@ -130,29 +116,16 @@ export function LiquidRefraction() {
       if (!raf) raf = requestAnimationFrame(tick);
     };
 
-    let pending = 0;
-    let idle = 0;
-    const ric = window.requestIdleCallback?.bind(window);
-    const recopy = () => {
-      if (ric) idle = ric(copy, { timeout: 1500 });
-      else copy();
-    };
-    const mo = new MutationObserver((records) => {
-      // the column's own style changes every frame of a pull; that is movement, handled by align()
-      if (records.every((r) => r.target === source && r.type === "attributes")) return;
-      clearTimeout(pending);
-      window.cancelIdleCallback?.(idle);
-      pending = window.setTimeout(recopy, RECOPY_AFTER_MS);
-    });
+    // runs right after each change to the page, before it is painted
+    const mo = new MutationObserver((records) => page.apply(records));
     const ro = new ResizeObserver(() => {
       shape();
       wake();
     });
 
     bar.dataset.refract = "true";
-    copy();
     shape();
-    mo.observe(source, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["class", "style", "d", "data-active", "aria-pressed", "aria-selected", "src"] });
+    mo.observe(source, PageMirror.observe);
     ro.observe(bar);
     ro.observe(source);
     const opts = { passive: true } as const;
@@ -165,8 +138,6 @@ export function LiquidRefraction() {
     return () => {
       delete bar.dataset.refract;
       cancelAnimationFrame(raf);
-      clearTimeout(pending);
-      window.cancelIdleCallback?.(idle);
       mo.disconnect();
       ro.disconnect();
       window.removeEventListener("scroll", wake);
