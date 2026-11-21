@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useRef } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { Avatar } from "@/components/ui/Avatar";
-import { useSlidingIndicator } from "@/hooks/useSlidingIndicator";
+import { useLiquidIndicator } from "@/hooks/useLiquidIndicator";
 import { APP_NAME } from "@/lib/brand";
 import { getNotifications, readAllNotifications, readNotification } from "@/app/actions/notifications";
 import { MAIN_NAV, isActive } from "./nav";
@@ -15,12 +15,14 @@ import s from "./TopNav.module.css";
 /**
  * Floating dark navbar: brand on the left, sections grouped in an inset pill,
  * shortcuts and the account button on the right. On phones only the brand and
- * avatar stay; the bottom tab bar carries the sections.
+ * avatar stay; the bottom tab bar carries the sections. On iPhone and iPad the
+ * bar is Liquid Glass and the section pill moves like iOS tabs (useLiquidIndicator).
  */
 export function TopNav({ accountName, image = null, unread = 0 }: { accountName: string; image?: string | null; unread?: number }) {
   const pathname = usePathname();
-  const active = MAIN_NAV.find((n) => isActive(pathname, n.href))?.href ?? null;
-  const { container, indicator } = useSlidingIndicator(active);
+  const router = useRouter();
+  const current = MAIN_NAV.find((n) => isActive(pathname, n.href))?.href ?? null;
+  const { container, indicator, active, handlers } = useLiquidIndicator(current, (href) => router.push(href));
   const hover = useRef<HTMLSpanElement>(null);
   const settingsOn = isActive(pathname, "/settings");
 
@@ -39,7 +41,7 @@ export function TopNav({ accountName, image = null, unread = 0 }: { accountName:
 
   return (
     <header className={s.wrap}>
-      <div className={s.bar}>
+      <div className={`${s.bar} liquid-glass`}>
         <Link href="/overview" className={s.brand} aria-label={`${APP_NAME} home`}>
           <span className={s.logo}>
             <Icon name="logo" size={18} strokeWidth={2.2} />
@@ -50,9 +52,9 @@ export function TopNav({ accountName, image = null, unread = 0 }: { accountName:
         </Link>
 
         <nav className={s.navCol} aria-label="Main">
-          <div ref={container} className={s.links} onPointerLeave={hideHover}>
+          <div ref={container} className={s.links} onPointerLeave={hideHover} {...handlers}>
             <span ref={hover} className={s.hover} aria-hidden="true" />
-            <span ref={indicator} className={s.ind} aria-hidden="true" />
+            <span ref={indicator} className={`${s.ind} liquid-lens`} aria-hidden="true" />
             {MAIN_NAV.map((n) => {
               const on = n.href === active;
               return (
@@ -60,8 +62,10 @@ export function TopNav({ accountName, image = null, unread = 0 }: { accountName:
                   key={n.href}
                   href={n.href}
                   className={s.link}
+                  data-key={n.href}
                   data-active={on}
-                  aria-current={on ? "page" : undefined}
+                  aria-current={n.href === current ? "page" : undefined}
+                  draggable={false}
                   onPointerEnter={(e) => showHover(e.currentTarget)}
                   onFocus={(e) => showHover(e.currentTarget)}
                   onBlur={hideHover}
@@ -93,7 +97,7 @@ export function TopNav({ accountName, image = null, unread = 0 }: { accountName:
 export function TopNavSkeleton() {
   return (
     <div className={s.wrap} aria-hidden="true">
-      <div className={s.bar} />
+      <div className={`${s.bar} liquid-glass`} />
     </div>
   );
 }

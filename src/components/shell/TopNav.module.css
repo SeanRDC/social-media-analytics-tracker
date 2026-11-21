@@ -235,25 +235,47 @@
   }
 }
 
-/* ---------- iPhone and iPad: glass (see globals.css) ---------- */
-@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :global(html[data-ios="true"]) .wrap {
-    /* only the status bar strip stays solid; below it the page shows through the glass */
-    background: linear-gradient(var(--bg) var(--safe-t), transparent calc(var(--safe-t) + 1px));
-  }
-  :global(html[data-ios="true"]) .bar {
-    background: var(--glass-nav);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-edge);
-    box-shadow: var(--glass-shine), 0 18px 40px -22px rgba(0, 0, 0, 0.5);
-  }
-  :global(html[data-ios="true"]) .links {
-    background: var(--glass-inset);
-  }
+/* ---------- iPhone and iPad: Liquid Glass (material in globals.css, motion in useLiquidIndicator) ---------- */
+:global(html[data-ios="true"]) .wrap {
+  /* only the status bar strip stays solid; below it the page shows through the glass */
+  background: linear-gradient(var(--bg) var(--safe-t), transparent calc(var(--safe-t) + 1px));
 }
-@media (prefers-reduced-transparency: reduce) {
-  :global(html[data-ios="true"]) .bar {
-    background: var(--nav);
-  }
+:global(html[data-ios="true"]) .bar {
+  position: relative;
+  border-radius: 999px;
+}
+:global(html[data-ios="true"]) .links {
+  border-radius: 999px;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+:global(html[data-ios="true"]) .link {
+  border-radius: 999px;
+}
+/* touch has no hover; the lens is the feedback */
+:global(html[data-ios="true"]) .hover {
+  display: none;
+}
+:global(html[data-ios="true"]) .link {
+  -webkit-tap-highlight-color: transparent;
+}
+:global(html[data-ios="true"]) .link[data-active="true"] {
+  color: var(--lg-on);
+}
+:global(html[data-ios="true"]) .ib {
+  border-radius: 999px;
+}
+:global(html[data-ios="true"]) .account {
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--tx);
+  box-shadow: inset 0 0 0 0.5px var(--line);
+}
+:global(html[data-ios="true"]) .link:focus-visible,
+:global(html[data-ios="true"]) .ib:focus-visible,
+:global(html[data-ios="true"]) .account:focus-visible,
+:global(html[data-ios="true"]) .brand:focus-visible {
+  outline-color: var(--lg-on);
 }

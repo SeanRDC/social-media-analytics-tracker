@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TabBar } from "../TabBar";
 
 let pathname = "/overview";
-vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
+vi.mock("next/navigation", () => ({ usePathname: () => pathname, useRouter: () => ({ push: vi.fn() }) }));
 
 describe("TabBar", () => {
   it("offers the same five sections as the desktop navbar", () => {
