@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { useLiquidIndicator } from "@/hooks/useLiquidIndicator";
 import { APP_NAME } from "@/lib/brand";
 import { getNotifications, readAllNotifications, readNotification } from "@/app/actions/notifications";
+import { LiquidRefraction } from "./LiquidRefraction";
 import { MAIN_NAV, isActive } from "./nav";
 import { NotificationBell } from "./NotificationBell";
 import s from "./TopNav.module.css";
@@ -42,6 +43,7 @@ export function TopNav({ accountName, image = null, unread = 0 }: { accountName:
   return (
     <header className={s.wrap}>
       <div className={`${s.bar} liquid-glass`}>
+        <LiquidRefraction />
         <Link href="/overview" className={s.brand} aria-label={`${APP_NAME} home`}>
           <span className={s.logo}>
             <Icon name="logo" size={18} strokeWidth={2.2} />

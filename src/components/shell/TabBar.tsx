@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "@/components/icons/Icon";
 import { useLiquidIndicator } from "@/hooks/useLiquidIndicator";
+import { LiquidRefraction } from "./LiquidRefraction";
 import { TAB_NAV, isActive } from "./nav";
 import s from "./TabBar.module.css";
 
@@ -19,6 +20,7 @@ export function TabBar() {
 
   return (
     <nav ref={container} className={`${s.bar} liquid-glass`} aria-label="Tabs" {...handlers}>
+      <LiquidRefraction />
       <span ref={indicator} className={`${s.ind} liquid-lens`} aria-hidden="true" />
       {TAB_NAV.map((n) => {
         const on = n.href === active;
