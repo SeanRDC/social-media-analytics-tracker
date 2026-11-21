@@ -17,7 +17,7 @@ import { getJson, withQuery } from "@/lib/connect/providers/oauth";
 import type { PostKind } from "@/lib/data/types";
 import { ageLabel, sharesOf, titleFrom } from "./daily";
 import { addDays, dateRange, isoDate } from "@/lib/dates";
-import type { AudienceRow, DailyRow, FetchContext, PlatformSnapshot, PostRow, SyncWindow } from "./types";
+import type { AudienceRow, DailyRow, FetchContext, OnlineHourRow, PlatformSnapshot, PostRow, SyncWindow } from "./types";
 
 /** Meta keeps account metrics for about 90 days. */
 const MAX_DAYS = 90;
@@ -51,9 +51,61 @@ export async function fetchInstagram(accessToken: string, window: SyncWindow, ct
   const posts = await fetchMedia(get, userId, ctx.maxPosts);
   const daily = await fetchDaily(get, userId, window, followers, posts);
   const audience = await fetchDemographics(get, userId);
+  const onlineFollowers = await fetchOnlineFollowers(get, userId);
   // no daily insights at all (e.g. the permission was declined): fall back to totals
-  if (!daily) return { followers, daily: [], posts, audience, derive: true };
-  return { followers, daily, posts, audience };
+  if (!daily) return { followers, daily: [], posts, audience, derive: true, onlineFollowers };
+  return { followers, daily, posts, audience, onlineFollowers };
+}
+
+/** Instagram reports followers online for the last 30 days only. */
+const ONLINE_DAYS = 30;
+const HOUR_MS = 3_600_000;
+
+/**
+ * How many followers were online in each hour of the last 30 days
+ * (`online_followers`). Optional: accounts under 100 followers, or a missing
+ * metric, simply give none. Asks for the whole 30 days, and if Meta refuses
+ * the range, for its default (the last day), which daily syncs add up.
+ */
+async function fetchOnlineFollowers(get: Get, userId: string): Promise<OnlineHourRow[]> {
+  const until = Math.floor(Date.now() / 1000);
+  const attempts: Record<string, string>[] = [
+    { metric: "online_followers", period: "lifetime", since: String(until - ONLINE_DAYS * DAY_SECONDS), until: String(until) },
+    { metric: "online_followers", period: "lifetime" },
+  ];
+  for (const params of attempts) {
+    try {
+      return parseOnlineFollowers(await get(`/${encodeURIComponent(userId)}/insights`, params));
+    } catch (e) {
+      if (e instanceof RateLimited) throw e;
+      if (!(e instanceof ProviderError)) throw e;
+    }
+  }
+  return [];
+}
+
+/**
+ * Turns Meta's answer into hours. Each value covers the day ending at its
+ * `end_time` and is keyed by hour "0"–"23" from that day's start. The day's
+ * start is taken from `end_time` itself, so the hours land on the right moment
+ * whatever time zone Meta counts its days in. Empty days ({}) are skipped.
+ */
+export function parseOnlineFollowers(body: Record<string, unknown>): OnlineHourRow[] {
+  const data = (body.data as { name?: string; values?: { value?: unknown; end_time?: string }[] }[] | undefined) ?? [];
+  const metric = data.find((d) => d.name === "online_followers");
+  const rows = new Map<number, OnlineHourRow>();
+  for (const v of metric?.values ?? []) {
+    const end = v.end_time ? Date.parse(v.end_time) : NaN;
+    if (!Number.isFinite(end) || !v.value || typeof v.value !== "object") continue;
+    const dayStart = end - 24 * HOUR_MS;
+    for (const [hour, count] of Object.entries(v.value as Record<string, unknown>)) {
+      const h = Number(hour);
+      if (!Number.isInteger(h) || h < 0 || h > 23 || typeof count !== "number" || !Number.isFinite(count)) continue;
+      const hourStart = dayStart + h * HOUR_MS;
+      rows.set(hourStart, { hourStart: new Date(hourStart), followers: Math.max(0, Math.round(count)) });
+    }
+  }
+  return [...rows.values()].sort((a, b) => a.hourStart.getTime() - b.hourStart.getTime());
 }
 
 async function fetchMedia(get: (path: string, params: Record<string, string>) => Promise<Record<string, unknown>>, userId: string, max: number): Promise<PostRow[]> {

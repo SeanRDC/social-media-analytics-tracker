@@ -48,6 +48,14 @@ export interface PlatformSnapshot {
    * today's row from the change since the previous sync instead of `daily`.
    */
   derive?: boolean;
+  /** Followers online per hour, as reported (Instagram only; absent when not shared). */
+  onlineFollowers?: OnlineHourRow[];
+}
+
+/** How many followers were online in the hour starting at `hourStart`. */
+export interface OnlineHourRow {
+  hourStart: Date;
+  followers: number;
 }
 
 /** What a fetcher knows about the connected account. */

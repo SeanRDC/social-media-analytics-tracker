@@ -3,7 +3,7 @@
  * UI can be checked end to end. The backend phase replaces this module's role
  * behind `api.ts`.
  */
-import type { Audience, DailyViews, Metrics, Platform, PlatformId, Post, Range } from "./types";
+import type { Audience, DailyViews, Metrics, Platform, PlatformId, Post, PostingCell, PostingTimes, Range } from "./types";
 
 export const ACCOUNT_NAME = "Northbay Studio";
 export const TODAY = "2026-11-15";
@@ -125,6 +125,36 @@ export const POSTS: Post[] = POST_SEEDS.map((p) => {
   };
 });
 
+const SAMPLE_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const SAMPLE_SCORES = [
+  [0.62, 0.8, 1.12, 0.9],
+  [0.7, 0.86, 1.24, 0.95],
+  [0.66, 0.82, 1.18, 0.88],
+  [0.78, 0.92, 1.46, 1.02],
+  [0.72, 0.9, 1.3, 1.08],
+  [0.95, 1.2, 1.1, 0.84],
+  [1.0, 1.24, 1.04, 0.8],
+];
+const SAMPLE_POSTS = [
+  [3, 4, 6, 3],
+  [2, 5, 7, 4],
+  [3, 4, 6, 3],
+  [4, 5, 8, 4],
+  [3, 5, 7, 5],
+  [4, 6, 5, 2],
+  [3, 6, 4, 1],
+];
+/** Average Instagram followers online in an hour of each window. */
+const SAMPLE_ONLINE = [
+  [3100, 4200, 6900, 5600],
+  [3000, 4300, 7100, 5800],
+  [3200, 4100, 7000, 5700],
+  [3300, 4400, 7400, 6000],
+  [3100, 4500, 7200, 6400],
+  [4200, 5600, 6600, 6100],
+  [4400, 5900, 6500, 5200],
+];
+
 export const AUDIENCE: Audience = {
   sources: ["youtube", "instagram"],
   ages: [
@@ -142,18 +172,43 @@ export const AUDIENCE: Audience = {
     { name: "Australia", share: 6 },
     { name: "Other", share: 23 },
   ],
-  slotLabels: ["9 a.m.", "1 p.m.", "6 p.m.", "10 p.m."],
-  timeZone: "UTC",
-  bestTimes: [
-    { day: "Mon", slots: [0.2, 0.35, 0.6, 0.4] },
-    { day: "Tue", slots: [0.25, 0.4, 0.7, 0.45] },
-    { day: "Wed", slots: [0.2, 0.35, 0.65, 0.4] },
-    { day: "Thu", slots: [0.3, 0.45, 1, 0.55] },
-    { day: "Fri", slots: [0.25, 0.4, 0.8, 0.6] },
-    { day: "Sat", slots: [0.45, 0.7, 0.6, 0.35] },
-    { day: "Sun", slots: [0.5, 0.75, 0.55, 0.3] },
+  slots: [
+    { label: "Morning", hours: "5–11 a.m." },
+    { label: "Midday", hours: "11 a.m.–4 p.m." },
+    { label: "Evening", hours: "4–8 p.m." },
+    { label: "Night", hours: "8 p.m.–5 a.m." },
   ],
+  timeZone: "UTC",
+  minPosts: 3,
+  firstWeekDays: 7,
+  posting: { all: samplePosting(), platforms: [] },
+  online: {
+    platform: "instagram",
+    daysCovered: 30,
+    days: SAMPLE_ONLINE.map((cells, d) => ({ day: SAMPLE_DAYS[d], cells })),
+  },
 };
+
+/**
+ * A sample week of posting results: each cell's score (1 = a typical post) and
+ * how many posts it holds; cells under three posts have no score.
+ */
+function samplePosting(): PostingTimes {
+  const grid = SAMPLE_SCORES.map((row, d) => row.map((score, t) => ({ score: SAMPLE_POSTS[d][t] >= 3 ? score : null, posts: SAMPLE_POSTS[d][t] })));
+  const pooled = (cells: PostingCell[]) => {
+    const scored = cells.filter((c) => c.score !== null);
+    const posts = cells.reduce((s, c) => s + c.posts, 0);
+    return { score: scored.length ? Math.round((scored.reduce((s, c) => s + c.score!, 0) / scored.length) * 100) / 100 : null, posts };
+  };
+  return {
+    days: grid.map((cells, d) => ({ day: SAMPLE_DAYS[d], cells })),
+    byDay: grid.map(pooled),
+    bySlot: SAMPLE_SCORES[0].map((_, t) => pooled(grid.map((row) => row[t]))),
+    used: SAMPLE_POSTS.flat().reduce((s, n) => s + n, 0),
+    waiting: 4,
+    untracked: 0,
+  };
+}
 
 export function platformById(id: string): Platform | undefined {
   return PLATFORMS.find((p) => p.id === (id as PlatformId));

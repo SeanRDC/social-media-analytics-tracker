@@ -107,7 +107,30 @@ export function simulatedSnapshot(platform: PlatformId, window: SyncWindow): Pla
     };
   });
 
-  return { followers, daily, posts, audience: p.demographics ? audience(platform) : null };
+  return {
+    followers,
+    daily,
+    posts,
+    audience: p.demographics ? audience(platform) : null,
+    ...(platform === "instagram" ? { onlineFollowers: onlineHours(followers, window.end) } : {}),
+  };
+}
+
+/**
+ * Simulated Instagram "followers online": the 30 days up to the sync, hour by
+ * hour, busiest in the evening (UTC+8, the sample audience's largest share).
+ */
+function onlineHours(followers: number, end: string) {
+  const last = Date.parse(`${end}T00:00:00Z`);
+  const rows = [];
+  for (let i = 30 * 24; i > 0; i--) {
+    const hourStart = last - i * 3_600_000;
+    const local = (new Date(hourStart).getUTCHours() + 8) % 24;
+    const daily = 0.5 + 0.5 * Math.sin(((local - 13) / 24) * 2 * Math.PI);
+    const weekend = [0, 6].includes(new Date(hourStart + 8 * 3_600_000).getUTCDay()) ? 1.12 : 1;
+    rows.push({ hourStart: new Date(hourStart), followers: Math.round(followers * (0.05 + 0.25 * daily) * weekend * (0.9 + 0.2 * noise("online", i))) });
+  }
+  return rows;
 }
 
 function audience(platform: string): AudienceRow[] {

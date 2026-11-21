@@ -134,7 +134,23 @@
 .best b {
   font-weight: 600;
 }
+.heatControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+/* five platforms don't fit a phone: the filter scrolls sideways instead of squeezing */
+.heatFilter {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.heatFilter::-webkit-scrollbar {
+  display: none;
+}
 .heat {
+  --heat-axis: 92px;
   display: grid;
   gap: 6px;
   align-items: center;
@@ -149,7 +165,16 @@
   text-align: center;
 }
 .heatRow .axis {
+  display: flex;
+  flex-direction: column;
   text-align: left;
+  line-height: 1.2;
+}
+.axisHours {
+  font-size: 10.5px;
+  font-weight: 400;
+  opacity: 0.8;
+  white-space: nowrap;
 }
 .cell {
   height: 40px;
@@ -165,6 +190,11 @@
   transform: scale(1.08);
   box-shadow: 0 0 0 2px var(--tx);
   outline: none;
+}
+/* not enough posts (or nothing reported): an outline, never a colour that reads as "bad" */
+.cellEmpty {
+  background: transparent;
+  border: 1.5px dashed var(--border-strong);
 }
 .cellBest {
   box-shadow: 0 0 0 3px var(--lime), 0 0 0 5px var(--tx);
@@ -197,6 +227,11 @@
     border-radius: 8px;
   }
   .heat {
+    --heat-axis: 56px;
     gap: 4px;
+  }
+  /* the hours are in each cell's readout; the narrow axis keeps just the name */
+  .axisHours {
+    display: none;
   }
 }

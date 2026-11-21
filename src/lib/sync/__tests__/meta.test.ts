@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReauthRequired } from "@/lib/connect/providers";
 import { ageLabel, sharesOf, titleFrom } from "@/lib/sync/daily";
 import { fetchFacebook } from "@/lib/sync/facebook";
-import { fetchInstagram } from "@/lib/sync/instagram";
+import { fetchInstagram, parseOnlineFollowers } from "@/lib/sync/instagram";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -179,5 +179,34 @@ describe("helpers", () => {
     expect(titleFrom("\n  Hello there \nmore", "x")).toBe("Hello there");
     expect(titleFrom("", "Fallback")).toBe("Fallback");
     expect(titleFrom("a".repeat(120), "x")).toHaveLength(88);
+  });
+});
+
+describe("Instagram followers online", () => {
+  it("places each hour from the day's own end_time, whatever time zone Meta counts days in", () => {
+    const rows = parseOnlineFollowers({
+      data: [
+        {
+          name: "online_followers",
+          period: "lifetime",
+          values: [
+            // a day ending 08:00 UTC (midnight Pacific): hour "0" starts at 08:00 UTC the day before
+            { value: { "0": 120, "1": 140, "23": 90 }, end_time: "2026-11-15T08:00:00+0000" },
+            { value: {}, end_time: "2026-11-16T08:00:00+0000" },
+          ],
+        },
+      ],
+    });
+    expect(rows.map((r) => [r.hourStart.toISOString(), r.followers])).toEqual([
+      ["2026-11-14T08:00:00.000Z", 120],
+      ["2026-11-14T09:00:00.000Z", 140],
+      ["2026-11-15T07:00:00.000Z", 90],
+    ]);
+  });
+
+  it("ignores anything that isn't an hour with a count", () => {
+    const rows = parseOnlineFollowers({ data: [{ name: "online_followers", values: [{ value: { "24": 5, x: 3, "2": "n/a" }, end_time: "2026-11-15T08:00:00+0000" }, { value: { "1": 4 } }] }] });
+    expect(rows).toEqual([]);
+    expect(parseOnlineFollowers({})).toEqual([]);
   });
 });

@@ -3,9 +3,9 @@
  * no database, no clock (everything is relative to the latest stored day), so
  * every rule can be tested directly.
  */
-import { addDays, dateRange, isoDate, weekdayShort } from "@/lib/dates";
+import { addDays, DAY_MS, dateRange, isoDate, weekdayShort } from "@/lib/dates";
 import { PLATFORM_NAMES } from "@/lib/platforms";
-import type { Audience, ConnectionStatus, DailyViews, Metrics, Overview, Platform, PlatformId, Post, PostKind, Range } from "./types";
+import type { Audience, ConnectionStatus, DailyViews, Metrics, OnlineTimes, Overview, Platform, PlatformId, Post, PostingCell, PostingTimes, PostKind, Range, TimeSlot } from "./types";
 import { PLATFORM_ORDER, RANGES } from "./types";
 
 /** One day as the platform reported it; null = not reported that day. */
@@ -38,6 +38,19 @@ export interface PostData {
   comments: number;
   shares: number;
   avgWatchSeconds: number | null;
+  /**
+   * Lifetime views as read closest to exactly FIRST_WEEK_DAYS after publishing
+   * (within half a day); null when no reading was taken then, e.g. the post was
+   * imported later.
+   */
+  views7d: number | null;
+}
+
+/** Followers online in one hour, as the platform reported it. */
+export interface OnlineHour {
+  platform: PlatformId;
+  hourStart: Date;
+  followers: number;
 }
 
 export interface AudienceData {
@@ -51,11 +64,23 @@ export interface Dataset {
   connections: ConnectionData[];
   posts: PostData[];
   audience: AudienceData[];
+  /** Hourly "followers online" (Instagram only shares it). */
+  online?: OnlineHour[];
 }
 
 const NOUN: Partial<Record<PlatformId, string>> = { youtube: "subscribers" };
 const AGE_ORDER = ["13–17", "18–24", "25–34", "35–44", "45+"];
-const SLOT_LABELS = ["9 a.m.", "1 p.m.", "6 p.m.", "10 p.m."];
+/** Windows of the day, in the person's own time. Night runs past midnight and belongs to the day it started. */
+const SLOTS: TimeSlot[] = [
+  { label: "Morning", hours: "5–11 a.m." },
+  { label: "Midday", hours: "11 a.m.–4 p.m." },
+  { label: "Evening", hours: "4–8 p.m." },
+  { label: "Night", hours: "8 p.m.–5 a.m." },
+];
+/** Posts are compared by their views this many days after publishing. */
+export const FIRST_WEEK_DAYS = 7;
+/** Posts a cell, day or window needs before it is scored: one post can't speak for a slot. */
+export const MIN_POSTS = 3;
 const WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const THUMBS = ["a", "b", "c", "d"] as const;
 
@@ -295,14 +320,14 @@ export function computeAudience(ds: Dataset, asOf: string, timeZone = "UTC"): Au
     sources,
     ages: ageLabels.map((label, i) => ({ label, share: ageShares[i] })),
     countries,
-    slotLabels: SLOT_LABELS,
-    bestTimes: bestTimes(ds.posts.filter((p) => followers.has(p.platform)), timeZone),
+    slots: SLOTS,
+    posting: postingTimes(ds.posts.filter((p) => followers.has(p.platform)), asOf, timeZone),
+    online: onlineTimes((ds.online ?? []).filter((h) => followers.has(h.platform)), timeZone),
+    minPosts: MIN_POSTS,
+    firstWeekDays: FIRST_WEEK_DAYS,
     timeZone,
   };
 }
-
-/** Morning 5–11, midday 11–16, evening 16–20, night 20–5 (UTC). */
-const slotOf = (hour: number) => (hour >= 5 && hour < 11 ? 0 : hour >= 11 && hour < 16 ? 1 : hour >= 16 && hour < 20 ? 2 : 3);
 
 /** A moment's weekday (0 = Monday) and hour in a time zone. */
 function localDayHour(timeZone: string) {
@@ -314,17 +339,96 @@ function localDayHour(timeZone: string) {
   };
 }
 
-/** Average views by weekday and time slot in the person's time zone, scaled so the best cell is 1. */
-export function bestTimes(posts: PostData[], timeZone = "UTC"): Audience["bestTimes"] {
-  const cells = WEEK.map(() => SLOT_LABELS.map(() => ({ views: 0, n: 0 })));
+/**
+ * Which weekday and window a moment falls in, in the person's time zone:
+ * morning 5–11, midday 11–16, evening 16–20, night 20–5. The small hours
+ * belong to the night that started the evening before (1 a.m. Tuesday is
+ * Monday night).
+ */
+export function placeInWeek(timeZone: string) {
   const local = localDayHour(timeZone);
-  for (const p of posts) {
-    const { day, hour } = local(p.publishedAt);
-    const cell = cells[day][slotOf(hour)];
-    cell.views += p.views;
-    cell.n++;
+  return (d: Date) => {
+    const { day, hour } = local(d);
+    if (hour < 5) return { day: (day + 6) % 7, slot: 3 };
+    return { day, slot: hour < 11 ? 0 : hour < 16 ? 1 : hour < 20 ? 2 : 3 };
+  };
+}
+
+export function median(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+/** A group of posts' scores as one cell: their median, once there are enough of them. */
+const cellOf = (scores: number[]): PostingCell => ({ score: scores.length >= MIN_POSTS ? Math.round(median(scores) * 100) / 100 : null, posts: scores.length });
+
+/**
+ * When past posts did best, by weekday and window of the day in the person's
+ * time zone. Fair by construction:
+ * - every post is measured at the same age, its views FIRST_WEEK_DAYS after
+ *   publishing, so old posts don't win just by having had longer;
+ * - each post is scored against its own platform's typical (median) post, so
+ *   a big platform doesn't drown out a small one;
+ * - a cell is the median of its posts, so one viral post can't carry it, and
+ *   it only gets a score with MIN_POSTS or more.
+ * Posts too young to have a week's numbers, or imported after their first week,
+ * are counted separately and left out.
+ */
+export function postingTimes(posts: PostData[], asOf: string, timeZone = "UTC"): Audience["posting"] {
+  const place = placeInWeek(timeZone);
+  const end = Date.parse(`${asOf}T23:59:59Z`);
+  // a post is measured one sync after its 7th day; until then it is waiting rather than missing
+  const settled = (p: PostData) => end - p.publishedAt.getTime() >= (FIRST_WEEK_DAYS + 1) * DAY_MS;
+
+  const measured = posts.filter((p) => p.views7d !== null);
+  const typical = new Map<PlatformId, number>();
+  for (const id of new Set(measured.map((p) => p.platform))) typical.set(id, median(measured.filter((p) => p.platform === id).map((p) => p.views7d!)));
+  const scored = measured
+    .filter((p) => typical.get(p.platform)! > 0)
+    .map((p) => ({ platform: p.platform, at: place(p.publishedAt), score: p.views7d! / typical.get(p.platform)! }));
+
+  const grid = (only: PlatformId | null): PostingTimes => {
+    const mine = scored.filter((s) => !only || s.platform === only);
+    const unmeasured = posts.filter((p) => p.views7d === null && (!only || p.platform === only));
+    const at = (day: number | null, slot: number | null) => mine.filter((s) => (day === null || s.at.day === day) && (slot === null || s.at.slot === slot)).map((s) => s.score);
+    return {
+      days: WEEK.map((day, d) => ({ day, cells: SLOTS.map((_, t) => cellOf(at(d, t))) })),
+      byDay: WEEK.map((_, d) => cellOf(at(d, null))),
+      bySlot: SLOTS.map((_, t) => cellOf(at(null, t))),
+      used: mine.length,
+      waiting: unmeasured.filter((p) => !settled(p)).length,
+      untracked: unmeasured.filter(settled).length,
+    };
+  };
+
+  return {
+    all: grid(null),
+    platforms: PLATFORM_ORDER.filter((id) => posts.some((p) => p.platform === id)).map((id) => ({ id, times: grid(id) })),
+  };
+}
+
+/**
+ * When followers are online, from the platform's own hourly counts (the latest
+ * 30 days): for each weekday and window, the average number online in an hour.
+ * Uses the first platform that reports it (only Instagram does).
+ */
+export function onlineTimes(hours: OnlineHour[], timeZone = "UTC"): OnlineTimes | null {
+  const platform = PLATFORM_ORDER.find((id) => hours.some((h) => h.platform === id));
+  if (!platform) return null;
+  const mine = hours.filter((h) => h.platform === platform);
+  const latest = Math.max(...mine.map((h) => h.hourStart.getTime()));
+  const recent = mine.filter((h) => h.hourStart.getTime() > latest - 30 * DAY_MS);
+  const place = placeInWeek(timeZone);
+  const cells = WEEK.map(() => SLOTS.map(() => ({ total: 0, n: 0 })));
+  for (const h of recent) {
+    const { day, slot } = place(h.hourStart);
+    cells[day][slot].total += h.followers;
+    cells[day][slot].n++;
   }
-  const avg = cells.map((row) => row.map((c) => (c.n ? c.views / c.n : 0)));
-  const max = Math.max(...avg.flat());
-  return WEEK.map((day, d) => ({ day, slots: avg[d].map((v) => (max > 0 ? Math.round((v / max) * 100) / 100 : 0)) }));
+  return {
+    platform,
+    days: WEEK.map((day, d) => ({ day, cells: cells[d].map((c) => (c.n ? Math.round(c.total / c.n) : null)) })),
+    daysCovered: new Set(recent.map((h) => isoDate(h.hourStart))).size,
+  };
 }

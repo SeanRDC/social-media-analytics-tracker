@@ -27,6 +27,7 @@ const post = (id: string, published: string, views: number): PostData => ({
   comments: 0,
   shares: 0,
   avgWatchSeconds: null,
+  views7d: null,
 });
 const conn = (daily: [string, number, number, number][]): ConnectionData => ({
   platform: "youtube",

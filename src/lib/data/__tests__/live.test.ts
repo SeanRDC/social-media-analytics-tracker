@@ -1,4 +1,5 @@
 import { PGlite } from "@electric-sql/pglite";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -27,7 +28,7 @@ beforeEach(async () => {
   ]);
 });
 
-const connectAndImport = async (userId: string, platform: "youtube" | "tiktok") => {
+const connectAndImport = async (userId: string, platform: "youtube" | "tiktok" | "instagram") => {
   const id = await saveConnection(db, userId, platform, tokens, { externalId: `simulated:${platform}`, name: `Sample ${platform}` });
   await syncConnection(db, id, NOW);
   return id;
@@ -81,5 +82,52 @@ describe("connect → import → dashboard", () => {
     const ids = loaded.dataset.posts.map((p) => p.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(asOfDate(loaded.dataset)).toBe("2026-11-17");
+  });
+});
+
+describe("best time to post", () => {
+  /** A post published at `publishedAt` with lifetime views read at each [capturedAt, views]. */
+  const postWithReadings = async (connectionId: string, externalId: string, publishedAt: string, readings: [string | null, number][]) => {
+    const [p] = await db.insert(schema.post).values({ connectionId, externalId, title: externalId, kind: "video", publishedAt: new Date(publishedAt) }).returning();
+    await db.insert(schema.postStat).values(
+      readings.map(([at, views], i) => ({ postId: p.id, date: `2026-10-${String(10 + i).padStart(2, "0")}`, views, capturedAt: at ? new Date(at) : null })),
+    );
+  };
+  const views7d = async (externalId: string) => (await loadDataset(db, "u1", NOW))!.dataset.posts.find((p) => p.title === externalId)!.views7d;
+
+  it("records when each post's numbers were read", async () => {
+    const id = await connectAndImport("u1", "youtube");
+    const rows = await db.select({ capturedAt: schema.postStat.capturedAt }).from(schema.postStat).innerJoin(schema.post, eq(schema.post.id, schema.postStat.postId)).where(eq(schema.post.connectionId, id));
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.capturedAt?.getTime() === NOW.getTime())).toBe(true);
+  });
+
+  it("takes each post's views from the reading nearest to exactly one week old", async () => {
+    const id = await connectAndImport("u1", "youtube");
+    // published Nov 1 at 20:00, so one week old at Nov 8 20:00
+    await postWithReadings(id, "weekly", "2026-11-01T20:00:00Z", [
+      ["2026-11-08T04:05:00Z", 700], // 16 hours early: too far
+      ["2026-11-09T04:05:00Z", 900], // 8 hours late: the one
+      ["2026-11-10T04:05:00Z", 1200], // a day later
+    ]);
+    expect(await views7d("weekly")).toBe(900);
+  });
+
+  it("leaves first-week views unknown rather than guessing", async () => {
+    const id = await connectAndImport("u1", "youtube");
+    await postWithReadings(id, "late", "2026-10-01T12:00:00Z", [["2026-10-11T04:00:00Z", 5000]]); // first read at 10 days old
+    await postWithReadings(id, "untimed", "2026-11-01T12:00:00Z", [[null, 800]]); // read before times were recorded
+    expect(await views7d("late")).toBeNull();
+    expect(await views7d("untimed")).toBeNull();
+  });
+
+  it("stores and loads Instagram's followers online, hour by hour", async () => {
+    await connectAndImport("u1", "instagram");
+    const loaded = (await loadDataset(db, "u1", NOW))!;
+    expect(loaded.dataset.online!.length).toBe(30 * 24);
+    expect(loaded.dataset.online!.every((h) => h.platform === "instagram" && h.followers >= 0)).toBe(true);
+    const online = computeAudience(loaded.dataset, asOfDate(loaded.dataset)!, "Asia/Manila").online!;
+    expect(online.platform).toBe("instagram");
+    expect(online.daysCovered).toBeGreaterThanOrEqual(30);
   });
 });

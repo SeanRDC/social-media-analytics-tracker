@@ -3,15 +3,17 @@
  * null until at least one connection has finished an import, so the dashboard
  * can keep showing sample data until then.
  */
-import { and, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
 import type { Db } from "@/db";
-import { audienceStat, connection, dailyStat, post, postStat } from "@/db/schema";
+import { audienceStat, connection, dailyStat, onlineFollowers, post, postStat } from "@/db/schema";
 import { SIMULATED_PREFIX } from "@/lib/connect/providers/simulated";
-import { addDays, isoDate } from "@/lib/dates";
-import type { AudienceData, Dataset, PostData } from "./compute";
+import { addDays, DAY_MS, isoDate } from "@/lib/dates";
+import { FIRST_WEEK_DAYS, type AudienceData, type Dataset, type PostData } from "./compute";
 
 /** Enough for the 90-day range and the 90 days before it. */
 const HISTORY_DAYS = 200;
+/** A post's first-week reading must be taken within this much of exactly FIRST_WEEK_DAYS old. */
+const FIRST_WEEK_SLACK_MS = DAY_MS / 2;
 
 export type DataSource = "sample" | "live" | "simulated";
 
@@ -23,7 +25,7 @@ export async function loadDataset(db: Db, userId: string, now = new Date()): Pro
   const platformOf = new Map(synced.map((c) => [c.id, c.platform]));
   const since = addDays(isoDate(now), -HISTORY_DAYS);
 
-  const [days, posts, stats, audience] = await Promise.all([
+  const [days, posts, stats, audience, firstWeek, online] = await Promise.all([
     db
       .select()
       .from(dailyStat)
@@ -42,7 +44,31 @@ export async function loadDataset(db: Db, userId: string, now = new Date()): Pro
       .from(audienceStat)
       .where(and(inArray(audienceStat.connectionId, ids), gte(audienceStat.date, addDays(isoDate(now), -60))))
       .orderBy(desc(audienceStat.date)),
+    // readings taken around each post's 7th day (half a day either side)
+    db
+      .select({ postId: postStat.postId, views: postStat.views, capturedAt: postStat.capturedAt, publishedAt: post.publishedAt })
+      .from(postStat)
+      .innerJoin(post, eq(post.id, postStat.postId))
+      .where(
+        and(
+          inArray(post.connectionId, ids),
+          isNotNull(postStat.capturedAt),
+          sql`${postStat.capturedAt} between ${post.publishedAt} + make_interval(secs => ${(FIRST_WEEK_DAYS * DAY_MS - FIRST_WEEK_SLACK_MS) / 1000}) and ${post.publishedAt} + make_interval(secs => ${(FIRST_WEEK_DAYS * DAY_MS + FIRST_WEEK_SLACK_MS) / 1000})`,
+        ),
+      ),
+    db
+      .select()
+      .from(onlineFollowers)
+      .where(and(inArray(onlineFollowers.connectionId, ids), gte(onlineFollowers.hourStart, new Date(now.getTime() - 35 * DAY_MS)))),
   ]);
+
+  // of those, the reading nearest to exactly 7 days old
+  const weekOld = new Map<string, { views: number; off: number }>();
+  for (const r of firstWeek) {
+    const off = Math.abs(r.capturedAt!.getTime() - (r.publishedAt.getTime() + FIRST_WEEK_DAYS * DAY_MS));
+    const had = weekOld.get(r.postId);
+    if (!had || off < had.off) weekOld.set(r.postId, { views: r.views, off });
+  }
 
   const latest = new Map(stats.map((r) => [r.post_stat.postId, r.post_stat]));
   const postRows: PostData[] = posts.map((p) => {
@@ -60,6 +86,7 @@ export async function loadDataset(db: Db, userId: string, now = new Date()): Pro
       comments: s?.comments ?? 0,
       shares: s?.shares ?? 0,
       avgWatchSeconds: s?.avgWatchSeconds ?? null,
+      views7d: weekOld.get(p.id)?.views ?? null,
     };
   });
 
@@ -81,6 +108,7 @@ export async function loadDataset(db: Db, userId: string, now = new Date()): Pro
       })),
       posts: postRows,
       audience: audienceRows,
+      online: online.map((h) => ({ platform: platformOf.get(h.connectionId)!, hourStart: h.hourStart, followers: h.followers })),
     },
   };
 }

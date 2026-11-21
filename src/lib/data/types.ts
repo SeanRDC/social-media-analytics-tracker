@@ -140,8 +140,55 @@ export interface Audience {
   sources: PlatformId[];
   ages: { label: string; share: number }[];
   countries: { name: string; share: number }[];
-  slotLabels: string[];
-  bestTimes: { day: string; slots: number[] }[];
+  /** The windows of the day the best times are grouped into. */
+  slots: TimeSlot[];
+  /** How past posts did by when they were published, across platforms and for each one. */
+  posting: { all: PostingTimes; platforms: { id: PlatformId; times: PostingTimes }[] };
+  /** When followers are online, where a platform reports it (Instagram); null otherwise. */
+  online: OnlineTimes | null;
+  /** Posts a day, window or cell needs before it gets a score. */
+  minPosts: number;
+  /** Posts are compared by their views this many days after publishing. */
+  firstWeekDays: number;
   /** The IANA time zone the best times are grouped in, e.g. "Asia/Manila". */
   timeZone: string;
+}
+
+/** A window of the day in the person's time zone, e.g. Evening, "4–8 p.m.". */
+export interface TimeSlot {
+  label: string;
+  hours: string;
+}
+
+export interface PostingCell {
+  /**
+   * Median of the posts' first-week views, each relative to its platform's
+   * typical post (1 = typical, 1.5 = half again). null below the minimum number of posts.
+   */
+  score: number | null;
+  /** Posts published in it that are counted. */
+  posts: number;
+}
+
+export interface PostingTimes {
+  /** Monday first; `cells` follow `Audience.slots`. */
+  days: { day: string; cells: PostingCell[] }[];
+  /** Each weekday on its own (all windows), Monday first. */
+  byDay: PostingCell[];
+  /** Each window on its own (all weekdays), in `Audience.slots` order. */
+  bySlot: PostingCell[];
+  /** Posts counted: their views at one week old are known. */
+  used: number;
+  /** Published less than a week ago (plus a day for the next sync): counted once they're a week old. */
+  waiting: number;
+  /** Imported after their first week, so their first-week views were never recorded. */
+  untracked: number;
+}
+
+export interface OnlineTimes {
+  platform: PlatformId;
+  /** Monday first; average followers online in an hour of each window, null where nothing was reported. */
+  days: { day: string; cells: (number | null)[] }[];
+  /** Days of hourly numbers behind it (the platform keeps 30). */
+  daysCovered: number;
 }

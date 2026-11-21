@@ -157,7 +157,11 @@ export const post = pgTable(
   (t) => [unique("post_connection_external_uq").on(t.connectionId, t.externalId), index("post_published_idx").on(t.publishedAt)],
 );
 
-/** Lifetime totals for a post as of `date`. */
+/**
+ * Lifetime totals for a post as of `date`. `capturedAt` is the moment they were
+ * read, so a post's numbers at an exact age (say, 7 days after publishing) can
+ * be picked out; null on rows stored before it was recorded.
+ */
 export const postStat = pgTable(
   "post_stat",
   {
@@ -171,8 +175,26 @@ export const postStat = pgTable(
     comments: integer("comments").notNull().default(0),
     shares: integer("shares").notNull().default(0),
     avgWatchSeconds: real("avg_watch_seconds"),
+    capturedAt: timestamp("captured_at", { withTimezone: true }),
   },
   (t) => [unique("post_stat_post_date_uq").on(t.postId, t.date)],
+);
+
+/**
+ * How many of an account's followers were online in each hour, exactly as the
+ * platform reports it (only Instagram shares this, for the last 30 days).
+ */
+export const onlineFollowers = pgTable(
+  "online_followers",
+  {
+    id: uuid(),
+    connectionId: text("connection_id")
+      .notNull()
+      .references(() => connection.id, { onDelete: "cascade" }),
+    hourStart: timestamp("hour_start", { withTimezone: true }).notNull(),
+    followers: integer("followers").notNull(),
+  },
+  (t) => [unique("online_followers_connection_hour_uq").on(t.connectionId, t.hourStart)],
 );
 
 /** Audience breakdowns, e.g. dimension "age" key "25-34" share 38.2. */

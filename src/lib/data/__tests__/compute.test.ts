@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   asOfDate,
-  bestTimes,
   computeAudience,
   computeDailyViews,
   computeOverview,
   computePlatforms,
   computePosts,
   daysEnding,
+  onlineTimes,
+  placeInWeek,
+  postingTimes,
   roundTo100,
   type Dataset,
   type PostData,
@@ -23,7 +25,7 @@ function dataset(platforms: PlatformId[]): Dataset {
   for (const platform of platforms) {
     const s = simulatedSnapshot(platform, W);
     ds.connections.push({ platform, account: `Sample ${platform}`, status: "connected", daily: s.daily });
-    ds.posts.push(...s.posts.map((p) => ({ ...p, id: p.externalId, platform })));
+    ds.posts.push(...s.posts.map((p) => ({ ...p, id: p.externalId, platform, views7d: null })));
     ds.audience.push(...(s.audience ?? []).map((a) => ({ ...a, platform })));
   }
   return ds;
@@ -97,8 +99,11 @@ describe("with imported history", () => {
     expect(a.countries.reduce((s, x) => s + x.share, 0)).toBe(100);
     expect(a.countries[0].name).toBe("United States");
     expect(a.countries.at(-1)?.name).toBe("Other");
-    expect(a.bestTimes).toHaveLength(7);
-    expect(Math.max(...a.bestTimes.flatMap((d) => d.slots))).toBe(1);
+    expect(a.posting.all.days).toHaveLength(7);
+    expect(a.slots.map((x) => x.label)).toEqual(["Morning", "Midday", "Evening", "Night"]);
+    // no first-week readings in a single import: everything is waiting or left out, nothing is made up
+    expect(a.posting.all.used).toBe(0);
+    expect(a.posting.all.days.flatMap((d) => d.cells).every((c) => c.score === null)).toBe(true);
   });
 
   it("turns posts into the contract with engagement and links", () => {
@@ -173,19 +178,108 @@ describe("edge cases", () => {
     expect(roundTo100([0, 0])).toEqual([0, 0]);
   });
 
-  it("scores best times by average views per slot", () => {
-    const post = (iso: string, views: number) => ({ publishedAt: new Date(iso), views }) as PostData;
-    const t = bestTimes([post("2026-11-12T18:00:00Z", 900), post("2026-11-12T19:00:00Z", 100), post("2026-11-16T08:00:00Z", 250)]);
-    expect(t[3]).toEqual({ day: "Thu", slots: [0, 0, 1, 0] });
-    expect(t[0].slots[0]).toBe(0.5);
+});
+
+describe("best time to post", () => {
+  const ASOF = "2026-11-30";
+  let n = 0;
+  const post = (iso: string, views7d: number | null, platform: PlatformId = "youtube", views = 10 * (views7d ?? 1)): PostData => ({
+    id: `p${n++}`,
+    platform,
+    title: "",
+    kind: "video",
+    publishedAt: new Date(iso),
+    thumbnailUrl: null,
+    permalink: null,
+    views,
+    likes: 0,
+    comments: 0,
+    shares: 0,
+    avgWatchSeconds: null,
+    views7d,
+  });
+  // Thursday 2026-11-12 18:00 UTC is Thursday evening; Monday 2026-11-09 08:00 UTC is Monday morning
+  const thuEvening = (v: number, p?: PlatformId) => post("2026-11-12T18:00:00Z", v, p);
+  const monMorning = (v: number, p?: PlatformId) => post("2026-11-09T08:00:00Z", v, p);
+  const cell = (t: ReturnType<typeof postingTimes>["all"], day: number, slot: number) => t.days[day].cells[slot];
+
+  it("places moments by the person's clock, the small hours belonging to the night before", () => {
+    const place = placeInWeek("UTC");
+    expect(place(new Date("2026-11-10T01:00:00Z"))).toEqual({ day: 0, slot: 3 }); // 1 a.m. Tuesday is Monday night
+    expect(place(new Date("2026-11-09T05:00:00Z"))).toEqual({ day: 0, slot: 0 });
+    expect(place(new Date("2026-11-09T11:00:00Z"))).toEqual({ day: 0, slot: 1 });
+    expect(place(new Date("2026-11-09T16:00:00Z"))).toEqual({ day: 0, slot: 2 });
+    expect(place(new Date("2026-11-09T20:00:00Z"))).toEqual({ day: 0, slot: 3 });
+    // Wednesday 22:00 UTC is Thursday 6 a.m. in Manila (UTC+8)
+    expect(placeInWeek("Asia/Manila")(new Date("2026-11-11T22:00:00Z"))).toEqual({ day: 3, slot: 0 });
   });
 
-  it("groups best times by the person's own clock, weekday included", () => {
-    const post = (iso: string, views: number) => ({ publishedAt: new Date(iso), views }) as PostData;
-    // Wednesday 22:00 UTC is Thursday 6 a.m. in Manila (UTC+8)
-    const posts = [post("2026-11-11T22:00:00Z", 500)];
-    expect(bestTimes(posts, "UTC")[2]).toEqual({ day: "Wed", slots: [0, 0, 0, 1] });
-    expect(bestTimes(posts, "Asia/Manila")[3]).toEqual({ day: "Thu", slots: [1, 0, 0, 0] });
+  it("gives no score until a time has enough posts, instead of a misleading 0% or 100%", () => {
+    const t = postingTimes([thuEvening(500), thuEvening(600), monMorning(100), monMorning(120), monMorning(110)], ASOF).all;
+    expect(cell(t, 3, 2)).toEqual({ score: null, posts: 2 });
+    expect(cell(t, 0, 0).score).not.toBeNull();
+    expect(cell(t, 5, 1)).toEqual({ score: null, posts: 0 });
+  });
+
+  it("uses the median, so one viral post can't carry a time", () => {
+    const posts = [monMorning(100), monMorning(100), monMorning(100_000), thuEvening(300), thuEvening(300), thuEvening(300)];
+    const t = postingTimes(posts, ASOF).all;
+    expect(cell(t, 3, 2).score!).toBeGreaterThan(cell(t, 0, 0).score!);
+  });
+
+  it("scores each post against its own platform, so a big platform doesn't drown out a small one", () => {
+    // YouTube's Monday mornings are typical; TikTok's Thursday evenings are 3× TikTok's usual
+    const posts = [
+      ...[1, 2, 3].map(() => monMorning(50_000, "youtube")),
+      ...[1, 2, 3].map(() => post("2026-11-13T09:00:00Z", 50_000, "youtube")),
+      ...[1, 2, 3].map(() => thuEvening(900, "tiktok")),
+      ...[1, 2, 3, 4, 5, 6].map(() => post("2026-11-14T13:00:00Z", 300, "tiktok")),
+    ];
+    const { all, platforms } = postingTimes(posts, ASOF);
+    expect(cell(all, 3, 2).score).toBe(3);
+    expect(cell(all, 0, 0).score).toBe(1);
+    expect(platforms.map((p) => p.id)).toEqual(["youtube", "tiktok"]);
+    expect(cell(platforms[1].times, 3, 2).score).toBe(3);
+    expect(cell(platforms[0].times, 3, 2)).toEqual({ score: null, posts: 0 });
+  });
+
+  it("only compares posts at the same age, and says which were left out and why", () => {
+    const posts = [
+      thuEvening(400),
+      post("2026-11-28T10:00:00Z", null), // two days old: waiting for its week
+      post("2026-06-01T10:00:00Z", null, "youtube", 9_000_000), // imported long after its first week
+    ];
+    const t = postingTimes(posts, ASOF).all;
+    expect(t.used).toBe(1);
+    expect(t.waiting).toBe(1);
+    expect(t.untracked).toBe(1);
+    // the old post's big lifetime total plays no part
+    expect(t.days.flatMap((d) => d.cells).reduce((s, c) => s + c.posts, 0)).toBe(1);
+  });
+
+  it("still names the best day and the best time of day while single cells are too thin", () => {
+    // three evening posts on three different days: no cell has 3, the evening window does
+    const posts = ["2026-11-09T17:00:00Z", "2026-11-10T17:00:00Z", "2026-11-11T17:00:00Z"].map((iso) => post(iso, 500));
+    const t = postingTimes(posts, ASOF).all;
+    expect(t.days.flatMap((d) => d.cells).every((c) => c.score === null)).toBe(true);
+    expect(t.bySlot[2]).toEqual({ score: 1, posts: 3 });
+    expect(t.byDay[0]).toEqual({ score: null, posts: 1 });
+  });
+});
+
+describe("followers online", () => {
+  const hour = (iso: string, followers: number) => ({ platform: "instagram" as const, hourStart: new Date(iso), followers });
+
+  it("averages the hourly counts in each window, in the person's time zone", () => {
+    const t = onlineTimes([hour("2026-11-09T17:00:00Z", 400), hour("2026-11-09T18:00:00Z", 600), hour("2026-11-16T17:00:00Z", 800)], "UTC")!;
+    expect(t.platform).toBe("instagram");
+    expect(t.days[0].cells[2]).toBe(600); // Monday evening: (400 + 600 + 800) / 3
+    expect(t.days[0].cells[0]).toBeNull(); // nothing reported: not zero
+    expect(t.daysCovered).toBe(2);
+  });
+
+  it("is absent when no platform reports it", () => {
+    expect(onlineTimes([], "UTC")).toBeNull();
   });
 });
 
@@ -233,6 +327,7 @@ describe("post views", () => {
     comments: 0,
     shares: 0,
     avgWatchSeconds: null,
+    views7d: null,
   });
   const ds: Dataset = {
     // TikTok has only reported its follower total so far: no daily views yet

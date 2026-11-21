@@ -5,7 +5,7 @@
  */
 import { and, asc, desc, eq, lt, sql } from "drizzle-orm";
 import type { Db } from "@/db";
-import { audienceStat, connection, dailyStat, post, postStat } from "@/db/schema";
+import { audienceStat, connection, dailyStat, onlineFollowers, post, postStat } from "@/db/schema";
 import { expiredValues, getAccessToken } from "@/lib/connect/service";
 import { ProviderError, RateLimited, ReauthRequired } from "@/lib/connect/providers";
 import { SIMULATED_PREFIX } from "@/lib/connect/providers/simulated";
@@ -35,6 +35,8 @@ const FETCHERS: Record<PlatformId, Fetcher> = {
 export const FIRST_IMPORT_DAYS = 180;
 /** Later syncs re-read a few days, because platforms finalise recent numbers late. */
 const OVERLAP_DAYS = 3;
+/** Hours of "followers online" kept: the 30 days Instagram reports, plus a little slack. */
+const ONLINE_KEEP_DAYS = 35;
 /** Posts read on the first import (a fuller back catalogue) and on each daily sync (recent posts and their latest numbers). */
 export const POSTS_FIRST_IMPORT = 500;
 export const POSTS_PER_SYNC = 200;
@@ -62,7 +64,7 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
   let snapshot: PlatformSnapshot;
   try {
     snapshot = simulated ? simulatedSnapshot(row.platform, window) : await fetcher(await getAccessToken(db, row.id), window, { externalId: row.externalId, maxPosts: row.lastSyncedAt ? POSTS_PER_SYNC : POSTS_FIRST_IMPORT });
-    await storeSnapshot(db, row.id, window.end, snapshot);
+    await storeSnapshot(db, row.id, window.end, snapshot, now);
   } catch (e) {
     if (e instanceof ReauthRequired) {
       await db.update(connection).set({ ...expiredValues(now), lastSyncError: e.message.slice(0, 200), lastSyncErrorAt: now }).where(eq(connection.id, row.id));
@@ -80,7 +82,8 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
 }
 
 /** Writes one sync's numbers. A value the platform reported is never replaced by an unknown (null) one. */
-export async function storeSnapshot(db: Db, connectionId: string, today: string, snapshot: PlatformSnapshot) {
+/** `capturedAt`: when the numbers were read, stored on each post's stats so their exact age is known. */
+export async function storeSnapshot(db: Db, connectionId: string, today: string, snapshot: PlatformSnapshot, capturedAt = new Date()) {
   await db.transaction(async (tx) => {
     const s = snapshot.derive ? { ...snapshot, daily: await derivedToday(tx as unknown as Db, connectionId, today, snapshot) } : snapshot;
     if (s.daily.length) {
@@ -113,7 +116,7 @@ export async function storeSnapshot(db: Db, connectionId: string, today: string,
       await tx
         .insert(postStat)
         .values(
-          s.posts.map((p) => ({ postId: idOf.get(p.externalId)!, date: today, views: p.views, likes: p.likes, comments: p.comments, shares: p.shares, avgWatchSeconds: p.avgWatchSeconds })),
+          s.posts.map((p) => ({ postId: idOf.get(p.externalId)!, date: today, views: p.views, likes: p.likes, comments: p.comments, shares: p.shares, avgWatchSeconds: p.avgWatchSeconds, capturedAt })),
         )
         .onConflictDoUpdate({
           target: [postStat.postId, postStat.date],
@@ -123,8 +126,18 @@ export async function storeSnapshot(db: Db, connectionId: string, today: string,
             comments: sql`excluded.comments`,
             shares: sql`excluded.shares`,
             avgWatchSeconds: sql`excluded.avg_watch_seconds`,
+            capturedAt: sql`excluded.captured_at`,
           },
         });
+    }
+
+    if (s.onlineFollowers?.length) {
+      await tx
+        .insert(onlineFollowers)
+        .values(s.onlineFollowers.map((h) => ({ connectionId, hourStart: h.hourStart, followers: h.followers })))
+        .onConflictDoUpdate({ target: [onlineFollowers.connectionId, onlineFollowers.hourStart], set: { followers: sql`excluded.followers` } });
+      // the platform only keeps 30 days; older hours would no longer match what it reports
+      await tx.delete(onlineFollowers).where(and(eq(onlineFollowers.connectionId, connectionId), lt(onlineFollowers.hourStart, new Date(capturedAt.getTime() - ONLINE_KEEP_DAYS * 86_400_000))));
     }
 
     if (s.audience) {

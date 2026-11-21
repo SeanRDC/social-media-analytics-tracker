@@ -30,7 +30,7 @@ export default async function AudiencePage() {
             YouTube and Instagram only share age and country breakdowns once an account has enough viewers. TikTok doesn&apos;t share them with apps like this one.
           </p>
         </section>
-        <BestTimes slotLabels={a.slotLabels} days={a.bestTimes} timeZone={a.timeZone} />
+        <BestTimes slots={a.slots} posting={a.posting} online={a.online} minPosts={a.minPosts} firstWeekDays={a.firstWeekDays} timeZone={a.timeZone} />
         {sync}
       </div>
     );
@@ -62,7 +62,7 @@ export default async function AudiencePage() {
       </section>
       {a.ages.length > 0 && <ShareBars title="Age" caption={caption} rows={a.ages} index={1} />}
       {a.countries.length > 0 && <ShareBars title="Top countries" caption={caption} rows={a.countries.map((c) => ({ label: c.name, share: c.share }))} index={2} />}
-      <BestTimes slotLabels={a.slotLabels} days={a.bestTimes} timeZone={a.timeZone} />
+      <BestTimes slots={a.slots} posting={a.posting} online={a.online} minPosts={a.minPosts} firstWeekDays={a.firstWeekDays} timeZone={a.timeZone} />
       {sync}
     </div>
   );

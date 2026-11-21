@@ -57,6 +57,13 @@
       "when": 1795156427496,
       "tag": "0007_access_lost_at",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795274170424,
+      "tag": "0008_best_time_accuracy",
+      "breakpoints": true
     }
   ]
 }
