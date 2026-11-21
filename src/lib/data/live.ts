@@ -9,11 +9,19 @@ import { audienceStat, connection, dailyStat, onlineFollowers, post, postStat } 
 import { SIMULATED_PREFIX } from "@/lib/connect/providers/simulated";
 import { addDays, DAY_MS, isoDate } from "@/lib/dates";
 import { FIRST_WEEK_DAYS, type AudienceData, type Dataset, type PostData } from "./compute";
+import type { PlatformId } from "./types";
 
 /** Enough for the 90-day range and the 90 days before it. */
 const HISTORY_DAYS = 200;
 /** A post's first-week reading must be taken within this much of exactly FIRST_WEEK_DAYS old. */
 const FIRST_WEEK_SLACK_MS = DAY_MS / 2;
+/**
+ * Platforms whose first-week views come from their own daily numbers
+ * (post.firstWeekViews) for every post. Their lifetime readings are a
+ * different count (YouTube's public view count vs. Analytics views), so they
+ * aren't mixed in: one source per platform keeps posts comparable.
+ */
+const FIRST_WEEK_FROM_PLATFORM: ReadonlySet<PlatformId> = new Set(["youtube"]);
 
 export type DataSource = "sample" | "live" | "simulated";
 
@@ -86,7 +94,9 @@ export async function loadDataset(db: Db, userId: string, now = new Date()): Pro
       comments: s?.comments ?? 0,
       shares: s?.shares ?? 0,
       avgWatchSeconds: s?.avgWatchSeconds ?? null,
-      views7d: weekOld.get(p.id)?.views ?? null,
+      views7d: FIRST_WEEK_FROM_PLATFORM.has(platformOf.get(p.connectionId)!) ? p.firstWeekViews : (weekOld.get(p.id)?.views ?? null),
+      // a later sync reads it from the platform (a few each day)
+      firstWeekPending: FIRST_WEEK_FROM_PLATFORM.has(platformOf.get(p.connectionId)!) && p.firstWeekViews === null,
     };
   });
 

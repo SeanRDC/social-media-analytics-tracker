@@ -6,7 +6,8 @@
  */
 import { addDays, daysBetween, dateRange, parseIso } from "@/lib/dates";
 import type { PlatformId, PostKind } from "@/lib/data/types";
-import type { AudienceRow, PlatformSnapshot, PostRow, SyncWindow } from "./types";
+import type { AudienceRow, FirstWeekRow, PlatformSnapshot, PostRow, SyncWindow } from "./types";
+import { firstWeekRange } from "./youtube";
 
 interface Profile {
   base: number;
@@ -68,18 +69,20 @@ export function simulatedSnapshot(platform: PlatformId, window: SyncWindow): Pla
 
   const days = dateRange(window.start, window.end);
   const posts: PostRow[] = [];
+  const firstWeeks: FirstWeekRow[] = [];
   for (let d = 0; d <= daysBetween(EPOCH, window.end); d++) {
     if (d % p.cadence !== 0 || d < daysBetween(EPOCH, window.end) - 200) continue;
     const date = addDays(EPOCH, d);
     const age = daysBetween(date, window.end);
     const views = Math.round(p.postViews * (0.3 + 1.7 * noise(platform, d + 31)) * Math.min(1, (age + 1) / 7));
     const eng = views * p.rate * (0.7 + 0.6 * noise(platform, d + 77));
+    const publishedAt = new Date(`${date}T${String(8 + Math.floor(noise(platform, d + 3) * 14)).padStart(2, "0")}:00:00Z`);
     posts.push({
       externalId: `${platform}-${date}`,
       title: TITLES[d % TITLES.length],
       kind: p.kinds[d % p.kinds.length],
       // posting times vary so "best time to post" has something to show
-      publishedAt: new Date(`${date}T${String(8 + Math.floor(noise(platform, d + 3) * 14)).padStart(2, "0")}:00:00Z`),
+      publishedAt,
       thumbnailUrl: null,
       permalink: null,
       views,
@@ -88,6 +91,11 @@ export function simulatedSnapshot(platform: PlatformId, window: SyncWindow): Pla
       shares: Math.round(eng * 0.08),
       avgWatchSeconds: p.watch == null ? null : Math.round(p.watch * (0.6 + 0.8 * noise(platform, d + 11))),
     });
+    // YouTube reads first weeks from Analytics once they've settled (see fetchFirstWeeks); evenings in UTC+8 do a little better
+    if (platform === "youtube" && firstWeekRange(publishedAt).end <= addDays(window.end, -3)) {
+      const evening = publishedAt.getUTCHours() >= 9 && publishedAt.getUTCHours() < 13;
+      firstWeeks.push({ externalId: `${platform}-${date}`, views: Math.round(p.postViews * (0.3 + 1.7 * noise(platform, d + 31)) * (evening ? 1.4 : 1)) });
+    }
   }
   const publishedOn = (iso: string) => posts.filter((x) => x.externalId === `${platform}-${iso}`).length;
 
@@ -112,6 +120,7 @@ export function simulatedSnapshot(platform: PlatformId, window: SyncWindow): Pla
     daily,
     posts,
     audience: p.demographics ? audience(platform) : null,
+    ...(firstWeeks.length ? { firstWeeks } : {}),
     ...(platform === "instagram" ? { onlineFollowers: onlineHours(followers, window.end) } : {}),
   };
 }

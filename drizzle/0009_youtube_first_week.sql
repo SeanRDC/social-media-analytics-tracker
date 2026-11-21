@@ -1,0 +1,1 @@
+ALTER TABLE "post" ADD COLUMN "first_week_views" bigint;

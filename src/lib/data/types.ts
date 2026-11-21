@@ -179,7 +179,7 @@ export interface PostingTimes {
   bySlot: PostingCell[];
   /** Posts counted: their views at one week old are known. */
   used: number;
-  /** Published less than a week ago (plus a day for the next sync): counted once they're a week old. */
+  /** First-week numbers still to come: too recent, or being read from the platform a few each sync. */
   waiting: number;
   /** Imported after their first week, so their first-week views were never recorded. */
   untracked: number;

@@ -63,7 +63,14 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
 
   let snapshot: PlatformSnapshot;
   try {
-    snapshot = simulated ? simulatedSnapshot(row.platform, window) : await fetcher(await getAccessToken(db, row.id), window, { externalId: row.externalId, maxPosts: row.lastSyncedAt ? POSTS_PER_SYNC : POSTS_FIRST_IMPORT });
+    const stored = await db.select({ externalId: post.externalId, publishedAt: post.publishedAt, firstWeekViews: post.firstWeekViews }).from(post).where(eq(post.connectionId, row.id));
+    const ctx = {
+      externalId: row.externalId,
+      maxPosts: row.lastSyncedAt ? POSTS_PER_SYNC : POSTS_FIRST_IMPORT,
+      firstWeekKnown: new Set(stored.filter((p) => p.firstWeekViews !== null).map((p) => p.externalId)),
+      firstWeekMissing: stored.filter((p) => p.firstWeekViews === null).map(({ externalId, publishedAt }) => ({ externalId, publishedAt })),
+    };
+    snapshot = simulated ? simulatedSnapshot(row.platform, window) : await fetcher(await getAccessToken(db, row.id), window, ctx);
     await storeSnapshot(db, row.id, window.end, snapshot, now);
   } catch (e) {
     if (e instanceof ReauthRequired) {
@@ -106,10 +113,25 @@ export async function storeSnapshot(db: Db, connectionId: string, today: string,
     if (s.posts.length) {
       const ids = await tx
         .insert(post)
-        .values(s.posts.map((p) => ({ connectionId, externalId: p.externalId, title: p.title, kind: p.kind, publishedAt: p.publishedAt, thumbnailUrl: p.thumbnailUrl, permalink: p.permalink })))
+        .values(
+          s.posts.map((p) => ({
+            connectionId,
+            externalId: p.externalId,
+            title: p.title,
+            kind: p.kind,
+            publishedAt: p.publishedAt,
+            thumbnailUrl: p.thumbnailUrl,
+            permalink: p.permalink,
+          })),
+        )
         .onConflictDoUpdate({
           target: [post.connectionId, post.externalId],
-          set: { title: sql`excluded.title`, kind: sql`excluded.kind`, thumbnailUrl: sql`excluded.thumbnail_url`, permalink: sql`excluded.permalink` },
+          set: {
+            title: sql`excluded.title`,
+            kind: sql`excluded.kind`,
+            thumbnailUrl: sql`excluded.thumbnail_url`,
+            permalink: sql`excluded.permalink`,
+          },
         })
         .returning({ id: post.id, externalId: post.externalId });
       const idOf = new Map(ids.map((r) => [r.externalId, r.id]));
@@ -129,6 +151,14 @@ export async function storeSnapshot(db: Db, connectionId: string, today: string,
             capturedAt: sql`excluded.captured_at`,
           },
         });
+    }
+
+    // first weeks are read once and kept; they may be for posts this sync didn't list
+    for (const w of s.firstWeeks ?? []) {
+      await tx
+        .update(post)
+        .set({ firstWeekViews: w.views })
+        .where(and(eq(post.connectionId, connectionId), eq(post.externalId, w.externalId)));
     }
 
     if (s.onlineFollowers?.length) {

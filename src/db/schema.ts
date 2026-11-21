@@ -152,6 +152,12 @@ export const post = pgTable(
     publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
     thumbnailUrl: text("thumbnail_url"),
     permalink: text("permalink"),
+    /**
+     * Views in the post's first week, from the platform's own daily numbers
+     * (YouTube Analytics), so posts imported long after they went out can be
+     * compared too. null until read.
+     */
+    firstWeekViews: bigint("first_week_views", { mode: "number" }),
     createdAt: createdAt(),
   },
   (t) => [unique("post_connection_external_uq").on(t.connectionId, t.externalId), index("post_published_idx").on(t.publishedAt)],

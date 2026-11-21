@@ -44,6 +44,8 @@ export interface PostData {
    * imported later.
    */
   views7d: number | null;
+  /** views7d is still to come from the platform (a later sync reads it), so a null means "waiting", not "missing". */
+  firstWeekPending?: boolean;
 }
 
 /** Followers online in one hour, as the platform reported it. */
@@ -79,6 +81,8 @@ const SLOTS: TimeSlot[] = [
 ];
 /** Posts are compared by their views this many days after publishing. */
 export const FIRST_WEEK_DAYS = 7;
+/** Days after the first week before a missing first-week number counts as missing rather than pending. */
+const FIRST_WEEK_SETTLE_DAYS = 4;
 /** Posts a cell, day or window needs before it is scored: one post can't speak for a slot. */
 export const MIN_POSTS = 3;
 const WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -378,8 +382,8 @@ const cellOf = (scores: number[]): PostingCell => ({ score: scores.length >= MIN
 export function postingTimes(posts: PostData[], asOf: string, timeZone = "UTC"): Audience["posting"] {
   const place = placeInWeek(timeZone);
   const end = Date.parse(`${asOf}T23:59:59Z`);
-  // a post is measured one sync after its 7th day; until then it is waiting rather than missing
-  const settled = (p: PostData) => end - p.publishedAt.getTime() >= (FIRST_WEEK_DAYS + 1) * DAY_MS;
+  // a post's first week is read a sync after its 7th day (YouTube's daily numbers a few days later); until then it's waiting, not missing
+  const settled = (p: PostData) => end - p.publishedAt.getTime() >= (FIRST_WEEK_DAYS + FIRST_WEEK_SETTLE_DAYS) * DAY_MS;
 
   const measured = posts.filter((p) => p.views7d !== null);
   const typical = new Map<PlatformId, number>();
@@ -397,8 +401,8 @@ export function postingTimes(posts: PostData[], asOf: string, timeZone = "UTC"):
       byDay: WEEK.map((_, d) => cellOf(at(d, null))),
       bySlot: SLOTS.map((_, t) => cellOf(at(null, t))),
       used: mine.length,
-      waiting: unmeasured.filter((p) => !settled(p)).length,
-      untracked: unmeasured.filter(settled).length,
+      waiting: unmeasured.filter((p) => p.firstWeekPending || !settled(p)).length,
+      untracked: unmeasured.filter((p) => !p.firstWeekPending && settled(p)).length,
     };
   };
 

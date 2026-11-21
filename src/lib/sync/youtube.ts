@@ -4,10 +4,11 @@
  * watch time, demographics). Demographics and per-video reports are optional:
  * small channels get none, and a failure there must not lose the rest.
  */
-import { isoDate } from "@/lib/dates";
+import { addDays, isoDate } from "@/lib/dates";
+import { FIRST_WEEK_DAYS } from "@/lib/data/compute";
 import { ProviderError, RateLimited } from "@/lib/connect/providers";
 import { getJson, withQuery } from "@/lib/connect/providers/oauth";
-import type { AudienceRow, DailyRow, FetchContext, PlatformSnapshot, PostRow, SyncWindow } from "./types";
+import type { AudienceRow, DailyRow, FetchContext, FirstWeekRow, PlatformSnapshot, PostRow, SyncWindow } from "./types";
 
 const DATA = "https://www.googleapis.com/youtube/v3";
 const ANALYTICS = "https://youtubeanalytics.googleapis.com/v2/reports";
@@ -16,6 +17,13 @@ const ANALYTICS = "https://youtubeanalytics.googleapis.com/v2/reports";
 const ANALYTICS_MAX_ROWS = 200;
 /** Shorts can be up to 3 minutes; the API has no Shorts flag. */
 const SHORT_MAX_SECONDS = 180;
+/** YouTube Analytics counts days in Pacific time. */
+const ANALYTICS_ZONE = "America/Los_Angeles";
+/** Its daily numbers settle a few days late; first weeks are only read once they have. */
+const ANALYTICS_SETTLE_DAYS = 3;
+/** First weeks read per sync (one request each), newest videos first; the rest follow on later syncs. */
+const FIRST_WEEKS_PER_SYNC = 50;
+const FIRST_WEEK_PARALLEL = 5;
 
 type Row = Record<string, string | number>;
 
@@ -76,6 +84,8 @@ export async function fetchYouTube(accessToken: string, window: SyncWindow, ctx:
     optional({ ...range, metrics: "views", dimensions: "country", sort: "-views", maxResults: "25" }),
   ]);
 
+  const firstWeeks = await fetchFirstWeeks(report, [...posts, ...(ctx.firstWeekMissing ?? [])], window.end, ctx.firstWeekKnown ?? new Set());
+
   const perVideo = new Map((byVideo ?? []).map((r) => [String(r.video), r]));
   for (const p of posts) {
     const v = perVideo.get(p.externalId);
@@ -85,7 +95,60 @@ export async function fetchYouTube(accessToken: string, window: SyncWindow, ctx:
   }
 
   const totalViews = days.reduce((sum, r) => sum + num(r.views), 0);
-  return { followers, daily: dailyRows(days, followers, posts), posts, audience: audienceRows(ages, countries, totalViews) };
+  return { followers, daily: dailyRows(days, followers, posts), posts, audience: audienceRows(ages, countries, totalViews), firstWeeks };
+}
+
+/**
+ * The whole Pacific-time days that make up a video's first week. Analytics
+ * only counts whole days, so the window ends at the midnight nearest to
+ * exactly FIRST_WEEK_DAYS after publishing: videos published before noon
+ * stop at the 7th midnight, later ones at the 8th. Every video is measured
+ * within half a day of the same age, whatever hour it went out (always
+ * stopping at the 7th midnight would cut late uploads short by up to a day).
+ */
+export function firstWeekRange(publishedAt: Date): { start: string; end: string } {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: ANALYTICS_ZONE, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(publishedAt);
+  const part = (type: string) => parts.find((p) => p.type === type)!.value;
+  const start = `${part("year")}-${part("month")}-${part("day")}`;
+  const hour = Number(part("hour")) + Number(part("minute")) / 60;
+  return { start, end: addDays(start, hour < 12 ? FIRST_WEEK_DAYS - 1 : FIRST_WEEK_DAYS) };
+}
+
+/**
+ * Reads first-week views, from YouTube Analytics, for videos that don't have
+ * them yet: each video's exact views over its first-week window. Takes this
+ * sync's videos and stored ones it no longer lists. Optional and capped per
+ * sync: a failure, or running out of quota, leaves the rest for the next sync
+ * and never fails this one.
+ */
+async function fetchFirstWeeks(
+  report: (params: Record<string, string>) => Promise<Row[]>,
+  videos: { externalId: string; publishedAt: Date }[],
+  today: string,
+  known: ReadonlySet<string>,
+): Promise<FirstWeekRow[]> {
+  const settled = addDays(today, -ANALYTICS_SETTLE_DAYS);
+  const unique = [...new Map(videos.map((v) => [v.externalId, v])).values()];
+  const todo = unique
+    .filter((v) => !known.has(v.externalId) && firstWeekRange(v.publishedAt).end <= settled)
+    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
+    .slice(0, FIRST_WEEKS_PER_SYNC);
+  const out: FirstWeekRow[] = [];
+  let stop = false;
+  const read = async (v: { externalId: string; publishedAt: Date }) => {
+    if (stop) return;
+    const { start, end } = firstWeekRange(v.publishedAt);
+    try {
+      const rows = await report({ startDate: start, endDate: end, metrics: "views", filters: `video==${v.externalId}` });
+      // no rows means no views in those days
+      out.push({ externalId: v.externalId, views: rows.reduce((sum, r) => sum + num(r.views), 0) });
+    } catch (e) {
+      if (e instanceof RateLimited) stop = true;
+      else if (!(e instanceof ProviderError)) throw e;
+    }
+  };
+  for (let i = 0; i < todo.length && !stop; i += FIRST_WEEK_PARALLEL) await Promise.all(todo.slice(i, i + FIRST_WEEK_PARALLEL).map(read));
+  return out;
 }
 
 async function fetchVideos(data: (path: string, params: Record<string, string>) => Promise<Record<string, unknown>>, playlistId: string, max: number): Promise<PostRow[]> {

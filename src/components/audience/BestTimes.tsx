@@ -89,7 +89,7 @@ export function BestTimes({ slots, posting, online, minPosts, firstWeekDays, tim
   }
 
   const left = [
-    data.waiting ? `${plural(data.waiting, "newer post")} ${data.waiting === 1 ? "counts" : "count"} once a week old` : null,
+    data.waiting ? `${plural(data.waiting, "post")} ${data.waiting === 1 ? "is" : "are"} still waiting for ${data.waiting === 1 ? "its" : "their"} first-week numbers` : null,
     data.untracked ? `${plural(data.untracked, "older post")} ${data.untracked === 1 ? "is" : "are"} left out: imported after ${data.untracked === 1 ? "its" : "their"} first week, so ${data.untracked === 1 ? "its" : "their"} first-week views were never recorded` : null,
   ].filter(Boolean);
   const method = showOnline

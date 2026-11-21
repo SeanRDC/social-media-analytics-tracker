@@ -29,6 +29,12 @@ export interface PostRow {
   avgWatchSeconds: number | null;
 }
 
+/** A post's views in its first week, from the platform's daily numbers (YouTube); see firstWeekRange(). */
+export interface FirstWeekRow {
+  externalId: string;
+  views: number;
+}
+
 /** Share of the audience, percent. Age keys are labels such as "25–34"; country keys are ISO codes. */
 export interface AudienceRow {
   dimension: "age" | "country" | "gender";
@@ -50,6 +56,8 @@ export interface PlatformSnapshot {
   derive?: boolean;
   /** Followers online per hour, as reported (Instagram only; absent when not shared). */
   onlineFollowers?: OnlineHourRow[];
+  /** First-week views read this sync, for posts from this sync or stored earlier. */
+  firstWeeks?: FirstWeekRow[];
 }
 
 /** How many followers were online in the hour starting at `hourStart`. */
@@ -64,6 +72,10 @@ export interface FetchContext {
   externalId: string;
   /** How many of the most recent posts to read: more on the first import, so older posts are included too. */
   maxPosts: number;
+  /** Posts (external ids) whose first-week views are already stored, so they aren't read again. */
+  firstWeekKnown?: ReadonlySet<string>;
+  /** Stored posts still without first-week views, including ones older than this sync's post list reaches. */
+  firstWeekMissing?: { externalId: string; publishedAt: Date }[];
 }
 
 export interface SyncWindow {

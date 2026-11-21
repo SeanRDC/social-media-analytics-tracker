@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReauthRequired } from "@/lib/connect/providers";
 import { simulatedSnapshot } from "@/lib/sync/simulated";
-import { audienceRows, dailyRows, fetchYouTube, parseDuration } from "@/lib/sync/youtube";
+import { audienceRows, dailyRows, fetchYouTube, firstWeekRange, parseDuration } from "@/lib/sync/youtube";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -99,6 +99,78 @@ describe("fetchYouTube", () => {
     api({ ...channelRoutes, "/channels": () => ({ body: { items: [{ statistics: { subscriberCount: "3" }, contentDetails: { relatedPlaylists: {} } }] } }) });
     const snap = await fetchYouTube("token", W, { externalId: "UC1", maxPosts: 200 });
     expect(snap.posts).toEqual([]);
+    expect(snap.daily).toHaveLength(3);
+  });
+});
+
+describe("first-week views", () => {
+  const DAY = 86_400_000;
+
+  it("ends each video's window at the Pacific midnight nearest to exactly 7 days old", () => {
+    // 09:00 PST: stop at the 7th midnight; 20:30 PST: at the 8th
+    expect(firstWeekRange(new Date("2026-11-10T17:00:00Z"))).toEqual({ start: "2026-11-10", end: "2026-11-16" });
+    expect(firstWeekRange(new Date("2026-11-11T04:30:00Z"))).toEqual({ start: "2026-11-10", end: "2026-11-17" });
+  });
+
+  it("measures every upload hour within half a day of the same age", () => {
+    for (let m = 0; m < 24 * 60; m += 30) {
+      const published = new Date(Date.parse("2026-11-10T08:00:00Z") + m * 60_000); // through one PST day
+      const { end } = firstWeekRange(published);
+      const windowEnd = Date.parse(`${end}T00:00:00-08:00`) + DAY;
+      expect(Math.abs(windowEnd - published.getTime() - 7 * DAY)).toBeLessThanOrEqual(DAY / 2);
+    }
+  });
+
+  /** Analytics answering per-video first-week requests with `views`, or a status. */
+  const withFirstWeeks = (answer: (id: string) => { status?: number; views?: number }) => ({
+    ...channelRoutes,
+    youtubeanalytics: (url: URL) => {
+      const f = url.searchParams.get("filters");
+      if (!f?.startsWith("video==")) return analytics(url);
+      const a = answer(f.slice(7));
+      if (a.status) return { status: a.status, body: { error: { code: a.status } } };
+      return { body: { columnHeaders: [{ name: "views" }], rows: a.views === undefined ? [] : [[a.views]] } };
+    },
+  });
+  const firstWeekCalls = (calls: string[]) => calls.filter((c) => c.includes("filters=video")).map((c) => new URL(c).searchParams);
+
+  it("reads a settled video's exact first-week views from Analytics", async () => {
+    const calls = api(withFirstWeeks(() => ({ views: 1234 })));
+    const snap = await fetchYouTube("token", W, { externalId: "UC1", maxPosts: 200 });
+    // v1 went out on Nov 11: its first week isn't over (and settled) yet
+    expect(snap.firstWeeks).toEqual([{ externalId: "v2", views: 1234 }]);
+    const [q] = firstWeekCalls(calls);
+    expect([q.get("filters"), q.get("startDate"), q.get("endDate"), q.get("metrics")]).toEqual(["video==v2", "2026-11-01", "2026-11-07", "views"]);
+  });
+
+  it("counts a first week with no rows as no views", async () => {
+    api(withFirstWeeks(() => ({})));
+    const snap = await fetchYouTube("token", W, { externalId: "UC1", maxPosts: 200 });
+    expect(snap.firstWeeks).toEqual([{ externalId: "v2", views: 0 }]);
+  });
+
+  it("doesn't ask again for videos whose first week is stored", async () => {
+    const calls = api(withFirstWeeks(() => ({ views: 1 })));
+    await fetchYouTube("token", W, { externalId: "UC1", maxPosts: 200, firstWeekKnown: new Set(["v2"]) });
+    expect(firstWeekCalls(calls)).toEqual([]);
+  });
+
+  it("also reads stored videos older than this sync's upload list reaches", async () => {
+    const calls = api(withFirstWeeks((id) => ({ views: id === "old" ? 77 : 1 })));
+    const snap = await fetchYouTube("token", W, {
+      externalId: "UC1",
+      maxPosts: 200,
+      firstWeekKnown: new Set(["v2"]),
+      firstWeekMissing: [{ externalId: "old", publishedAt: new Date("2024-03-05T18:00:00Z") }],
+    });
+    expect(snap.firstWeeks).toEqual([{ externalId: "old", views: 77 }]);
+    expect(firstWeekCalls(calls).map((q) => q.get("filters"))).toEqual(["video==old"]);
+  });
+
+  it("leaves first weeks for the next sync when out of quota, without failing the sync", async () => {
+    api(withFirstWeeks(() => ({ status: 429 })));
+    const snap = await fetchYouTube("token", W, { externalId: "UC1", maxPosts: 200 });
+    expect(snap.firstWeeks).toEqual([]);
     expect(snap.daily).toHaveLength(3);
   });
 });

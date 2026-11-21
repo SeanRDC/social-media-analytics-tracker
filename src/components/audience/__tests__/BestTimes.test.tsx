@@ -43,7 +43,7 @@ describe("BestTimes", () => {
   it("explains which posts were left out and why", () => {
     const g = grid([], { used: 12, waiting: 2, untracked: 40 });
     render(<BestTimes {...props} posting={{ all: g, platforms: [] }} online={null} />);
-    expect(screen.getByText(/Based on 12 posts; 2 newer posts count once a week old; 40 older posts are left out: imported after their first week/)).toBeInTheDocument();
+    expect(screen.getByText(/Based on 12 posts; 2 posts are still waiting for their first-week numbers; 40 older posts are left out: imported after their first week/)).toBeInTheDocument();
   });
 
   it("switches to when Instagram followers are online", () => {
