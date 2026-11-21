@@ -12,6 +12,7 @@ import { loadDataset, type DataSource } from "./live";
 import type { ReportData } from "@/lib/reports/build";
 import { reportDataFrom } from "@/lib/reports/data";
 import { getSavedTimeZone } from "@/lib/reports/schedule";
+import { loadPlatformOrder } from "@/lib/platformOrder";
 import { sortPosts } from "./sort";
 import type { Audience, DailyViews, Overview, Platform, Post, PostQuery } from "./types";
 
@@ -75,6 +76,9 @@ export async function getAudience(): Promise<Audience> {
   const [d, zone] = await Promise.all([data(), getTimeZone()]);
   return computeAudience(d.dataset, d.asOf, zone ?? "UTC");
 }
+
+/** The order the person arranged their platform cards in (Platforms tab). */
+export const getPlatformOrder = cache(async () => loadPlatformOrder(getDb(), (await requireUser()).id));
 
 /** The person's saved time zone, or null before one is saved. */
 export const getTimeZone = cache(async () => getSavedTimeZone((await requireUser()).id));

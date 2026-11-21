@@ -52,6 +52,16 @@ const PATHS = {
     </>
   ),
   arrow: <path d="M7 17L17 7M9 7h8v8" />,
+  grip: (
+    <>
+      <circle cx="9" cy="6.5" r="1.1" />
+      <circle cx="15" cy="6.5" r="1.1" />
+      <circle cx="9" cy="12" r="1.1" />
+      <circle cx="15" cy="12" r="1.1" />
+      <circle cx="9" cy="17.5" r="1.1" />
+      <circle cx="15" cy="17.5" r="1.1" />
+    </>
+  ),
   down: <path d="M6 9l6 6 6-6" />,
   right: <path d="M9 6l6 6-6 6" />,
   back: <path d="M15 5l-7 7 7 7" />,

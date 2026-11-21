@@ -233,6 +233,18 @@ export const alertSetting = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.kind] })],
 );
 
+/**
+ * The order someone arranged their platform cards in on the Platforms tab
+ * (platform ids, first card first). No row means the default order.
+ */
+export const platformOrder = pgTable("platform_order", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  platforms: text("platforms").array().notNull(),
+  updatedAt: updatedAt(),
+});
+
 export const reportSchedule = pgTable("report_schedule", {
   userId: text("user_id")
     .primaryKey()
