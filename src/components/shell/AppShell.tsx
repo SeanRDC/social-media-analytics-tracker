@@ -6,6 +6,7 @@ import { getDb } from "@/db";
 import { requireUser } from "@/lib/dal";
 import { unreadCount } from "@/lib/notifications";
 import { Header } from "./Header";
+import { PullToRefresh } from "./PullToRefresh";
 import { RangeProvider } from "./RangeProvider";
 import { TabBar } from "./TabBar";
 import { TopNav, TopNavSkeleton } from "./TopNav";
@@ -24,13 +25,13 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Suspense fallback={<TopNavSkeleton />}>
         <SignedInNav />
       </Suspense>
-      <main className={s.main}>
+      <PullToRefresh className={s.main}>
         <Header />
         <Suspense fallback={null}>
           <SimulatedNotice />
         </Suspense>
         {children}
-      </main>
+      </PullToRefresh>
       <TabBar />
     </RangeProvider>
   );

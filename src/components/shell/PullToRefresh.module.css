@@ -1,0 +1,130 @@
+/*
+ * Pull-to-refresh loader: the logo badge, sitting in the gap that opens above
+ * the page as it is pulled down. PullToRefresh writes --pull (0..1, 1 = will
+ * refresh) and --d (how far the page has moved) on .loader.
+ */
+.loader {
+  position: relative;
+  z-index: 1;
+  height: 0;
+  pointer-events: none;
+  --pull: 0;
+  --d: 0px;
+}
+
+.badge {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  margin-left: -20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--lime);
+  color: var(--on-bright);
+  box-shadow: 0 8px 18px -8px rgba(20, 20, 22, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  /* centred in the opened gap; grows and turns upright as the pull gets closer to refreshing */
+  transform: translateY(calc(var(--d) / 2 - 8px)) scale(calc(0.45 + var(--pull) * 0.55)) rotate(calc((1 - var(--pull)) * -140deg));
+  opacity: min(1, calc(var(--pull) * 1.8));
+}
+.loader[data-anim="true"] .badge {
+  transition: transform 0.5s var(--spring), opacity 0.3s var(--out);
+}
+
+/* the arch traces itself in with the pull */
+.arch,
+.sweep {
+  stroke: currentColor;
+  stroke-width: 2.3;
+}
+.arch {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--pull));
+  transition: opacity 0.25s var(--out);
+}
+.sweep {
+  opacity: 0;
+  stroke-dasharray: 0.3 2;
+}
+
+/* the eye pops in once letting go will refresh */
+.eye {
+  fill: currentColor;
+  transform-origin: 12px 15.5px;
+  transform: scale(0);
+  transition: transform 0.4s var(--spring);
+}
+.loader[data-armed="true"] .eye,
+.loader[data-phase="refreshing"] .eye {
+  transform: scale(1);
+}
+
+/* refreshing: the badge sits upright, a light runs along the arch and the eye follows it, scanning side to side */
+.loader[data-phase="refreshing"] .badge {
+  transform: translateY(calc(var(--d) / 2 - 8px));
+  opacity: 1;
+}
+.loader[data-phase="refreshing"] .arch {
+  stroke-dashoffset: 0;
+  opacity: 0.28;
+}
+.loader[data-phase="refreshing"] .sweep {
+  opacity: 1;
+  animation: sweep 0.9s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+.loader[data-phase="refreshing"] .eye {
+  animation: scan 0.9s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+@keyframes sweep {
+  from {
+    stroke-dashoffset: 0.18;
+  }
+  to {
+    stroke-dashoffset: -0.88;
+  }
+}
+@keyframes scan {
+  from {
+    transform: translateX(-2.2px);
+  }
+  to {
+    transform: translateX(2.2px);
+  }
+}
+
+/* done: the eye blinks and the badge shrinks away */
+.loader[data-phase="done"] .eye {
+  transform: scaleY(0.1);
+  transition-duration: 0.14s;
+}
+.loader[data-phase="done"] .badge {
+  transform: translateY(calc(var(--d) / 2 - 8px)) scale(0);
+  opacity: 0;
+  transition: transform 0.26s var(--in), opacity 0.26s var(--in);
+}
+
+/* the page column follows the finger, then springs back */
+.page[data-anim="true"] {
+  transition: transform 0.5s var(--out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge {
+    transform: translateY(calc(var(--d) / 2 - 8px));
+  }
+  .loader[data-phase="refreshing"] .sweep,
+  .loader[data-phase="refreshing"] .eye {
+    animation: none;
+  }
+  .loader[data-phase="refreshing"] .arch {
+    opacity: 1;
+    animation: breathe 1.4s ease-in-out infinite alternate;
+  }
+  @keyframes breathe {
+    to {
+      opacity: 0.4;
+    }
+  }
+}

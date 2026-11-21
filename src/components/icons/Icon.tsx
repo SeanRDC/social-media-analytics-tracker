@@ -1,5 +1,8 @@
 import type { SVGProps } from "react";
 
+/** The logo's shapes on the 24-unit grid: an arch (the lid) over a dot (the eye). The pull-to-refresh loader draws these too. */
+export const LOGO = { arch: "M5 15c2.5-5 4.5-7 7-7s4.5 2 7 7", eye: { cx: 12, cy: 15.5, r: 2 } } as const;
+
 const PATHS = {
   home: <path d="M4 11l8-6.5 8 6.5v8.2a.8.8 0 0 1-.8.8H15v-5.5H9V20H4.8a.8.8 0 0 1-.8-.8z" />,
   grid: (
@@ -71,8 +74,8 @@ const PATHS = {
   ),
   logo: (
     <>
-      <path d="M5 15c2.5-5 4.5-7 7-7s4.5 2 7 7" />
-      <circle cx="12" cy="15.5" r="2" />
+      <path d={LOGO.arch} />
+      <circle cx={LOGO.eye.cx} cy={LOGO.eye.cy} r={LOGO.eye.r} />
     </>
   ),
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,

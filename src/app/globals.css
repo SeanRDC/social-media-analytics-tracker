@@ -331,6 +331,12 @@ html {
   height: 100%;
   -webkit-text-size-adjust: 100%;
 }
+/* app pages have their own pull-to-refresh (PullToRefresh); keep the browser's from firing too */
+@media (pointer: coarse) {
+  html:has(main[data-pull-refresh]) {
+    overscroll-behavior-y: none;
+  }
+}
 
 body {
   margin: 0;
