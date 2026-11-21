@@ -22,7 +22,12 @@ function causeOf(e: Error): string {
 
 export function describeError(e: unknown): string {
   if (e instanceof DrizzleQueryError) {
-    return cap(`Database query failed: ${e.query.replace(/\s+/g, " ")}${causeOf(e)}`);
+    // the cause is what says what went wrong: shorten a long query (a bulk insert) rather than lose it
+    const cause = causeOf(e);
+    const prefix = "Database query failed: ";
+    const room = Math.max(60, MAX - prefix.length - cause.length);
+    const query = e.query.replace(/\s+/g, " ");
+    return cap(`${prefix}${query.length > room ? `${query.slice(0, room - 1)}…` : query}${cause}`);
   }
   if (e instanceof Error) return cap(redact(`${e.name}: ${e.message}`) + causeOf(e));
   return cap(redact(String(e)));

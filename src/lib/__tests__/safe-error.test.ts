@@ -20,6 +20,17 @@ describe("describeError", () => {
     expect(text).toContain(`from "session"`);
   });
 
+  it("keeps the cause when the query is long, shortening the query instead", () => {
+    const rows = Array.from({ length: 200 }, (_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`).join(", ");
+    const cause = Object.assign(new Error("ON CONFLICT DO UPDATE command cannot affect row a second time"), { code: "21000" });
+    const text = describeError(new DrizzleQueryError(`insert into "post" ("id", "title") values ${rows}`, [TOKEN], cause));
+    expect(text.length).toBeLessThanOrEqual(300);
+    expect(text).toContain(`insert into "post"`);
+    expect(text).toContain("cannot affect row a second time");
+    expect(text).toContain("21000");
+    expect(text).not.toContain(TOKEN);
+  });
+
   it("redacts parameter lists that appear inside any error message", () => {
     const e = new Error(`Failed query: select 1 where token = $1\nparams: ${TOKEN}`);
     expect(describeError(e)).not.toContain(TOKEN);
