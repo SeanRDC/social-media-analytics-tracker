@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { Notification } from "@/lib/notifications";
-import { NotificationBell, timeAgo } from "../NotificationBell";
+import { NotificationBell, placePanel, timeAgo } from "../NotificationBell";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ usePathname: () => "/overview", useRouter: () => ({ push }) }));
@@ -67,5 +67,42 @@ describe("NotificationBell", () => {
     render(<NotificationBell initialUnread={0} load={vi.fn().mockResolvedValue({ items: [], unread: 0 })} onRead={vi.fn()} onReadAll={vi.fn()} />);
     await userEvent.click(screen.getByRole("button", { name: "Notifications" }));
     expect(await screen.findByText("You're all caught up")).toBeInTheDocument();
+  });
+});
+
+describe("placePanel", () => {
+  // a bell near the right of a 390px phone, beside the avatar
+  const phoneBell = { left: 278, right: 320, bottom: 62, width: 42 };
+
+  it("spans a phone screen between its margins instead of running off the left", () => {
+    const p = placePanel(phoneBell, 366, { width: 390, height: 844, phone: true, bottom: 760 });
+    expect(p.right).toBeNull();
+    expect(p.top).toBe(72);
+  });
+
+  it("stops above the tab bar on phones", () => {
+    const p = placePanel(phoneBell, 366, { width: 390, height: 844, phone: true, bottom: 760 });
+    expect(p.top + p.maxHeight).toBeLessThanOrEqual(760 - 12);
+  });
+
+  it("hangs from the bell on wider screens", () => {
+    const p = placePanel({ left: 900, right: 942, bottom: 74, width: 42 }, 380, { width: 1280, height: 800, phone: false, bottom: null });
+    expect(p.right).toBe(1280 - 942);
+    expect(p.maxHeight).toBe(560);
+  });
+
+  it("keeps the panel inside the screen when the bell sits far from the right edge", () => {
+    // tablet: 700px wide, bell ending 420px from the right; a 380px panel would cross the left edge
+    const view = { width: 700, height: 1000, phone: false, bottom: null };
+    const p = placePanel({ left: 238, right: 280, bottom: 74, width: 42 }, 380, view);
+    const left = view.width - p.right! - 380;
+    expect(left).toBeGreaterThanOrEqual(12);
+    expect(p.right).toBeGreaterThanOrEqual(12);
+  });
+
+  it("grows out of the bell", () => {
+    const p = placePanel({ left: 900, right: 942, bottom: 74, width: 42 }, 380, { width: 1280, height: 800, phone: false, bottom: null });
+    const left = 1280 - p.right! - 380;
+    expect(left + p.originX).toBe(921);
   });
 });

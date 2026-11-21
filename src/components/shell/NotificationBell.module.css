@@ -47,6 +47,7 @@
   position: fixed;
   z-index: 1000;
   width: min(380px, calc(100vw - 24px));
+  /* refined by placePanel() once the bell is measured */
   max-height: min(560px, calc(100dvh - 110px));
   display: flex;
   flex-direction: column;
@@ -273,6 +274,12 @@
 @media (max-width: 639px) {
   .bell {
     width: 42px;
+  }
+  /* phones: a sheet across the screen with even margins (clear of the notch in landscape); keep in step with PHONE in NotificationBell.tsx */
+  .panel {
+    left: max(12px, calc(var(--safe-l) + 8px));
+    right: max(12px, calc(var(--safe-r) + 8px));
+    width: auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {

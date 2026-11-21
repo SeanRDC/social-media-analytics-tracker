@@ -30,6 +30,43 @@ export function timeAgo(iso: string, now = Date.now()): string {
   return formatMonthDay(d.getMonth(), d.getDate());
 }
 
+/** Phones: the inbox becomes a full-width sheet under the top bar (see .panel in the CSS). */
+const PHONE = "(max-width: 639px)";
+const EDGE = 12;
+const GAP = 10;
+const MAX_HEIGHT = 560;
+
+/** Top of the phone tab bar when it is showing, so the inbox stops above it. */
+function tabBarTop(): number | null {
+  const bar = document.querySelector<HTMLElement>('nav[aria-label="Tabs"]');
+  if (!bar || getComputedStyle(bar).display === "none") return null;
+  return bar.getBoundingClientRect().top;
+}
+
+/**
+ * Where the inbox goes. On phones it spans the screen between even margins
+ * (set in CSS, so `right` is null) under the bell; elsewhere it hangs from the
+ * bell's right edge but is pushed back inside the screen if it would overflow
+ * either side. Its height stops above the tab bar or the bottom of the screen,
+ * and it grows out of the bell (originX, from the panel's left edge).
+ */
+export function placePanel(
+  bell: { left: number; right: number; bottom: number; width: number },
+  panelWidth: number,
+  view: { width: number; height: number; phone: boolean; bottom: number | null },
+) {
+  const top = bell.bottom + GAP;
+  const floor = (view.bottom ?? view.height) - EDGE;
+  const maxHeight = Math.max(160, Math.min(MAX_HEIGHT, floor - top));
+  const bellX = bell.left + bell.width / 2;
+  if (view.phone) {
+    return { top, right: null, maxHeight, originX: Math.round(bellX - EDGE) };
+  }
+  const right = Math.min(Math.max(EDGE, view.width - bell.right), Math.max(EDGE, view.width - panelWidth - EDGE));
+  const left = view.width - right - panelWidth;
+  return { top, right, maxHeight, originX: Math.round(bellX - left) };
+}
+
 interface Props {
   initialUnread: number;
   load: () => Promise<{ items: Notification[]; unread: number }>;
@@ -87,11 +124,19 @@ export function NotificationBell({ initialUnread, load, onRead, onReadAll }: Pro
   useLayoutEffect(() => {
     if (!open) return;
     const place = () => {
-      const b = button.current?.getBoundingClientRect();
       const p = panel.current;
-      if (!b || !p) return;
-      p.style.top = `${b.bottom + 10}px`;
-      p.style.right = `${Math.max(12, window.innerWidth - b.right)}px`;
+      if (!button.current || !p) return;
+      const placement = placePanel(button.current.getBoundingClientRect(), p.offsetWidth, {
+        // the visible width (no scrollbar), which is what `right` is measured from
+        width: document.documentElement.clientWidth,
+        height: window.innerHeight,
+        phone: window.matchMedia(PHONE).matches,
+        bottom: tabBarTop(),
+      });
+      p.style.top = `${placement.top}px`;
+      p.style.right = placement.right === null ? "" : `${placement.right}px`;
+      p.style.maxHeight = `${placement.maxHeight}px`;
+      p.style.transformOrigin = `${placement.originX}px top`;
     };
     place();
     window.addEventListener("resize", place);
