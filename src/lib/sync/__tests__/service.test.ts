@@ -6,7 +6,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import type { Db } from "@/db";
 import * as schema from "@/db/schema";
 import { saveConnection } from "@/lib/connect/service";
-import { syncAll, syncConnection, syncWindow } from "@/lib/sync/service";
+import { storeSnapshot, syncAll, syncConnection, syncWindow } from "@/lib/sync/service";
 
 let db: Db;
 const NOW = new Date("2026-11-16T06:00:00Z");
@@ -56,6 +56,17 @@ describe("syncConnection", () => {
     expect((await db.select().from(schema.audienceStat)).length).toBeGreaterThan(0);
     const [c] = await db.select().from(schema.connection).where(eq(schema.connection.id, id));
     expect(c.lastSyncedAt?.toISOString()).toBe(NOW.toISOString());
+  });
+
+  it("saves a post or day the platform listed twice once, instead of failing the whole import", async () => {
+    const id = await simulated();
+    const p = { externalId: "v1", title: "Old title", kind: "video" as const, publishedAt: new Date("2026-11-01T00:00:00Z"), thumbnailUrl: null, permalink: null, views: 10, likes: 1, comments: 0, shares: 0, avgWatchSeconds: null };
+    const d = { date: "2026-11-15", followers: 5, followersGained: 1, views: 3, engagements: 1, posts: 0, watchMinutes: 2 };
+    await storeSnapshot(db, id, "2026-11-16", { followers: 5, daily: [d, { ...d, views: 4 }], posts: [p, { ...p, title: "New title", views: 12 }], audience: null });
+    const posts = await db.select().from(schema.post);
+    expect(posts.map((r) => r.title)).toEqual(["New title"]);
+    expect((await db.select().from(schema.postStat)).map((r) => r.views)).toEqual([12]);
+    expect((await db.select().from(schema.dailyStat)).map((r) => r.views)).toEqual([4]);
   });
 
   it("is idempotent", async () => {

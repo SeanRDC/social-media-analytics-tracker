@@ -88,11 +88,16 @@ export async function syncConnection(db: Db, connectionId: string, now = new Dat
   return { status: "synced", days: snapshot.daily.length, posts: snapshot.posts.length };
 }
 
+/** One item per key, the last one listed winning, in first-seen order. */
+const lastOf = <T>(items: T[], key: (item: T) => string): T[] => [...new Map(items.map((i) => [key(i), i])).values()];
+
 /** Writes one sync's numbers. A value the platform reported is never replaced by an unknown (null) one. */
 /** `capturedAt`: when the numbers were read, stored on each post's stats so their exact age is known. */
 export async function storeSnapshot(db: Db, connectionId: string, today: string, snapshot: PlatformSnapshot, capturedAt = new Date()) {
   await db.transaction(async (tx) => {
-    const s = snapshot.derive ? { ...snapshot, daily: await derivedToday(tx as unknown as Db, connectionId, today, snapshot) } : snapshot;
+    const derived = snapshot.derive ? { ...snapshot, daily: await derivedToday(tx as unknown as Db, connectionId, today, snapshot) } : snapshot;
+    // a platform can list the same post (or day) twice, e.g. while paging; Postgres rejects a batch upsert that touches a row twice
+    const s = { ...derived, daily: lastOf(derived.daily, (d) => d.date), posts: lastOf(derived.posts, (p) => p.externalId) };
     if (s.daily.length) {
       await tx
         .insert(dailyStat)
