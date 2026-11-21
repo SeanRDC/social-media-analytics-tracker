@@ -11,8 +11,8 @@ import { PGlite } from "@electric-sql/pglite";
 import { attachDatabasePool } from "@vercel/functions";
 import { drizzle as drizzleNodePg } from "drizzle-orm/node-postgres";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
-import { Pool } from "pg";
 import { logEvent } from "@/lib/log";
+import { ResilientPool } from "./resilient-pool";
 import * as schema from "./schema";
 
 /**
@@ -26,7 +26,8 @@ export function withStrictSsl(url: string): string {
 function create() {
   const url = process.env.DATABASE_URL;
   if (url) {
-    const pool = new Pool({
+    // stays awake while a connection is in use and retries one that failed to open (see resilient-pool.ts)
+    const pool = new ResilientPool({
       connectionString: withStrictSsl(url),
       max: 5,
       // Vercel suspends instances between requests; short-lived idle connections
