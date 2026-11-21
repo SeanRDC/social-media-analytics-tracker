@@ -4,11 +4,13 @@ import { useEffect, useId, useRef } from "react";
 import { displacementMapUrl, mapSize, type LensShape } from "@/lib/liquidGlass";
 import { isIos } from "@/lib/platform";
 
-// content sampled around the bar, the curved rim's width, how far the rim bends (px), and a touch of softening
-const MARGIN = 22;
-const BEZEL = 18;
-const SCALE = 40;
-const SOFTEN = 0.7;
+// content sampled around the bar (px); the curved rim as a share of the bar's height (the bar
+// bends like a glass rod, nearly flat only along its middle); the most the rim shifts content, as
+// a share of the rim; and a light softening so the glass reads as glass
+const MARGIN = 26;
+const RIM = 0.44;
+const SHIFT = 0.75;
+const SOFTEN = 1.4;
 // colour fringing: blue bends a little less than red, like real glass
 const FRINGE = [1, 0.95, 0.9] as const;
 const CHANNEL = ["1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0", "0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0", "0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"];
@@ -88,15 +90,18 @@ export function LiquidRefraction() {
         height: bar.clientHeight,
         radius: parseFloat(getComputedStyle(bar).borderTopLeftRadius) || 0,
         margin: MARGIN,
-        bezel: Math.min(BEZEL, bar.clientHeight / 2),
+        bezel: bar.clientHeight * RIM,
       };
       if (!s.width || !s.height) return;
+      // feDisplacementMap moves by scale × (value − 0.5), so the full rim shift needs twice the distance
+      const scale = 2 * Math.min(s.bezel * SHIFT, MARGIN - 2);
+      fl.querySelectorAll("feDisplacementMap").forEach((d, i) => d.setAttribute("scale", String(scale * FRINGE[i])));
       const { width, height } = mapSize(s);
       for (const el of [fl, fm]) {
         el.setAttribute("width", String(width));
         el.setAttribute("height", String(height));
       }
-      fm.setAttribute("href", displacementMapUrl(s));
+      fm.setAttribute("href", displacementMapUrl(s, Math.min(window.devicePixelRatio || 1, 3)));
       align();
     };
 
@@ -161,8 +166,8 @@ export function LiquidRefraction() {
         <filter ref={filter} id={id} x="0" y="0" width="1" height="1" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
           <feImage ref={map} x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map" />
           <feGaussianBlur in="SourceGraphic" stdDeviation={SOFTEN} result="soft" />
-          {FRINGE.map((k, i) => (
-            <feDisplacementMap key={`d${i}`} in="soft" in2="map" scale={SCALE * k} xChannelSelector="R" yChannelSelector="G" result={`d${i}`} />
+          {FRINGE.map((_, i) => (
+            <feDisplacementMap key={`d${i}`} in="soft" in2="map" scale={0} xChannelSelector="R" yChannelSelector="G" result={`d${i}`} />
           ))}
           {CHANNEL.map((values, i) => (
             <feColorMatrix key={`c${i}`} in={`d${i}`} type="matrix" values={values} result={`c${i}`} />

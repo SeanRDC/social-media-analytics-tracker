@@ -190,7 +190,7 @@
   --lg-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.24));
   --lg-blur: blur(5px) saturate(190%) brightness(1.05);
   /* the faint tint laid over the refracted page */
-  --lg-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
+  --lg-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.26));
   --lg-rim: linear-gradient(
     135deg,
     rgba(255, 255, 255, 1),
@@ -218,7 +218,7 @@
 :root[data-theme="dark"] {
   --lg-fill: linear-gradient(180deg, rgba(48, 48, 54, 0.42), rgba(26, 26, 30, 0.36));
   --lg-blur: blur(6px) saturate(170%);
-  --lg-tint: linear-gradient(180deg, rgba(40, 40, 46, 0.3), rgba(16, 16, 20, 0.36));
+  --lg-tint: linear-gradient(180deg, rgba(40, 40, 46, 0.46), rgba(16, 16, 20, 0.52));
   --lg-rim: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.55),
