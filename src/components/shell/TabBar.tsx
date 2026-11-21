@@ -21,7 +21,10 @@ export function TabBar() {
   return (
     <nav ref={container} className={`${s.bar} liquid-glass`} aria-label="Tabs" {...handlers}>
       <LiquidRefraction />
-      <span ref={indicator} className={`${s.ind} liquid-lens`} aria-hidden="true" />
+      <span ref={indicator} className={`${s.ind} liquid-lens`} aria-hidden="true">
+        <span className="liquid-lens-base" />
+        <span className="liquid-lens-glass" />
+      </span>
       {TAB_NAV.map((n) => {
         const on = n.href === active;
         return (

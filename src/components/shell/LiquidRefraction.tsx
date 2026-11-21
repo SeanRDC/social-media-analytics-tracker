@@ -11,9 +11,8 @@ const MARGIN = 26;
 const RIM = 0.44;
 const SHIFT = 0.75;
 const SOFTEN = 1.4;
-// colour fringing: blue bends a little less than red, like real glass
-const FRINGE = [1, 0.95, 0.9] as const;
-const CHANNEL = ["1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0", "0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0", "0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"];
+// wait for the page to stop changing (a new tab streams in over several commits) before copying it again
+const RECOPY_AFTER_MS = 450;
 
 /**
  * Real refraction for a Liquid Glass bar on iPhone and iPad.
@@ -24,7 +23,12 @@ const CHANNEL = ["1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0", "0 0 0 0 0  0 1 0
  * real one as it scrolls or is pulled, and re-copied when the page changes.
  * That copy is bent through an SVG displacement map drawn from the bar's exact
  * shape (src/lib/liquidGlass.ts): flat in the middle, curving at the rim, where
- * content from just beyond the bar is pulled in, with slight colour fringing.
+ * content from just beyond the bar is pulled in.
+ *
+ * Kept cheap so tab switches stay smooth: the bend renders on its own layer,
+ * so nothing else repainting in the bar re-runs it; the copy is refreshed only
+ * once the page has settled and the browser is idle; and parts of the copy far
+ * from the bar skip rendering (content-visibility).
  *
  * Render it as the first child of a `.liquid-glass` element. It switches itself
  * on (data-refract on the bar) only on iOS, when the page column exists and
@@ -80,6 +84,15 @@ export function LiquidRefraction() {
       c.removeAttribute("id");
       c.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
       c.setAttribute("inert", "");
+      // sections well away from the bar skip layout and paint, holding their real size
+      const real = [...source.children].flatMap((n) => [n, ...n.children]) as HTMLElement[];
+      const copies = [...c.children].flatMap((n) => [n, ...n.children]) as HTMLElement[];
+      copies.forEach((n, i) => {
+        const h = real[i]?.offsetHeight;
+        if (!h) return;
+        n.style.contentVisibility = "auto";
+        n.style.containIntrinsicSize = `auto ${h}px`;
+      });
       mr.replaceChildren(c);
       align();
     };
@@ -95,7 +108,7 @@ export function LiquidRefraction() {
       if (!s.width || !s.height) return;
       // feDisplacementMap moves by scale × (value − 0.5), so the full rim shift needs twice the distance
       const scale = 2 * Math.min(s.bezel * SHIFT, MARGIN - 2);
-      fl.querySelectorAll("feDisplacementMap").forEach((d, i) => d.setAttribute("scale", String(scale * FRINGE[i])));
+      fl.querySelector("feDisplacementMap")?.setAttribute("scale", String(scale));
       const { width, height } = mapSize(s);
       for (const el of [fl, fm]) {
         el.setAttribute("width", String(width));
@@ -118,11 +131,18 @@ export function LiquidRefraction() {
     };
 
     let pending = 0;
+    let idle = 0;
+    const ric = window.requestIdleCallback?.bind(window);
+    const recopy = () => {
+      if (ric) idle = ric(copy, { timeout: 1500 });
+      else copy();
+    };
     const mo = new MutationObserver((records) => {
       // the column's own style changes every frame of a pull; that is movement, handled by align()
       if (records.every((r) => r.target === source && r.type === "attributes")) return;
       clearTimeout(pending);
-      pending = window.setTimeout(copy, 180);
+      window.cancelIdleCallback?.(idle);
+      pending = window.setTimeout(recopy, RECOPY_AFTER_MS);
     });
     const ro = new ResizeObserver(() => {
       shape();
@@ -146,6 +166,7 @@ export function LiquidRefraction() {
       delete bar.dataset.refract;
       cancelAnimationFrame(raf);
       clearTimeout(pending);
+      window.cancelIdleCallback?.(idle);
       mo.disconnect();
       ro.disconnect();
       window.removeEventListener("scroll", wake);
@@ -166,15 +187,8 @@ export function LiquidRefraction() {
         <filter ref={filter} id={id} x="0" y="0" width="1" height="1" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
           <feImage ref={map} x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map" />
           <feGaussianBlur in="SourceGraphic" stdDeviation={SOFTEN} result="soft" />
-          {FRINGE.map((_, i) => (
-            <feDisplacementMap key={`d${i}`} in="soft" in2="map" scale={0} xChannelSelector="R" yChannelSelector="G" result={`d${i}`} />
-          ))}
-          {CHANNEL.map((values, i) => (
-            <feColorMatrix key={`c${i}`} in={`d${i}`} type="matrix" values={values} result={`c${i}`} />
-          ))}
-          <feBlend in="c0" in2="c1" mode="screen" result="rg" />
-          <feBlend in="rg" in2="c2" mode="screen" result="rgb" />
-          <feColorMatrix in="rgb" type="saturate" values="1.35" />
+          <feDisplacementMap in="soft" in2="map" scale={0} xChannelSelector="R" yChannelSelector="G" result="bent" />
+          <feColorMatrix in="bent" type="saturate" values="1.35" />
         </filter>
       </svg>
     </div>

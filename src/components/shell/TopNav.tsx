@@ -56,7 +56,10 @@ export function TopNav({ accountName, image = null, unread = 0 }: { accountName:
         <nav className={s.navCol} aria-label="Main">
           <div ref={container} className={s.links} onPointerLeave={hideHover} {...handlers}>
             <span ref={hover} className={s.hover} aria-hidden="true" />
-            <span ref={indicator} className={`${s.ind} liquid-lens`} aria-hidden="true" />
+            <span ref={indicator} className={`${s.ind} liquid-lens`} aria-hidden="true">
+              <span className="liquid-lens-base" />
+              <span className="liquid-lens-glass" />
+            </span>
             {MAIN_NAV.map((n) => {
               const on = n.href === active;
               return (

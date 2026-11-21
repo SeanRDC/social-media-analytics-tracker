@@ -279,8 +279,8 @@
     pointer-events: none;
   }
   /*
-   * The selection capsule inside a glass group (useLiquidIndicator writes --lift, 0..1).
-   * At rest it is a soft tinted capsule; lifted it turns into a clear lens with a lit rim,
+   * The selection capsule inside a glass group (useLiquidIndicator fades between its faces).
+   * At rest it is a soft tinted capsule (base); lifted it turns into a clear lens with a lit rim (glass),
    * and the item beneath it (data-lensed) is magnified.
    */
   html[data-ios="true"] .liquid-lens {
@@ -290,21 +290,19 @@
     box-shadow: none;
     will-change: transform;
   }
-  html[data-ios="true"] .liquid-lens::before,
-  html[data-ios="true"] .liquid-lens::after {
-    content: "";
+  html[data-ios="true"] .liquid-lens > span {
+    display: block;
     position: absolute;
     inset: 0;
     border-radius: inherit;
   }
-  html[data-ios="true"] .liquid-lens::before {
+  html[data-ios="true"] .liquid-lens-base {
     background: var(--lg-sel);
-    opacity: calc(1 - var(--lift, 0));
   }
-  html[data-ios="true"] .liquid-lens::after {
+  html[data-ios="true"] .liquid-lens-glass {
     background: var(--lg-lens);
     box-shadow: var(--lg-lens-edge);
-    opacity: var(--lift, 0);
+    opacity: 0;
   }
   html[data-ios="true"] .liquid-glass [data-key] {
     transition: color 0.25s var(--out), transform 0.4s var(--spring);
@@ -341,6 +339,10 @@
   }
 }
 
+.liquid-lens-base,
+.liquid-lens-glass {
+  display: none;
+}
 .liquid-refract {
   display: none;
   position: absolute;
@@ -351,6 +353,8 @@
   pointer-events: none;
   /* makes Safari clip the filtered copy to the rounded shape */
   -webkit-mask-image: -webkit-radial-gradient(white, black);
+  /* its own layer: the bend re-renders only when the copy moves, not when the bar's tabs repaint */
+  transform: translateZ(0);
 }
 .liquid-refract::after {
   content: "";

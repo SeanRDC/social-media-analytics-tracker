@@ -101,6 +101,14 @@ const LIFT = { k: 420, c: 34 };
 // how far the lens grows past the bar when lifted, and how much the tab under it is magnified
 const LENS_SCALE = 0.2;
 const DRAG_SLOP = 6;
+const FRAME = 1 / 60;
+const MAX_STEP = 1 / 240;
+
+interface Motion {
+  x: Spring;
+  w: Spring;
+  lift: Spring;
+}
 
 class Engine {
   private x: Spring = { x: 0, v: 0 };
@@ -118,12 +126,21 @@ class Engine {
   private dragged = false;
   private touched = false;
   private lensed: HTMLElement | null = null;
+  private anims: Animation[] = [];
+  private frames: Motion[] = [];
+  private started = 0;
+  // the capsule's two faces: the resting tint and the lifted lens
+  private base: HTMLElement | null;
+  private glass: HTMLElement | null;
 
   constructor(
     private c: HTMLElement,
     private ind: HTMLSpanElement,
     private liquid: boolean,
-  ) {}
+  ) {
+    this.base = ind.querySelector(".liquid-lens-base");
+    this.glass = ind.querySelector(".liquid-lens-glass");
+  }
 
   private items() {
     return Array.from(this.c.querySelectorAll<HTMLElement>("[data-key]"));
@@ -169,7 +186,7 @@ class Engine {
       if (!this.liquid) requestAnimationFrame(() => (this.ind.dataset.ready = "true"));
       return;
     }
-    if (!this.pressed) this.run();
+    if (!this.pressed) this.play();
   }
 
   /** Layout changed: jump straight to the active tab. */
@@ -181,10 +198,16 @@ class Engine {
   }
 
   private snap() {
+    this.halt(false);
+    this.snapTo();
+  }
+
+  /** Puts the capsule at rest on the target. */
+  private snapTo() {
     this.x = { x: this.tx, v: 0 };
     this.w = { x: this.tw, v: 0 };
     this.lift = { x: 0, v: 0 };
-    this.paint();
+    this.paint(this.state);
   }
 
   press(clientX: number) {
@@ -225,7 +248,6 @@ class Engine {
     const under = this.nearest(this.tx + this.c.getBoundingClientRect().left + this.tw / 2);
     const key = under?.dataset.key ?? null;
     if (under) this.measure(under);
-    this.run();
     return key && key !== this.key ? key : null;
   }
 
@@ -244,28 +266,21 @@ class Engine {
     return t;
   }
 
+  /** Finger-following mode: springs stepped frame by frame, so the lens can track a moving target. */
   private run() {
+    this.halt();
     if (this.raf) return;
     this.last = performance.now();
     const tick = (now: number) => {
       const dt = Math.min((now - this.last) / 1000, 1 / 30);
       this.last = now;
-      const spring = this.pressed ? FOLLOW : TRAVEL;
-      step(this.x, this.tx, spring.k, spring.c, dt);
-      step(this.w, this.tw, spring.k, spring.c, dt);
-      // the capsule lifts into a lens while held, or while it is still travelling
-      const travelling = Math.abs(this.x.x - this.tx) > 3;
-      step(this.lift, this.pressed || travelling ? 1 : 0, LIFT.k, LIFT.c, dt);
-      this.paint();
-      const still =
-        Math.abs(this.x.x - this.tx) < 0.25 &&
-        Math.abs(this.x.v) < 4 &&
-        Math.abs(this.w.x - this.tw) < 0.25 &&
-        Math.abs(this.lift.x) < 0.005 &&
-        Math.abs(this.lift.v) < 0.05;
-      if (still && !this.pressed) {
+      this.advance(this.state, dt, this.pressed);
+      this.paint(this.state);
+      this.magnify(this.state);
+      if (!this.pressed) {
+        // finger lifted: hand the rest of the motion to the compositor
         this.raf = 0;
-        this.snap();
+        this.play();
         return;
       }
       this.raf = requestAnimationFrame(tick);
@@ -273,28 +288,119 @@ class Engine {
     this.raf = requestAnimationFrame(tick);
   }
 
+  private get state(): Motion {
+    return { x: this.x, w: this.w, lift: this.lift };
+  }
+
+  /** One spring step. The capsule lifts into a lens while held, or while it is still travelling. */
+  private advance(m: Motion, dt: number, pressed: boolean) {
+    const spring = pressed ? FOLLOW : TRAVEL;
+    // small sub-steps keep the stiff springs stable even when a frame arrives late (a busy page load)
+    const n = Math.ceil(dt / MAX_STEP);
+    const h = dt / n;
+    for (let i = 0; i < n; i++) {
+      step(m.x, this.tx, spring.k, spring.c, h);
+      step(m.w, this.tw, spring.k, spring.c, h);
+      const travelling = Math.abs(m.x.x - this.tx) > 3;
+      step(m.lift, pressed || travelling ? 1 : 0, LIFT.k, LIFT.c, h);
+    }
+  }
+
+  private settled(m: Motion) {
+    return (
+      Math.abs(m.x.x - this.tx) < 0.25 &&
+      Math.abs(m.x.v) < 4 &&
+      Math.abs(m.w.x - this.tw) < 0.25 &&
+      Math.abs(m.lift.x) < 0.005 &&
+      Math.abs(m.lift.v) < 0.05
+    );
+  }
+
+  /**
+   * Travel mode: simulates the whole spring motion up front and plays it as a
+   * Web Animation of transform and opacity only. iOS runs those on the
+   * compositor, so the capsule stays smooth while the new page is being built
+   * on the main thread.
+   */
+  private play() {
+    cancelAnimationFrame(this.raf);
+    this.raf = 0;
+    this.halt();
+    this.magnify(null);
+    const sim: Motion = { x: { ...this.x }, w: { ...this.w }, lift: { ...this.lift } };
+    const frames: Motion[] = [];
+    for (let i = 0; i < 240 && !this.settled(sim); i++) {
+      this.advance(sim, FRAME, false);
+      frames.push({ x: { ...sim.x }, w: { ...sim.w }, lift: { ...sim.lift } });
+    }
+    this.snapTo(); // the resting state, which the animation lands on
+    if (!frames.length || typeof this.ind.animate !== "function") return;
+    const opts: KeyframeAnimationOptions = { duration: frames.length * FRAME * 1000, easing: "linear" };
+    this.anims = [
+      this.ind.animate(frames.map((f) => ({ transform: this.transformFor(f) })), opts),
+      ...(this.base ? [this.base.animate(frames.map((f) => ({ opacity: 1 - Math.max(0, f.lift.x) })), opts)] : []),
+      ...(this.glass ? [this.glass.animate(frames.map((f) => ({ opacity: Math.max(0, f.lift.x) })), opts)] : []),
+    ];
+    this.frames = frames;
+    this.started = performance.now();
+    this.anims[0].onfinish = () => this.halt(false);
+  }
+
+  /** Stops a playing travel animation, taking over from wherever it had got to. */
+  private halt(resume = true) {
+    if (!this.anims.length) return;
+    if (resume && this.frames.length) {
+      const i = Math.min(Math.floor((performance.now() - this.started) / (FRAME * 1000)), this.frames.length - 1);
+      const f = this.frames[i];
+      this.x = { ...f.x };
+      this.w = { ...f.w };
+      this.lift = { ...f.lift };
+      this.paint(this.state);
+    }
+    this.anims.forEach((a) => a.cancel());
+    this.anims = [];
+    this.frames = [];
+  }
+
   stop() {
     cancelAnimationFrame(this.raf);
     this.raf = 0;
+    this.halt(false);
   }
 
-  private paint() {
-    const lift = Math.max(0, this.lift.x);
+  /**
+   * The capsule keeps the target tab's width as its box and reaches any other
+   * width by scaling, so moving it never triggers layout.
+   */
+  private transformFor(m: Motion) {
+    const lift = Math.max(0, m.lift.x);
     // stretch along the direction of travel, thinning a little, like a drop of liquid
-    const stretch = Math.min(Math.abs(this.x.v) / 3200, 0.22);
+    const stretch = Math.min(Math.abs(m.x.v) / 3200, 0.22);
     const grow = 1 + LENS_SCALE * lift;
-    const sx = (1 + stretch) * grow;
+    const tw = this.tw || 1;
+    const sx = (m.w.x / tw) * (1 + stretch) * grow;
     const sy = (1 - stretch * 0.45) * grow;
-    const s = this.ind.style;
-    s.width = `${this.w.x}px`;
-    s.height = `${this.h}px`;
-    s.transform = `translate(${this.x.x}px, ${this.y}px) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`;
-    s.setProperty("--lift", lift.toFixed(3));
+    const x = m.x.x + (m.w.x - tw) / 2;
+    return `translate(${x.toFixed(2)}px, ${this.y}px) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`;
+  }
 
-    // magnify the tab under the lens
-    const center = this.x.x + this.w.x / 2;
+  private paint(m: Motion) {
+    const s = this.ind.style;
+    const box = `${this.tw}px`;
+    if (s.width !== box) s.width = box;
+    const h = `${this.h}px`;
+    if (s.height !== h) s.height = h;
+    s.transform = this.transformFor(m);
+    const lift = Math.max(0, m.lift.x);
+    if (this.base) this.base.style.opacity = String(1 - lift);
+    if (this.glass) this.glass.style.opacity = String(lift);
+  }
+
+  /** Magnifies the tab under the lens (finger-following mode only). */
+  private magnify(m: Motion | null) {
     let under: HTMLElement | null = null;
-    if (lift > 0.35) {
+    if (m && m.lift.x > 0.35) {
+      const center = m.x.x + m.w.x / 2;
       under = this.items().find((el) => center >= el.offsetLeft && center <= el.offsetLeft + el.offsetWidth) ?? null;
     }
     if (under !== this.lensed) {
